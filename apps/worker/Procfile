@@ -1,0 +1,3 @@
+worker: pnpm --filter @audit/worker start
+
+

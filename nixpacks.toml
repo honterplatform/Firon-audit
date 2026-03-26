@@ -1,0 +1,26 @@
+[phases.setup]
+# System dependencies for Playwright/Chromium (needed by worker)
+nixPkgs = [
+  "nodejs-18_x",
+  "pnpm",
+  "chromium",
+  "nss",
+  "libnspr",
+  "atk",
+  "at-spi2-atk",
+  "cups",
+  "dbus",
+  "gtk3",
+  "libdrm",
+  "libxkbcommon",
+  "libxcomposite",
+  "libxdamage",
+  "libxfixes",
+  "libxrandr",
+  "mesa",
+  "pango",
+  "alsa-lib"
+]
+
+[phases.install]
+cmds = ["pnpm install --no-frozen-lockfile"]

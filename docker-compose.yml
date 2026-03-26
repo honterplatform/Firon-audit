@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: audit_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5001}:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/audit_db
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      STORAGE_PROVIDER: local
+      LOCAL_STORAGE_DIR: /app/data/uploads
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5001}
+      AUTH_SECRET: ${AUTH_SECRET:-change-this-to-a-random-string}
+      NEXTAUTH_URL: ${APP_BASE_URL:-http://localhost:5001}
+      NODE_ENV: production
+    volumes:
+      - upload_data:/app/data/uploads
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/audit_db
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      STORAGE_PROVIDER: local
+      LOCAL_STORAGE_DIR: /app/data/uploads
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5001}
+      NODE_ENV: production
+    volumes:
+      - upload_data:/app/data/uploads
+
+volumes:
+  postgres_data:
+  redis_data:
+  upload_data:

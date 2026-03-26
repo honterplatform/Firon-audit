@@ -1,0 +1,23 @@
+{
+  "name": "@audit/plugins",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@audit/pipeline": "workspace:*",
+    "@axe-core/playwright": "^4.8.2",
+    "axe-core": "^4.8.2",
+    "chrome-launcher": "^1.0.0",
+    "lighthouse": "^11.4.0",
+    "playwright": "^1.40.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  }
+}
+

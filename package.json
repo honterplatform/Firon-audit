@@ -1,0 +1,26 @@
+{
+  "name": "@audit/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "postinstall": "pnpm --filter @audit/db db:generate",
+    "dev": "concurrently \"pnpm --filter @audit/web dev\" \"pnpm --filter @audit/worker dev\"",
+    "build": "pnpm --filter @audit/db db:generate && pnpm --filter @audit/db build && pnpm --filter @audit/pipeline build && pnpm --filter @audit/llm build && pnpm --filter @audit/plugins build && pnpm --filter @audit/ui build && pnpm --filter @audit/web build",
+    "build:worker": "pnpm --filter @audit/db db:generate && pnpm --filter @audit/db build && pnpm --filter @audit/pipeline build && pnpm --filter @audit/llm build && pnpm --filter @audit/plugins build && pnpm --filter @audit/worker build && pnpm --filter @audit/plugins exec playwright install chromium",
+    "db:push": "pnpm --filter @audit/db db:push",
+    "db:migrate": "pnpm --filter @audit/db db:migrate",
+    "db:studio": "pnpm --filter @audit/db db:studio",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
+

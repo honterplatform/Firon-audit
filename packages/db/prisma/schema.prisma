@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AuditRunStatus {
+  queued
+  running
+  partial
+  failed
+  completed
+}
+
+enum FindingImpact {
+  High
+  Medium
+  Low
+}
+
+enum FindingEffort {
+  Small
+  Medium
+  Large
+}
+
+enum FindingKind {
+  MarketingStrategy
+  Copywriting
+  UXUI
+}
+
+enum ArtifactType {
+  screenshot
+  html
+  json
+}
+
+enum ContactStatus {
+  new_lead
+  contacted
+  no_response
+  responded
+  closed
+}
+
+model AuditRun {
+  id          String          @id @default(cuid())
+  target      String
+  inputsJson  Json
+  status      AuditRunStatus  @default(queued)
+  startedAt   DateTime?
+  completedAt DateTime?
+  summaryJson Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  findings      AuditFinding[]
+  artifacts     Artifact[]
+  salesContacts SalesContact[]
+
+  @@index([status])
+  @@index([target])
+  @@index([createdAt])
+}
+
+model AuditFinding {
+  id           String         @id @default(cuid())
+  runId        String
+  issue        String
+  why          String
+  fix          String
+  evidenceJson Json?
+  impact       FindingImpact
+  effort       FindingEffort
+  kind         FindingKind
+  createdAt    DateTime       @default(now())
+
+  run          AuditRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([impact])
+  @@index([kind])
+}
+
+model Artifact {
+  id        String       @id @default(cuid())
+  runId     String
+  type      ArtifactType
+  path      String
+  metaJson  Json?
+  createdAt DateTime     @default(now())
+
+  run       AuditRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([type])
+}
+
+model SalesContact {
+  id            String        @id @default(cuid())
+  runId         String
+  name          String
+  email         String
+  phone         String?
+  contactStatus ContactStatus @default(new_lead)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now()) @updatedAt
+
+  run           AuditRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([email])
+  @@index([contactStatus])
+}
+

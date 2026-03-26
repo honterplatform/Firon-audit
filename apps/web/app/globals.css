@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.5rem;
+  --bg-primary: #0a211f;
+}
+
+body {
+  @apply text-gray-100;
+  background-color: var(--bg-primary);
+}
+
+/* Hide scrollbars but keep scroll functionality */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+
+/* Highlight animation for findings */
+@keyframes highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(216, 255, 133, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(216, 255, 133, 0.4);
+  }
+}
+
+.highlight-finding {
+  animation: highlight 1s ease-in-out;
+  border: 2px solid #d8ff85;
+  border-radius: 1rem;
+}
+
+/* Shimmer animation for progress bar */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
