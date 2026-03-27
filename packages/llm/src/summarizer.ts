@@ -379,13 +379,31 @@ Focus on what impacts search rankings and organic traffic most.`;
         content: m.content,
       }));
 
-      const completion = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        system: systemMsg + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code fences, no prose.',
-        messages: claudeMessages,
-        temperature: attempt > 0 ? 0.2 : 0.4,
-      });
+      // Try primary model, fall back to haiku if overloaded
+      let completion;
+      try {
+        completion = await client.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          system: systemMsg + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code fences, no prose.',
+          messages: claudeMessages,
+          temperature: attempt > 0 ? 0.2 : 0.4,
+        });
+      } catch (modelError: any) {
+        if (modelError?.status === 529 || modelError?.message?.includes('Overloaded')) {
+          logger.warn('Claude Sonnet overloaded, falling back to Haiku');
+          await new Promise(r => setTimeout(r, 2000));
+          completion = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 4096,
+            system: systemMsg + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code fences, no prose.',
+            messages: claudeMessages,
+            temperature: attempt > 0 ? 0.2 : 0.4,
+          });
+        } else {
+          throw modelError;
+        }
+      }
 
       const textBlock = completion.content.find(b => b.type === 'text');
       const content = textBlock?.text;
