@@ -120,6 +120,29 @@ export class LocalStorageProvider implements StorageProvider {
   }
 }
 
+export class DatabaseStorageProvider implements StorageProvider {
+  private baseUrl: string;
+
+  constructor() {
+    this.baseUrl = process.env.APP_BASE_URL || 'http://localhost:5001';
+  }
+
+  async putObject(key: string, buffer: Buffer, contentType: string): Promise<string> {
+    const { prisma } = await import('@audit/db');
+    const data = buffer.toString('base64');
+    await prisma.storedFile.upsert({
+      where: { key },
+      create: { key, data, contentType },
+      update: { data, contentType },
+    });
+    return key;
+  }
+
+  async getSignedUrl(key: string): Promise<string> {
+    return `${this.baseUrl}/api/storage/${encodeURIComponent(key)}`;
+  }
+}
+
 const dataUrlStore = new Map<string, string>();
 
 class DataUrlStorageProvider implements StorageProvider {
@@ -147,9 +170,11 @@ function isPlaceholder(value?: string | null): boolean {
 }
 
 export function createStorageProvider(): StorageProvider {
-  const provider = process.env.STORAGE_PROVIDER || 'local';
+  const provider = process.env.STORAGE_PROVIDER || 'database';
 
-  if (provider === 'local') {
+  if (provider === 'database' || provider === 'db') {
+    return new DatabaseStorageProvider();
+  } else if (provider === 'local') {
     return new LocalStorageProvider();
   } else if (provider === 's3') {
     return new S3StorageProvider();
