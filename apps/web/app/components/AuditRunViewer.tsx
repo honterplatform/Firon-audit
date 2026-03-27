@@ -165,7 +165,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         if (data.status === 'running' || data.status === 'queued') {
           timer = setTimeout(poll, POLL_INTERVAL_MS);
         } else {
-          setIsPolling(false);
+          // Audit just finished — reload to get full server-rendered page with findings
+          window.location.reload();
         }
       } catch (err) {
         console.error('Failed to poll audit status', err);
