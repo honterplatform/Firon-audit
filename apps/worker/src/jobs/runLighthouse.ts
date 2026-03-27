@@ -41,7 +41,7 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
         evidenceJson: { lcp: result.lcp, threshold: 2.5, metric: 'LCP' },
         impact: (result.lcp > 4.0 ? FindingImpact.High : FindingImpact.Medium) as FindingImpact,
         effort: FindingEffort.Medium as FindingEffort,
-        kind: FindingKind.MarketingStrategy as FindingKind,
+        kind: FindingKind.Performance as FindingKind,
       });
     }
 
@@ -55,7 +55,7 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
         evidenceJson: { cls: result.cls, threshold: 0.1, metric: 'CLS' },
         impact: (result.cls > 0.25 ? FindingImpact.High : FindingImpact.Medium) as FindingImpact,
         effort: FindingEffort.Medium as FindingEffort,
-        kind: FindingKind.UXUI as FindingKind,
+        kind: FindingKind.Performance as FindingKind,
       });
     }
 
@@ -69,7 +69,7 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
         evidenceJson: { inp: result.inp, threshold: 200, metric: 'INP' },
         impact: (result.inp > 500 ? FindingImpact.High : FindingImpact.Medium) as FindingImpact,
         effort: FindingEffort.Medium as FindingEffort,
-        kind: FindingKind.UXUI as FindingKind,
+        kind: FindingKind.Performance as FindingKind,
       });
     }
 
@@ -83,7 +83,7 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
         evidenceJson: { tbt: result.tbt, threshold: 0.2, metric: 'TBT' },
         impact: (result.tbt > 0.6 ? FindingImpact.High : FindingImpact.Medium) as FindingImpact,
         effort: FindingEffort.Medium as FindingEffort,
-        kind: FindingKind.MarketingStrategy as FindingKind,
+        kind: FindingKind.Performance as FindingKind,
       });
     }
 
@@ -97,7 +97,7 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
         evidenceJson: { totalBytes: result.totalBytes, totalMB: (result.totalBytes / (1024 * 1024)).toFixed(1) },
         impact: (result.totalBytes > 5 * 1024 * 1024 ? FindingImpact.High : FindingImpact.Medium) as FindingImpact,
         effort: FindingEffort.Medium as FindingEffort,
-        kind: FindingKind.MarketingStrategy as FindingKind,
+        kind: FindingKind.Performance as FindingKind,
       });
     }
 

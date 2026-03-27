@@ -15,7 +15,7 @@ type Summary = {
     fix: string;
     impact: 'High' | 'Medium' | 'Low';
     effort: 'Small' | 'Medium' | 'Large';
-    kind: 'Marketing Strategy' | 'Copywriting' | 'UX/UI';
+    kind: 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links';
     evidenceRefs?: string[];
   }>;
   plan: {
@@ -88,35 +88,38 @@ const statusMessages: Record<AuditStatus, string> = {
   failed: 'The audit failed. Check the worker logs for more information.',
 };
 
-// Normalize kind values to ensure they use the new assignment-based values
-function normalizeKind(kind: string): 'Marketing Strategy' | 'Copywriting' | 'UX/UI' {
+// Normalize kind values to ensure they use the new SEO category display values
+function normalizeKind(kind: string): 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links' {
   const kindLower = kind.toLowerCase().trim();
-  // Map old enum values to new assignment values
+  // Map new Prisma enum values (case-insensitive)
+  if (kindLower === 'technicalseo' || kindLower === 'technical seo') {
+    return 'Technical SEO';
+  }
+  if (kindLower === 'onpageseo' || kindLower === 'on-page seo' || kindLower === 'on page seo') {
+    return 'On-Page SEO';
+  }
   if (kindLower === 'performance' || kindLower === 'perf' || kindLower === 'speed') {
-    return 'Marketing Strategy';
+    return 'Performance';
   }
-  if (kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
-    return 'UX/UI';
+  if (kindLower === 'links' || kindLower === 'link') {
+    return 'Links';
   }
-  if (kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
-    return 'Copywriting';
-  }
-  // Check for new values (case-insensitive)
+  // Map old values to new SEO categories
   if (kindLower === 'marketing strategy' || kindLower === 'marketingstrategy') {
-    return 'Marketing Strategy';
+    return 'Technical SEO';
   }
-  if (kindLower === 'copywriting') {
-    return 'Copywriting';
+  if (kindLower === 'copywriting' || kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
+    return 'On-Page SEO';
   }
-  if (kindLower === 'ux/ui' || kindLower === 'uxui') {
-    return 'UX/UI';
+  if (kindLower === 'ux/ui' || kindLower === 'uxui' || kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
+    return 'Performance';
   }
-  // Map Motion and Generalist to UX/UI as fallback
+  // Map Motion and Generalist to Performance as fallback
   if (kindLower === 'motion' || kindLower === 'animation' || kindLower === 'transition' || kindLower === 'generalist' || kindLower === 'general') {
-    return 'UX/UI';
+    return 'Performance';
   }
   // Default fallback
-  return 'UX/UI';
+  return 'Performance';
 }
 
 export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScreenshotUrls, elementCoordinates, blockedStatus }: Props) {
@@ -196,7 +199,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     // Always start with database findings (includes heuristics, Axe, and LLM findings)
     const dbFindings = run.fallbackFindings.map((f, index) => ({
       ...f,
-      kind: normalizeKind(f.kind || 'UX/UI'),
+      kind: normalizeKind(f.kind || 'Performance'),
       _index: index, // Store original index for selection tracking
     }));
 
@@ -221,33 +224,34 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   // Group findings by kind (Assign To)
   const findingsByKind = useMemo(() => {
     const groups: Record<string, typeof findingsToRender> = {
-      'Marketing Strategy': [],
-      'Copywriting': [],
-      'UX/UI': [],
+      'Technical SEO': [],
+      'On-Page SEO': [],
+      'Performance': [],
+      'Links': [],
     };
 
     findingsToRender.forEach(finding => {
-      const kind = finding.kind || 'UX/UI';
+      const kind = finding.kind || 'Performance';
       if (groups[kind]) {
         groups[kind].push(finding);
       } else {
-        // Fallback to UX/UI for any unknown kinds
-        groups['UX/UI'].push(finding);
+        // Fallback to Performance for any unknown kinds
+        groups['Performance'].push(finding);
       }
     });
 
     return groups;
   }, [findingsToRender]);
 
-  // Get all available tabs (kinds that have findings) - UX/UI always first
+  // Get all available tabs (kinds that have findings) - Technical SEO always first
   const availableTabs = useMemo(() => {
-    const allTabs = (['Marketing Strategy', 'Copywriting', 'UX/UI'] as const).filter(
+    const allTabs = (['Technical SEO', 'On-Page SEO', 'Performance', 'Links'] as const).filter(
       kind => findingsByKind[kind].length > 0
     );
-    // Sort so UX/UI always appears first
+    // Sort so Technical SEO always appears first
     return allTabs.sort((a, b) => {
-      if (a === 'UX/UI') return -1;
-      if (b === 'UX/UI') return 1;
+      if (a === 'Technical SEO') return -1;
+      if (b === 'Technical SEO') return 1;
       return 0; // Keep original order for others
     });
   }, [findingsByKind]);
@@ -296,11 +300,11 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
       const meta = a.meta as any;
       return path.includes('axe') || (meta?.violationsCount !== undefined || meta?.contrastIssuesCount !== undefined);
     }) || false;
-    // Heuristics findings are UX/UI findings that aren't from Axe (no contrast/tap target issues)
+    // Heuristics findings are Performance findings that aren't from Axe (no contrast/tap target issues)
     const hasHeuristics = run.fallbackFindings.some(f => {
       const issueLower = f.issue.toLowerCase();
-      return f.kind === 'UX/UI' && 
-             !issueLower.includes('contrast') && 
+      return f.kind === 'Performance' &&
+             !issueLower.includes('contrast') &&
              !issueLower.includes('tap target') &&
              !issueLower.includes('accessibility violation');
     }) || false;
@@ -393,7 +397,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a211f' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       <div className="flex h-screen overflow-hidden">
         {/* Main content area - with right padding for chat only when audit is complete */}
         <div className={`flex-1 overflow-y-auto scrollbar-hide ${showProgressBar ? 'pr-0' : 'pr-0 lg:pr-[432px]'}`}>
@@ -406,11 +410,11 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               {/* Progress Bar - Show only when audit is running */}
               <div className="text-center">
                 <div className="flex items-center justify-center mb-6">
-                  <h2 className="text-lg font-semibold" style={{ color: '#0a211f' }}>Progress</h2>
+                  <h2 className="text-lg font-semibold" style={{ color: '#ffffff' }}>Progress</h2>
           </div>
                 
                 {/* Current Stage Text */}
-                <p className="text-sm text-center mb-6" style={{ color: '#a4ada8' }}>
+                <p className="text-sm text-center mb-6" style={{ color: '#888888' }}>
                   {(() => {
                     const currentStage = progressStages.find(s => !s.completed);
                     if (!currentStage) return 'Finalizing audit report...';
@@ -432,14 +436,14 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <div
                           className="w-32 h-2 rounded-full transition-all duration-500 relative overflow-hidden"
                           style={{
-                            backgroundColor: stage.completed ? '#d8ff85' : isActive ? '#3a4a47' : '#223734',
+                            backgroundColor: stage.completed ? '#FB3B24' : isActive ? '#212121' : '#0F0F0F',
                           }}
                         >
                           {isActive && (
                             <div
                               className="absolute inset-0 rounded-full"
                               style={{
-                                background: 'linear-gradient(90deg, transparent, rgba(216, 255, 133, 0.4), transparent)',
+                                background: 'linear-gradient(90deg, transparent, rgba(251, 59, 36, 0.4), transparent)',
                                 animation: 'shimmer 2s infinite',
                                 transform: 'translateX(-100%)',
                               }}
@@ -449,7 +453,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <span
                           className="text-xs mt-2 font-medium transition-all duration-300"
                           style={{
-                            color: stage.completed ? '#d8ff85' : isActive ? '#d8ff85' : '#6f7c79',
+                            color: stage.completed ? '#FB3B24' : isActive ? '#FB3B24' : '#666666',
                             fontWeight: isActive ? 600 : 500,
                           }}
                         >
@@ -461,7 +465,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                 </div>
                 
                 {/* Message below progress bar */}
-                <p className="text-sm text-center mt-6" style={{ color: '#6f7c79' }}>
+                <p className="text-sm text-center mt-6" style={{ color: '#666666' }}>
                   Analyzing your website... this may take a few minutes
                 </p>
               </div>
@@ -492,7 +496,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                       }
                     }}
                     className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90"
-                    style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#d8ff85', color: '#0a211f' }}
+                    style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#FB3B24', color: '#ffffff' }}
                   >
                     Download Audit
                   </button>
@@ -512,11 +516,11 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                       type="submit"
                       disabled={isDownloadingPdf || !pdfEmailInput.trim()}
                       className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                      style={{ backgroundColor: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#223734' : '#d8ff85', color: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#6f7c79' : '#0a211f', height: '42px', boxSizing: 'border-box' }}
+                      style={{ backgroundColor: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#0F0F0F' : '#FB3B24', color: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
                     >
                       {isDownloadingPdf ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline" style={{ color: isDownloadingPdf ? '#6f7c79' : '#0a211f' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline" style={{ color: isDownloadingPdf ? '#666666' : '#ffffff' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -533,7 +537,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         setPdfEmailInput('');
                       }}
                       className="text-sm hover:text-white transition-colors ml-auto"
-                      style={{ color: '#a4ada8' }}
+                      style={{ color: '#888888' }}
                       disabled={isDownloadingPdf}
                     >
                       Cancel
@@ -547,7 +551,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         )}
         
               {/* Divider */}
-              <div className="border-b mb-16" style={{ borderColor: '#223734' }}></div>
+              <div className="border-b mb-16" style={{ borderColor: '#0F0F0F' }}></div>
 
         {/* Show content only when audit is complete */}
         {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
@@ -557,8 +561,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
           <div className="mb-12 pt-16">
             <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#8dfdba' }}>Performance Overview</h2>
-                <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#a4ada8' }}>
+                <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#4ADE80' }}>Performance Overview</h2>
+                <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
                   Visual preview and key performance metrics
                 </p>
               </div>
@@ -570,7 +574,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                   rel="noopener noreferrer"
                   className="font-normal text-white hover:underline transition-colors cursor-pointer inline-block" 
                   style={{ color: '#ffffff' }} 
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#d8ff85'; }} 
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#FB3B24'; }} 
                   onMouseLeave={(e) => { e.currentTarget.style.color = '#ffffff'; }}
                 >
                   {run.target}
@@ -582,7 +586,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               <div 
                 className="overflow-hidden" 
                 style={{ 
-                  backgroundColor: '#0a211f',
+                  backgroundColor: '#0A0A0A',
                   height: '500px',
                   overflow: 'hidden',
                   position: 'relative',
@@ -592,7 +596,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               >
                 {screenshotUrls.desktop ? (
                   blockedStatusState?.desktop ? (
-                    <div className="flex flex-col items-center justify-center h-full" style={{ color: '#a4ada8', border: '1px solid #223734' }}>
+                    <div className="flex flex-col items-center justify-center h-full" style={{ color: '#888888', border: '1px solid #0F0F0F' }}>
                       <p className="text-sm font-medium">No Preview Available</p>
                       <p className="text-xs mt-1 opacity-75">Access to this website was blocked</p>
                     </div>
@@ -718,9 +722,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                     : null;
                   
                   return (
-                    <div className="rounded-lg p-6 shadow-lg" style={{ backgroundColor: '#f7f9f2' }}>
-                      <h3 className="text-xl font-light mb-4" style={{ color: '#0a211f' }}>Core Web Vitals</h3>
-                      <div className="text-sm" style={{ color: '#6f7c79' }}>
+                    <div className="rounded-lg p-6 shadow-lg" style={{ backgroundColor: '#F5F5F5' }}>
+                      <h3 className="text-xl font-light mb-4" style={{ color: '#0A0A0A' }}>Core Web Vitals</h3>
+                      <div className="text-sm" style={{ color: '#666666' }}>
                         {isPartial
                           ? 'Lighthouse analysis failed. The audit completed with partial results.'
                           : run.status === 'failed'
@@ -742,7 +746,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               </div>
             )}
                       {isPartial && !lighthouseError && (
-                        <div className="mt-3 text-xs" style={{ color: '#6f7c79' }}>
+                        <div className="mt-3 text-xs" style={{ color: '#666666' }}>
                           <p>Tip: Check the worker terminal logs for more details about the Lighthouse failure.</p>
           </div>
                       )}
@@ -752,16 +756,16 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
                 const getScoreColor = (value: number, threshold: number, isLowerBetter: boolean = true) => {
                   const isGood = isLowerBetter ? value <= threshold : value >= threshold;
-                  return isGood ? '#8dfdba' : '#ff9595';
+                  return isGood ? '#4ADE80' : '#ff9595';
                 };
 
                 return (
                   <div style={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
                     <div className="grid grid-cols-2 gap-4 flex-1">
                       {/* LCP Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0a211f', border: '1px solid #223734' }}>
+                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                         <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>LCP</div>
-                        <div className="text-sm mb-2" style={{ color: '#6f7c79' }}>How long it takes for the main content to appear</div>
+                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How long it takes for the main content to appear</div>
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
@@ -769,16 +773,16 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                           >
                             {lighthouseMetrics.lcp?.toFixed(2)}s
           </div>
-                          <div className="text-sm mt-1" style={{ color: '#4a5a58' }}>
+                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
                             Target: &lt;2.5s
                           </div>
                         </div>
                       </div>
 
                       {/* CLS Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0a211f', border: '1px solid #223734' }}>
+                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                         <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>CLS</div>
-                        <div className="text-sm mb-2" style={{ color: '#6f7c79' }}>How much the page shifts while loading</div>
+                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How much the page shifts while loading</div>
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
@@ -786,16 +790,16 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                           >
                             {lighthouseMetrics.cls?.toFixed(3)}
             </div>
-                          <div className="text-sm mt-1" style={{ color: '#4a5a58' }}>
+                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
                             Target: &lt;0.1
                           </div>
                         </div>
                       </div>
 
                       {/* INP Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0a211f', border: '1px solid #223734' }}>
+                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                         <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>INP</div>
-                        <div className="text-sm mb-2" style={{ color: '#6f7c79' }}>How responsive the page feels when you interact with it</div>
+                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How responsive the page feels when you interact with it</div>
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
@@ -803,7 +807,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                           >
                             {lighthouseMetrics.inp?.toFixed(0)}ms
             </div>
-                          <div className="text-sm mt-1" style={{ color: '#4a5a58' }}>
+                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
                             Target: &lt;200ms
                           </div>
                         </div>
@@ -811,9 +815,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
                       {/* TBT Card */}
                       {lighthouseMetrics.tbt ? (
-                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0a211f', border: '1px solid #223734' }}>
+                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                           <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>TBT</div>
-                          <div className="text-sm mb-2" style={{ color: '#6f7c79' }}>How long the page is blocked from responding</div>
+                          <div className="text-sm mb-2" style={{ color: '#666666' }}>How long the page is blocked from responding</div>
                           <div className="mt-auto">
                             <div 
                               className="text-6xl font-light mb-1"
@@ -821,19 +825,19 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                             >
                               {lighthouseMetrics.tbt?.toFixed(0)}ms
                             </div>
-                            <div className="text-sm mt-1" style={{ color: '#4a5a58' }}>
+                            <div className="text-sm mt-1" style={{ color: '#212121' }}>
                               Target: &lt;200ms
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0a211f', border: '1px solid #223734' }}>
-                          <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#6f7c79' }}>Total Size</div>
+                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
+                          <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#666666' }}>Total Size</div>
                           <div className="mt-auto">
-                            <div className="text-6xl font-light mb-1" style={{ color: '#8dfdba', fontFamily: 'var(--font-instrument-serif), serif' }}>
+                            <div className="text-6xl font-light mb-1" style={{ color: '#4ADE80', fontFamily: 'var(--font-instrument-serif), serif' }}>
                               {(lighthouseMetrics.totalBytes / 1024 / 1024).toFixed(2)} MB
                             </div>
-                            <div className="text-sm" style={{ color: '#6f7c79' }}>
+                            <div className="text-sm" style={{ color: '#666666' }}>
                               Page Size
                             </div>
                           </div>
@@ -860,9 +864,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             <section className="space-y-6">
               <div className="mb-6 mt-24">
                 <div>
-                  <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#8dfdba' }}>Findings</h2>
+                  <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#4ADE80' }}>Findings</h2>
                   {hasSummary && run.summaryJson && (
-                    <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#a4ada8' }}>
+                    <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
                       {run.stats.highImpactFindings > 0 && `${run.stats.highImpactFindings} high-impact ${run.stats.highImpactFindings === 1 ? 'item' : 'items'} need attention. `}
                       {findingsToRender.length > 0 && `This audit identified ${findingsToRender.length} ${findingsToRender.length === 1 ? 'issue' : 'issues'} across design, UX, messaging, and performance. `}
                       <br />
@@ -888,13 +892,13 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                             whitespace-nowrap py-4 px-1 border-b-2 font-light text-xs uppercase
                             ${isActive
                               ? ''
-                              : 'border-transparent hover:border-[#d8ff85]'
+                              : 'border-transparent hover:border-[#FB3B24]'
                             }
                           `}
                           style={{ 
                             letterSpacing: '0.15em', 
-                            color: isActive ? '#ffffff' : '#808c88',
-                            borderBottomColor: isActive ? '#d8ff85' : undefined
+                            color: isActive ? '#ffffff' : '#777777',
+                            borderBottomColor: isActive ? '#FB3B24' : undefined
                           }}
                         >
                           {tab.toUpperCase()}
@@ -906,7 +910,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                                 : 'text-gray-400'
                               }
                             `}
-                            style={isActive ? { backgroundColor: 'rgba(216, 255, 133, 0.2)', color: '#d8ff85' } : { backgroundColor: '#223734' }}
+                            style={isActive ? { backgroundColor: 'rgba(251, 59, 36, 0.2)', color: '#FB3B24' } : { backgroundColor: '#0F0F0F' }}
                             >
                               {tabFindings.length}
                             </span>
@@ -973,7 +977,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             {/* Failed status message - show when audit failed */}
             {run.status === 'failed' && (
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-lg font-medium mb-2" style={{ color: '#0a211f' }}>Audit Failed</p>
+            <p className="text-lg font-medium mb-2" style={{ color: '#0A0A0A' }}>Audit Failed</p>
                 <p className="text-gray-600 mb-4">
               The audit failed. Please retry or check the worker logs.
             </p>
@@ -1010,7 +1014,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
         {/* Chat panel - Fixed on right side, full height with margins - Only show when audit is complete */}
         {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
-        <div className="hidden lg:block fixed right-4 top-4 bottom-4 w-[400px] border border-gray-600 rounded-3xl flex-shrink-0 z-40 shadow-lg overflow-hidden" style={{ backgroundColor: '#f7f9f2' }}>
+        <div className="hidden lg:block fixed right-4 top-4 bottom-4 w-[400px] rounded-3xl flex-shrink-0 z-40 shadow-lg overflow-hidden" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
           <AuditChat
             ref={chatRef}
             runId={runId}

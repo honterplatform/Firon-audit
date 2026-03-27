@@ -20,7 +20,7 @@ export async function processHeuristics(job: Job<HeuristicsJobData>) {
       evidenceJson: f.evidence ? { evidence: f.evidence } : undefined,
       impact: FindingImpact.Medium as FindingImpact,
       effort: FindingEffort.Small as FindingEffort,
-      kind: FindingKind.UXUI as FindingKind,
+      kind: FindingKind.OnPageSEO as FindingKind,
     }));
 
     if (findings.length > 0) {

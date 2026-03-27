@@ -4,7 +4,7 @@
 
 :root {
   --radius: 0.5rem;
-  --bg-primary: #0a211f;
+  --bg-primary: #0A0A0A;
 }
 
 body {
@@ -27,16 +27,16 @@ body {
 /* Highlight animation for findings */
 @keyframes highlight {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(216, 255, 133, 0);
+    box-shadow: 0 0 0 0 rgba(251, 59, 36, 0);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(216, 255, 133, 0.4);
+    box-shadow: 0 0 0 8px rgba(251, 59, 36, 0.4);
   }
 }
 
 .highlight-finding {
   animation: highlight 1s ease-in-out;
-  border: 2px solid #d8ff85;
+  border: 2px solid #FB3B24;
   border-radius: 1rem;
 }
 

@@ -16,7 +16,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "UX/UI Audit Platform",
+  title: "SEO Audit Platform",
   description: "Evidence-first audits for websites",
 };
 

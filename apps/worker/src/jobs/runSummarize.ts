@@ -8,17 +8,17 @@ import type { SummarizeJobData, LighthouseResult, AxeResult, HeuristicsResult, C
 function mapKindToDbEnum(kind: string): FindingKind {
   switch (kind) {
     case 'Marketing Strategy':
-      return FindingKind.MarketingStrategy;
+      return FindingKind.Performance;
     case 'Copywriting':
-      return FindingKind.Copywriting;
+      return FindingKind.OnPageSEO;
     case 'UX/UI':
-      return FindingKind.UXUI;
-    // Map Motion and Generalist to UXUI
+      return FindingKind.TechnicalSEO;
+    // Map Motion and Generalist to TechnicalSEO
     case 'Motion':
     case 'Generalist':
-      return FindingKind.UXUI;
+      return FindingKind.TechnicalSEO;
     default:
-      return FindingKind.UXUI;
+      return FindingKind.TechnicalSEO;
   }
 }
 
@@ -134,7 +134,7 @@ export async function processSummarize(job: Job<SummarizeJobData>) {
           }
         }
         
-        // Ensure kind is always defined - fallback to UXUI if missing or invalid
+        // Ensure kind is always defined - fallback to TechnicalSEO if missing or invalid
         const kindValue = f.kind && typeof f.kind === 'string' ? f.kind.trim() : 'UX/UI';
         
         return {

@@ -292,296 +292,62 @@ export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummar
       ? `${input.a11y.tapTargetIssues.length} tap target issues detected.`
       : 'No tap target issues captured.';
 
-  const systemPrompt = `🧑‍💼 ROLE & EXPERTISE
-You are an AI Web Audit Agent specializing in UX/UI, Marketing Strategy, Copywriting, and Motion Design. You are modeled after a senior Web Creative Director with over 15 years of hands-on experience leading cross-functional teams in:
-- UX/UI design systems & component libraries
-- High-converting websites, landing pages, and funnels
-- Email marketing strategy, design, and automation flows
-- Front-end development with responsive, scalable code
-- Conversion rate optimization (CRO), A/B testing, and behavioral design
-- Brand systems, marketing psychology, and persuasive design patterns
+  const systemPrompt = `You are an SEO Audit Agent. You analyze websites and produce actionable SEO findings.
 
-You have deep experience working with growth teams, marketers, and product designers. You understand the business behind the pixels — not just how it looks, but why it works. You are equally fluent in design, development, and marketing — and your feedback reflects this hybrid expertise.
+CATEGORIES — assign each finding to EXACTLY one of these:
 
-🧠 IDENTITY & VOICE
-You behave like a high-trust creative leader inside a fast-moving product or growth team. You are:
-- Direct but friendly
-- Strategic, not surface-level
-- Sharp-eyed but not nitpicky
-- Collaborative, not robotic
+🔧 "Technical SEO" — Crawlability, indexability, redirects, sitemaps, HTTPS, structured data, robots.txt, canonical tags, hreflang, meta robots
+🔍 "On-Page SEO" — Title tags, meta descriptions, headings (H1/H2), alt text, content quality, keyword usage, duplicate content, thin content
+⚡ "Performance" — Core Web Vitals (LCP, CLS, INP, TBT), page speed, image optimization, render-blocking resources, caching, compression
+🔗 "Links" — Broken links, redirect chains, internal linking, orphan pages, anchor text, nofollow misuse
 
-Tone Guidelines:
-- Write like you're in a Slack thread with fellow senior creatives
-- Use casual confidence: clear, concise, smart — not over-explaining
-- Speak with design intuition and business context baked in
-- Use bullet points for clarity, but avoid over-structuring or academic tone
-- Don't just criticize — suggest what to fix, and why it matters
-
-🎯 PRIMARY OBJECTIVE
-For each user submission, provide an actionable, multi-perspective audit across the following key dimensions:
-
-🖼️ 1. DESIGN & VISUAL COMMUNICATION
-- Visual hierarchy — Are key messages and actions visually prioritized?
-- Layout clarity & structure — Is there a strong rhythm, balance, and grouping?
-- Typography & spacing — Is type readable, scannable, and on-brand? CRITICAL: Analyze font sizes, line-heights, heading hierarchy, and typography system. Check if body text is ≥16px, H1 is ≥24px, line-height is ≥1.5x, and heading sizes create clear hierarchy (H1 > H2 > H3 with 20%+ difference). Evaluate if typography supports F-pattern reading and mobile readability.
-- Brand coherence — Does the design reinforce the intended identity?
-- Motion & delight — Identify where interactions or animations can reduce static feel
-- Imagery use — Are visuals enhancing or distracting from the core message? CRITICAL: Analyze image optimization, file sizes, formats, lazy loading, and LCP image. Check if images are optimized (<100KB for above-the-fold), use modern formats (WebP/AVIF), have proper sizing (natural vs displayed), and use responsive images (srcset) and lazy loading where appropriate.
-
-🧭 2. UX/UI & INTERACTION DESIGN
-- Flow logic — Is the user journey clear, frictionless, and goal-oriented?
-- Click-depth & hierarchy — Is the information architecture intuitive?
-- Interaction affordances — Do buttons, links, and actions signal clearly?
-- Mobile-first behavior — How does it scale and adapt responsively?
-- Accessibility — Flag WCAG misses (color contrast, keyboard nav, etc.)
-- Micro-interactions — Suggest subtle moments of feedback, animation, or control that reduce friction or boost delight
-
-💬 3. MARKETING & MESSAGING
-- Value proposition clarity — Is the core benefit obvious above the fold?
-- Messaging hierarchy — Are headlines, subheads, and body copy in sync?
-- CTA strategy — Are calls-to-action visible, compelling, and conversion-aligned?
-- Funnel alignment — Does the experience match the user's awareness stage and conversion goal?
-- Trust signals — Are testimonials, guarantees, or data used effectively?
-
-💻 4. DEVELOPMENT & PERFORMANCE
-- Responsive behavior — Is layout integrity preserved across screen sizes?
-- Interaction feasibility — Are hover states, transitions, or animations realistic to implement?
-- Performance risks — Identify any design choices likely to impact speed (e.g. large images, JS-heavy UI, layout shifts). CRITICAL: Analyze image optimization opportunities. Link image file sizes, formats, and optimization to LCP and performance metrics. Identify unoptimized images, missing lazy loading, missing responsive images (srcset), and suboptimal formats.
-- Image optimization — Are images optimized for performance? Check file sizes, formats (WebP/AVIF), responsive images (srcset), lazy loading, and LCP image optimization.
-- Dev handoff — Does the design suggest clean, componentized structure?
-
-🧠 AUDIT BEHAVIOR RULES
-You must:
-- Lead the thinking — flag both what's broken AND what's missing
-- Explain the "why" — always tie critique back to user behavior, psychology, or performance
-- Push for clarity — if a page's goal is fuzzy, call it out and suggest how to tighten
-- Suggest improvements — don't just diagnose, prescribe specific tactics, components, or copy changes
-- Prioritize ruthlessly — focus feedback on what moves the needle
-- Raise questions — if something's unclear, ask strategic follow-ups instead of guessing
-- Never default to polish — prioritize outcomes over aesthetics
-- Always reason from real evidence. Never fabricate metrics, screenshots, or issues. If data is missing, call it out instead of guessing.
-
-🔥 SPECIAL FOCUS AREAS
-You should always flag when:
-- A design feels too static — and recommend dynamic UX patterns to inject interactivity
-- The layout buries the value prop or CTA — and suggest re-structuring
-- The content is copy-led vs. design-led — and the messaging needs simplification
-- There's a missed opportunity for visual storytelling, interaction, or persuasion
-- There's a gap between design intent and user goal — and it needs reframing
-
-🧰 REFERENCE UX FRAMEWORKS TO APPLY WHEN RELEVANT
-- F-shaped reading pattern (for scannability)
-- Hick's Law (limit user choice complexity)
-- Jakob's Law (familiarity > novelty)
-- AIDA (attention, interest, desire, action for marketing copy)
-- Gestalt principles (grouping, proximity, contrast)
-- Mobile thumb zones and tap targets
-- 3-click rule (minimize click depth to goals)
-
-✅ OUTPUT EXPECTATIONS
-- CRITICAL DISTRIBUTION RULE (MUST FOLLOW): You MUST create findings across AT LEAST 3 different assignment categories. This is a HARD REQUIREMENT.
-  * If you create 5-8 findings, they MUST be distributed as follows:
-    - Maximum 3 findings per category (no single category can have more than 3 findings)
-    - Minimum 1 "Copywriting" finding (MANDATORY if hero has headlines/CTAs)
-    - Minimum 1 "Marketing Strategy" finding (if performance/image issues exist)
-    - Remaining findings distributed across UX/UI, Copywriting, Marketing Strategy
-  * DO NOT assign more than 3 findings to any single category
-  * DO NOT assign all findings to "UX/UI" - this is a CRITICAL ERROR that will cause validation to fail
-  * DO NOT assign all findings to "Marketing Strategy" - this is also a CRITICAL ERROR
-  * When you have 5-8 findings, ensure at least 3 different categories are represented
-- You must respond with a JSON object that matches the schema below.
+RULES:
 - Maximum 8 findings. Issue ≤140 chars, Why ≤400, Fix ≤280.
-- CRITICAL: Assign kind field using EXACTLY one of these three values (who should this finding be assigned to):
-  
-  📊 "Marketing Strategy" - Business impact, conversion optimization, strategic decisions
-  Focus: Performance metrics affecting conversion, strategic positioning, business outcomes
-  * Performance metrics (LCP, CLS, INP, TBT) that impact conversion rates
-  * Image optimization affecting performance metrics (file sizes, formats, lazy loading, LCP image)
-  * Third-party scripts affecting load time and conversion
-  * Conversion funnel alignment and strategic positioning
-  * SEO considerations affecting business goals
-  * Business impact of technical issues (e.g., slow pages losing visitors)
-  * Strategic decisions about resource optimization
-  
-  ✍️ "Copywriting" - Content, messaging, words
-  Focus: What the words say, how they communicate, messaging clarity
-  * Headline/subheadline clarity, effectiveness, and messaging
-  * CTA copy and messaging (the actual words, not placement)
-  * Value proposition messaging and clarity
-  * Body copy clarity, scannability, and content strategy
-  * Trust signal content (testimonial text, guarantee wording, social proof messaging)
-  * Messaging hierarchy and flow (how words guide the reader)
-  * Content strategy gaps or missing messaging
-  
-  🎨 "UX/UI" - Design, usability, interaction, accessibility
-  Focus: How it works, how it looks, technical implementation
-  * Visual hierarchy, layout, and design consistency
-  * Typography system (font sizes, line-heights, hierarchy) - technical implementation
-  * Accessibility (contrast ratios, tap targets, WCAG violations, keyboard navigation)
-  * Navigation structure and information architecture
-  * Responsive design issues and mobile usability
-  * Interaction design, usability, and user flows
-  * CTA placement and visibility (not the copy itself)
-  * Visual design consistency and brand coherence
-  
-- DECISION RULES FOR EDGE CASES:
-  * Typography: Technical implementation (sizes, line-heights, hierarchy) → UX/UI; Readability/messaging clarity → Copywriting
-  * Images: Performance optimization (file sizes, formats, lazy loading) → Marketing Strategy; Visual design/usage → UX/UI
-  * CTAs: Copy/text/wording → Copywriting; Placement/visibility/design → UX/UI
-  * Trust signals: Content/messaging (what they say) → Copywriting; Strategic placement → Marketing Strategy
-  * Performance: Conversion impact, business metrics → Marketing Strategy; User experience impact → UX/UI
-  * Typography readability: If about font sizes/line-heights affecting readability → UX/UI; If about messaging clarity/word choice → Copywriting
-  
-- IMPORTANT: Use the EXACT strings above ("Marketing Strategy", "Copywriting", "UX/UI") - do not use variations like "performance", "a11y", "ux", "copy", or "design".
-- MANDATORY: If the hero snapshot contains headlines, CTAs, or messaging, you MUST create at least one "Copywriting" finding analyzing the messaging clarity, headline effectiveness, or CTA copy strategy.
-- Provide a plan with prioritized quick wins, next steps, and experiments (max 3). Populate each array when findings exist—never leave the plan empty.
-- Use the findings to determine priority: Quick Wins = high-impact, lower-effort fixes; Next Steps = remaining must-do items; Experiments = CRO/UX tests or ideas that could improve conversion, engagement, or user experience based on the findings (e.g., A/B testing different CTAs, headline variations, layout changes, motion effects, trust signal placement).
-- CRITICAL: Always provide at least 1-2 experiments when findings suggest optimization opportunities (e.g., CTA effectiveness, headline clarity, motion engagement, trust signal placement, layout variations). Experiments should include: hypothesis (what you're testing), variant (what you'll change), metric (how you'll measure success), and optional risk level.
-- Every recommendation must stem directly from provided data (metrics, violations, heuristics, inputs). If evidence is thin, note the gap explicitly.
-- Ensure the final set of findings touches all four pillars: design/visual, UX/interactions, marketing/messaging, and development/performance. If evidence is missing for a pillar, surface the gap as a finding.
-- Leverage the hero snapshot, navigation cues, section headings, testimonials, and trust signals from the crawl to ground your critique in actual messaging and layout.
+- Distribute findings across at least 3 categories. Max 3 per category.
+- Use EXACTLY these kind values: "Technical SEO", "On-Page SEO", "Performance", "Links"
+- Every finding must be grounded in the provided data. Never fabricate issues.
+- Provide a plan with quick wins, next steps, and experiments.
+- Quick Wins = high-impact, low-effort SEO fixes. Next Steps = remaining priorities. Experiments = SEO tests to run (e.g., title tag variations, internal linking changes).
 - Respond with JSON only, no markdown or prose.`;
 
-  const userPrompt = `Audit Context:
-Goal: ${input.goal}
-Target Audience: ${input.audience}
-Primary CTA: ${input.primaryCta}
+  const userPrompt = `SEO Audit Data for: ${input.goal}
 
-📸 HERO SNAPSHOT (Above-the-fold Analysis):
+📸 PAGE CONTENT:
 ${heroSnapshot}
 
-Analyze this hero snapshot for:
-- Value proposition clarity: Is the headline immediately clear about what the product/service does and why it matters? [ASSIGN TO: Copywriting - this is about messaging clarity]
-- Messaging hierarchy: Do headline → subheadline → CTA flow logically? Is the copy scannable? [ASSIGN TO: Copywriting - this is about word flow and messaging]
-- CTA copy: Are the CTA words action-oriented and persuasive? Is the messaging clear? [ASSIGN TO: Copywriting - this is about the actual words/copy]
-- CTA placement: Is the primary CTA visible? Is the viewport offset reasonable? [ASSIGN TO: UX/UI - this is about placement and visibility]
-- Trust signals content: Are testimonials/trust badges present? What do they say? [ASSIGN TO: Copywriting if about messaging/content]
-- Trust signals placement: Are trust signals positioned effectively above the fold? [ASSIGN TO: Marketing Strategy if about strategic placement for conversion]
-- Visual hierarchy: Based on content structure, are key elements (headline, CTA) likely well-prioritized visually? [ASSIGN TO: UX/UI - this is about visual design]
-- Typography technical: Review the typography data above. Are font sizes appropriate (16px+ body, 24px+ H1)? Is line-height readable (1.5x+)? [ASSIGN TO: UX/UI - technical implementation]
-- Typography messaging: Does the typography support messaging clarity and scannability? [ASSIGN TO: Copywriting if about how typography affects message clarity]
+Heading hierarchy: ${input.crawl.typography?.headingHierarchy?.map(h => `H${h.level}: ${h.count} found`).join(', ') || 'Not detected'}
+Navigation items: ${input.crawl.navItems.length > 0 ? input.crawl.navItems.join(', ') : 'None detected'}
+Section headings: ${input.crawl.sectionHeadings.length > 0 ? input.crawl.sectionHeadings.slice(0, 8).join(' → ') : 'None detected'}
+Images missing alt text: check accessibility violations below
 
-🚀 PERFORMANCE METRICS:
+⚡ CORE WEB VITALS:
 - Available: ${input.availability.perf ? 'yes' : 'no'}
-- LCP: ${input.perf.lcp.toFixed(2)}s (target: <2.5s) ${input.perf.lcp > 2.5 ? '⚠️ SLOW' : '✅ Good'}
-- CLS: ${input.perf.cls.toFixed(3)} (target: <0.1) ${input.perf.cls > 0.1 ? '⚠️ HIGH LAYOUT SHIFT' : '✅ Stable'}
-- INP: ${input.perf.inp.toFixed(2)}ms (target: <200ms) ${input.perf.inp > 200 ? '⚠️ SLOW INTERACTION' : '✅ Responsive'}
+- LCP: ${input.perf.lcp.toFixed(2)}s (target: <2.5s) ${input.perf.lcp > 2.5 ? '⚠️ SLOW — hurts SEO rankings' : '✅ Good'}
+- CLS: ${input.perf.cls.toFixed(3)} (target: <0.1) ${input.perf.cls > 0.1 ? '⚠️ HIGH — hurts SEO rankings' : '✅ Stable'}
+- INP: ${input.perf.inp.toFixed(2)}ms (target: <200ms) ${input.perf.inp > 200 ? '⚠️ SLOW' : '✅ Responsive'}
 - TBT: ${input.perf.tbt.toFixed(2)}s (target: <0.2s) ${input.perf.tbt > 0.2 ? '⚠️ BLOCKING' : '✅ Good'}
-- Total Bytes: ${(input.perf.totalBytes / 1024 / 1024).toFixed(2)}MB ${input.perf.totalBytes > 2 * 1024 * 1024 ? '⚠️ LARGE' : '✅ Reasonable'}
-- Third-party domains: ${input.perf.thirdPartyDomains.length > 0 ? input.perf.thirdPartyDomains.join(', ') : 'None captured'}
+- Total page size: ${(input.perf.totalBytes / 1024 / 1024).toFixed(2)}MB ${input.perf.totalBytes > 2 * 1024 * 1024 ? '⚠️ LARGE' : '✅ OK'}
+- Third-party domains: ${input.perf.thirdPartyDomains.length > 0 ? input.perf.thirdPartyDomains.join(', ') : 'None'}
 
-Performance Analysis:
-- Focus on conversion impact: slow pages lose visitors before they can convert
-- Link performance problems to business outcomes (bounce rate, conversion rate, SEO rankings)
-- Identify which metrics are causing the biggest conversion issues
-- Link performance problems to technical choices (e.g., large images, heavy JS, third-party scripts)
-- Suggest specific optimizations that improve conversion rates
-- [ASSIGN TO: Marketing Strategy - performance affects business outcomes]
-
-♿ ACCESSIBILITY EVIDENCE:
-- Available: ${input.availability.a11y ? 'yes' : 'no'}
+♿ ACCESSIBILITY / TECHNICAL ISSUES:
 - Violations (${input.a11y.violations.length}):
 ${accessibilityViolations}
-- Contrast Issues:
-${contrastSummary}
-- Tap Targets: ${tapTargetSummary}
-
-Accessibility Analysis:
-- Prioritize violations that block users from completing key actions (CTAs, forms, navigation)
-- Contrast issues that affect readability of critical content (headlines, body copy, CTAs)
-- Tap target issues that make mobile interactions difficult
-- Consider business impact: accessibility barriers reduce addressable market and may have legal implications
-- [ASSIGN TO: UX/UI - accessibility is a usability/design concern]
+- Contrast issues: ${contrastSummary}
 
 🔍 HEURISTIC FINDINGS (${input.heuristics.findings.length}):
 ${heuristicSummary}
 
-Heuristic Analysis:
-- These are rule-based checks that flag common UX issues
-- Connect heuristic findings to user behavior: how does each issue impact conversion or user satisfaction?
-- Prioritize findings that affect the primary conversion goal
-- Suggest specific, actionable fixes that address the root cause
-
-📊 CONTENT STRUCTURE ANALYSIS:
-Navigation items: ${input.crawl.navItems.length > 0 ? input.crawl.navItems.join(', ') : 'None detected'}
-Section headings: ${input.crawl.sectionHeadings.length > 0 ? input.crawl.sectionHeadings.slice(0, 5).join(' → ') : 'None detected'}
-${input.crawl.sectionHeadings.length > 5 ? `... and ${input.crawl.sectionHeadings.length - 5} more sections` : ''}
-
-Content Analysis:
-- Information architecture: Does the navigation structure make sense? Can users find what they need in ≤3 clicks?
-- Content flow: Do section headings tell a logical story? Is the page structure scannable (F-pattern)?
-- Messaging consistency: Are section headings aligned with the value proposition and goal?
-- Content depth: Is there enough information to build trust and address objections?
-
-📝 TYPOGRAPHY ANALYSIS:
-${input.crawl.typography ? `
-- H1: ${input.crawl.typography.h1 ? `${input.crawl.typography.h1.fontSize.toFixed(1)}px, ${input.crawl.typography.h1.fontWeight}, ${input.crawl.typography.h1.fontFamily}` : 'Not detected'}
-- H2: ${input.crawl.typography.h2 ? `${input.crawl.typography.h2.fontSize.toFixed(1)}px, ${input.crawl.typography.h2.fontWeight}, ${input.crawl.typography.h2.fontFamily}` : 'Not detected'}
-- Body: ${input.crawl.typography.body ? `${input.crawl.typography.body.fontSize.toFixed(1)}px, line-height: ${input.crawl.typography.body.lineHeight}, ${input.crawl.typography.body.fontFamily}` : 'Not detected'}
-- Heading hierarchy: ${input.crawl.typography.headingHierarchy && input.crawl.typography.headingHierarchy.length > 0
-  ? input.crawl.typography.headingHierarchy.map(h => `H${h.level}: ${h.fontSize.toFixed(1)}px (${h.count} found)`).join(', ')
-  : 'Not detected'}
-
-Typography Analysis:
-- Font size appropriateness: Are body text (16px+), headings (24px+ for H1), and hierarchy sizes appropriate? [ASSIGN TO: UX/UI - technical implementation]
-- Typography hierarchy: Does the heading hierarchy create clear visual distinction? Is H1 > H2 > H3 clearly established? Are size differences meaningful (20%+ difference)? [ASSIGN TO: UX/UI - visual design]
-- Readability: Is line-height adequate (1.5x+ for body text)? Are font sizes large enough for mobile reading? [ASSIGN TO: UX/UI - technical readability]
-- Scannability: Does the typography system support F-pattern reading? Are headings prominent enough to guide the eye? [ASSIGN TO: UX/UI - visual design, or Copywriting if about messaging flow]
-- Brand coherence: Do font choices support the brand identity? Is typography consistent across the page? [ASSIGN TO: UX/UI - visual design consistency]
-- Performance impact: Are web fonts loading efficiently? Could font choices impact performance? [ASSIGN TO: Marketing Strategy - performance affects conversion]
-` : 'Typography data not available.'}
-
-🖼️ IMAGE ANALYSIS:
+🖼️ IMAGES:
 ${input.crawl.images ? `
-- Total images: ${input.crawl.images.totalImages}
-- Total image size: ${(input.crawl.images.totalImageSize / (1024 * 1024)).toFixed(2)}MB
-- Above-the-fold images: ${input.crawl.images.aboveFold.length}
-- Below-the-fold images: ${input.crawl.images.belowFold.length}
-${input.crawl.images.lcpImage ? `
-- LCP image: ${input.crawl.images.lcpImage.url.substring(input.crawl.images.lcpImage.url.lastIndexOf('/') + 1)} (${(input.crawl.images.lcpImage.fileSize / 1024).toFixed(0)}KB, ${input.crawl.images.lcpImage.format}, ${input.crawl.images.lcpImage.naturalWidth}x${input.crawl.images.lcpImage.naturalHeight}px natural, ${input.crawl.images.lcpImage.displayedWidth}x${input.crawl.images.lcpImage.displayedHeight}px displayed)
-` : '- LCP image: Not detected'}
-${input.crawl.images.aboveFold.length > 0 ? `
-- Above-the-fold images:
-${input.crawl.images.aboveFold.slice(0, 5).map((img, idx) => `  ${idx + 1}. ${img.url.substring(img.url.lastIndexOf('/') + 1)} — ${(img.fileSize / 1024).toFixed(0)}KB, ${img.format}, ${img.naturalWidth}x${img.naturalHeight}px (displayed: ${img.displayedWidth}x${img.displayedHeight}px), lazy: ${img.hasLazyLoading ? 'yes' : 'no'}, srcset: ${img.hasSrcset ? 'yes' : 'no'}${img.isLcpCandidate ? ' [LCP CANDIDATE]' : ''}`).join('\n')}
-${input.crawl.images.aboveFold.length > 5 ? `  ... and ${input.crawl.images.aboveFold.length - 5} more above-the-fold images` : ''}
-` : ''}
-${input.crawl.images.belowFold.length > 0 ? `
-- Below-the-fold images (sample):
-${input.crawl.images.belowFold.slice(0, 3).map((img, idx) => `  ${idx + 1}. ${img.url.substring(img.url.lastIndexOf('/') + 1)} — ${(img.fileSize / 1024).toFixed(0)}KB, ${img.format}, lazy: ${img.hasLazyLoading ? 'yes' : 'no'}, srcset: ${img.hasSrcset ? 'yes' : 'no'}`).join('\n')}
-${input.crawl.images.belowFold.length > 3 ? `  ... and ${input.crawl.images.belowFold.length - 3} more below-the-fold images` : ''}
-` : ''}
+- Total: ${input.crawl.images.totalImages} images, ${(input.crawl.images.totalImageSize / (1024 * 1024)).toFixed(2)}MB total
+- Above fold: ${input.crawl.images.aboveFold.length}, Below fold: ${input.crawl.images.belowFold.length}
+- Missing lazy loading: ${input.crawl.images.belowFold.filter(i => !i.hasLazyLoading).length} below-fold images
+- Missing alt text: check accessibility violations
+${input.crawl.images.lcpImage ? `- LCP image: ${(input.crawl.images.lcpImage.fileSize / 1024).toFixed(0)}KB, ${input.crawl.images.lcpImage.format}` : ''}
+` : 'Not available'}
 
-Image Analysis:
-- LCP optimization: Is the LCP image optimized? File size should be <100KB for above-the-fold images. Is it properly sized (natural size close to displayed size)? Does it use modern formats (WebP/AVIF)? [ASSIGN TO: Marketing Strategy - performance affects conversion]
-- Image optimization: Are above-the-fold images compressed and optimized? Large images (>200KB) slow down page load and hurt LCP scores. [ASSIGN TO: Marketing Strategy - performance optimization]
-- Responsive images: Do images use srcset for responsive loading? This ensures mobile devices download smaller images, improving load time. [ASSIGN TO: Marketing Strategy - performance optimization]
-- Lazy loading: Are below-the-fold images using lazy loading? This defers non-critical images until needed, improving initial page load. [ASSIGN TO: Marketing Strategy - performance optimization]
-- Image formats: Are images using modern formats (WebP, AVIF) instead of PNG/JPEG where appropriate? Modern formats can reduce file sizes by 25-35%. [ASSIGN TO: Marketing Strategy - performance optimization]
-- Image sizing: Are images displayed at their natural size, or are they significantly larger/smaller? Oversized images waste bandwidth. [ASSIGN TO: Marketing Strategy - performance optimization]
-- Performance impact: How do image sizes and optimization affect LCP, TBT, and total page weight? Link image issues to performance metrics. [ASSIGN TO: Marketing Strategy - business impact]
-- Design impact: Do images enhance the message and support the value proposition? Are they used effectively for visual storytelling? [ASSIGN TO: UX/UI - visual design, or Copywriting if about messaging]
-` : 'Image data not available.'}
-
-🎯 AUDIT REQUIREMENTS:
-Generate an audit summary that:
-1. References all evidence above (performance, accessibility, heuristics, content structure, typography, images)
-2. Surfaces 5–8 high-value findings distributed across MULTIPLE assignment categories:
-   - "Marketing Strategy" - performance/conversion optimization, strategic positioning, business impact, image optimization affecting performance
-   - "Copywriting" - messaging, headlines, CTAs (copy), value proposition, trust signal content (MANDATORY if hero has headlines/CTAs)
-   - "UX/UI" - layout, accessibility, interactions, navigation, visual design, typography (technical), CTA placement
-3. CRITICAL DISTRIBUTION (HARD REQUIREMENT): You MUST distribute findings across AT LEAST 3 different categories. Maximum 3 findings per category. Do NOT assign all findings to "UX/UI" or "Marketing Strategy". This is a validation requirement - failure to distribute will cause the response to be rejected.
-4. Delivers a prioritized action plan with quick wins, next steps, and experiments (always include at least 1-2 experiments based on findings that suggest optimization opportunities)
-5. Ties every finding to user behavior, psychology, or business impact
-6. Provides specific, actionable fixes (not generic advice) — for typography, include exact font sizes, line-heights, and hierarchy recommendations; for images, include file sizes, formats, and optimization recommendations
-7. Uses UX frameworks (F-pattern, Hick's Law, AIDA, Gestalt, etc.) when relevant — especially F-pattern for typography scannability
-8. Flags gaps: if evidence is missing for a pillar, call it out as a finding
-9. CRITICAL: When typography data is available, ensure at least one finding addresses typography:
-   - Technical implementation (font sizes, line-heights, hierarchy) → assign to "UX/UI"
-   - Messaging clarity affected by typography → assign to "Copywriting"
-10. CRITICAL: When image data is available, ensure at least one finding addresses image optimization (file sizes, formats, lazy loading, LCP image, responsive images) and links it to performance metrics (LCP, total page weight) - assign to "Marketing Strategy"
-11. CRITICAL: When hero snapshot contains headlines or CTAs, create at least one "Copywriting" finding analyzing messaging clarity, headline effectiveness, or CTA copy (not placement)
-
-Focus on what moves the needle for the stated goal: "${input.goal}".`;
+Generate 5-8 SEO findings using categories: "Technical SEO", "On-Page SEO", "Performance", "Links".
+Focus on what impacts search rankings and organic traffic most.`;
 
   const maxRetries = 2;
   let lastError: Error | null = null;
@@ -596,13 +362,11 @@ Focus on what moves the needle for the stated goal: "${input.goal}".`;
 
       // Add correction prompt on retry
       if (attempt > 0 && lastContent) {
-        const correctionPrompt = `The previous response failed validation. Please critique and correct the JSON output to strictly match the schema. Ensure:
-- findings array has max 8 items
-- Each finding has all required fields with correct max lengths
-- impact, effort, kind use exact enum values (kind must be one of: "Marketing Strategy", "Copywriting", "UX/UI")
-- CRITICAL: Findings MUST be distributed across AT LEAST 3 different categories. Maximum 3 findings per category. Do NOT assign all findings to "UX/UI" or any single category.
-- plan has quickWins (max 5), next (max 5), experiments (max 3, but always include at least 1-2 when findings suggest optimization opportunities)
-- Each experiment must have: hypothesis (string), variant (string), metric (string), risk (string, optional)
+        const correctionPrompt = `The previous response failed validation. Fix the JSON to match the schema:
+- findings array max 8 items. Issue ≤140 chars, Why ≤400, Fix ≤280.
+- kind must be EXACTLY one of: "Technical SEO", "On-Page SEO", "Performance", "Links"
+- Distribute across at least 3 categories. Max 3 per category.
+- plan: quickWins (max 5), next (max 5), experiments (max 3)
 - Return valid JSON only.`;
         messages.push({ role: 'assistant', content: lastContent });
         messages.push({ role: 'user', content: correctionPrompt });
@@ -658,9 +422,10 @@ function enforceDistribution(
   }
 
   const kindCounts: Record<NormalizedFinding['kind'], number> = {
-    'Marketing Strategy': 0,
-    'Copywriting': 0,
-    'UX/UI': 0,
+    'Technical SEO': 0,
+    'On-Page SEO': 0,
+    'Performance': 0,
+    'Links': 0,
   };
 
   findings.forEach((f) => kindCounts[f.kind]++);
@@ -678,10 +443,10 @@ function enforceDistribution(
     Boolean(input.crawl.heroSubheadline) ||
     Boolean(input.crawl.primaryCtaText) ||
     input.crawl.secondaryCtas.length > 0;
-  const needsCopywriting = hasHeadlines && kindCounts['Copywriting'] === 0;
+  const needsOnPageSEO = hasHeadlines && kindCounts['On-Page SEO'] === 0;
 
   // If distribution is good and mandatory categories are met, return as-is
-  if (!needsRedistribution && !needsCopywriting && total >= 3) {
+  if (!needsRedistribution && !needsOnPageSEO && total >= 3) {
     // Check if we have at least 2 different categories
     const uniqueCategories = Object.values(kindCounts).filter((count) => count > 0).length;
     if (uniqueCategories >= 2) {
@@ -692,9 +457,10 @@ function enforceDistribution(
   // Redistribute: reassign some findings to other categories
   const redistributed = findings.map((f) => ({ ...f })); // Deep copy
   const categories: Array<NormalizedFinding['kind']> = [
-    'Marketing Strategy',
-    'Copywriting',
-    'UX/UI',
+    'Technical SEO',
+    'On-Page SEO',
+    'Performance',
+    'Links',
   ];
 
   // Find over-represented category
@@ -718,7 +484,7 @@ function enforceDistribution(
         // Find a category that needs more findings
         const underRepCategory =
           categories.find((cat) => cat !== overRepCategory && kindCounts[cat] < maxAllowed) ||
-          'UX/UI';
+          'Performance';
 
         // Only reassign if it makes semantic sense
         if (canReassign(redistributed[i], overRepCategory, underRepCategory)) {
@@ -732,28 +498,28 @@ function enforceDistribution(
   }
 
   // Ensure mandatory findings exist
-  if (needsCopywriting) {
-    // Convert a UX/UI finding to Copywriting if possible
-    const uxFinding = redistributed.find(
+  if (needsOnPageSEO) {
+    // Convert a Performance finding to On-Page SEO if possible
+    const perfFinding = redistributed.find(
       (f) =>
-        f.kind === 'UX/UI' &&
+        f.kind === 'Performance' &&
         (f.issue.toLowerCase().includes('cta') ||
           f.issue.toLowerCase().includes('headline') ||
           f.issue.toLowerCase().includes('messaging') ||
           f.issue.toLowerCase().includes('copy') ||
           f.issue.toLowerCase().includes('text'))
     );
-    if (uxFinding) {
-      uxFinding.kind = 'Copywriting';
-      kindCounts['UX/UI']--;
-      kindCounts['Copywriting']++;
+    if (perfFinding) {
+      perfFinding.kind = 'On-Page SEO';
+      kindCounts['Performance']--;
+      kindCounts['On-Page SEO']++;
     } else {
-      // Convert any finding to Copywriting
-      const firstFinding = redistributed.find((f) => f.kind !== 'Copywriting');
+      // Convert any finding to On-Page SEO
+      const firstFinding = redistributed.find((f) => f.kind !== 'On-Page SEO');
       if (firstFinding) {
-        firstFinding.kind = 'Copywriting';
+        firstFinding.kind = 'On-Page SEO';
         kindCounts[firstFinding.kind]--;
-        kindCounts['Copywriting']++;
+        kindCounts['On-Page SEO']++;
       }
     }
   }
@@ -766,7 +532,7 @@ function enforceDistribution(
       ([_, count]) => count > 0
     )?.[0] as NormalizedFinding['kind'];
     if (dominantCategory) {
-      const otherCategory = categories.find((cat) => cat !== dominantCategory) || 'UX/UI';
+      const otherCategory = categories.find((cat) => cat !== dominantCategory) || 'Performance';
       const firstFinding = redistributed.find((f) => f.kind === dominantCategory);
       if (firstFinding && canReassign(firstFinding, dominantCategory, otherCategory)) {
         firstFinding.kind = otherCategory;
@@ -788,8 +554,8 @@ function canReassign(
   const fix = finding.fix.toLowerCase();
   const combined = `${issue} ${why} ${fix}`.toLowerCase();
 
-  // Copywriting: words, messaging, content
-  if (to === 'Copywriting') {
+  // On-Page SEO: content, messaging, headings, meta
+  if (to === 'On-Page SEO') {
     if (combined.includes('cta') && (combined.includes('copy') || combined.includes('text') || combined.includes('word'))) return true;
     if (combined.includes('headline') || combined.includes('subheadline')) return true;
     if (combined.includes('messaging') || combined.includes('message')) return true;
@@ -797,35 +563,43 @@ function canReassign(
     if (combined.includes('testimonial') && combined.includes('content')) return true;
     if (combined.includes('value proposition') && combined.includes('clear')) return true;
     if (combined.includes('trust signal') && combined.includes('content')) return true;
-    // Don't reassign typography technical issues to Copywriting
+    // Don't reassign typography technical issues to On-Page SEO
     if (combined.includes('typography') && (combined.includes('size') || combined.includes('line-height') || combined.includes('font'))) return false;
   }
 
-  // Marketing Strategy: performance, conversion, business impact
-  if (to === 'Marketing Strategy') {
+  // Technical SEO: accessibility, crawlability, structured data
+  if (to === 'Technical SEO') {
+    if (combined.includes('accessibility') || combined.includes('contrast') || combined.includes('tap target') || combined.includes('wcag')) return true;
+    if (combined.includes('structured data') || combined.includes('schema') || combined.includes('crawl')) return true;
+    if (combined.includes('meta') && (combined.includes('tag') || combined.includes('description') || combined.includes('robot'))) return true;
+    if (combined.includes('canonical') || combined.includes('sitemap') || combined.includes('robots.txt')) return true;
+    if (combined.includes('third-party') || combined.includes('script')) return true;
+    if (combined.includes('responsive') || combined.includes('mobile')) return true;
+  }
+
+  // Performance: speed, core web vitals, optimization
+  if (to === 'Performance') {
     if (combined.includes('performance') || combined.includes('lcp') || combined.includes('cls') || combined.includes('inp') || combined.includes('tbt')) return true;
-    if (combined.includes('conversion') || combined.includes('bounce rate') || combined.includes('seo')) return true;
     if (combined.includes('image') && (combined.includes('optimization') || combined.includes('size') || combined.includes('format') || combined.includes('lazy'))) return true;
     if (combined.includes('optimization') && (combined.includes('speed') || combined.includes('load'))) return true;
-    if (combined.includes('third-party') || combined.includes('script')) return true;
+    if (combined.includes('typography') && (combined.includes('size') || combined.includes('line-height') || combined.includes('hierarchy'))) return true;
+    if (combined.includes('visual hierarchy') || combined.includes('design')) return true;
+    if (combined.includes('layout')) return true;
+  }
+
+  // Links: navigation, internal/external links, anchors
+  if (to === 'Links') {
+    if (combined.includes('navigation') || combined.includes('information architecture')) return true;
+    if (combined.includes('link') || combined.includes('anchor') || combined.includes('href')) return true;
+    if (combined.includes('cta') && (combined.includes('placement') || combined.includes('visible') || combined.includes('position'))) return true;
+    if (combined.includes('usability') || combined.includes('user flow')) return true;
     if (combined.includes('trust signal') && combined.includes('placement')) return true;
   }
 
-  // UX/UI: design, usability, technical implementation
-  if (to === 'UX/UI') {
-    if (combined.includes('accessibility') || combined.includes('contrast') || combined.includes('tap target') || combined.includes('wcag')) return true;
-    if (combined.includes('typography') && (combined.includes('size') || combined.includes('line-height') || combined.includes('hierarchy'))) return true;
-    if (combined.includes('layout') || combined.includes('navigation') || combined.includes('information architecture')) return true;
-    if (combined.includes('cta') && (combined.includes('placement') || combined.includes('visible') || combined.includes('position'))) return true;
-    if (combined.includes('responsive') || combined.includes('mobile')) return true;
-    if (combined.includes('visual hierarchy') || combined.includes('design')) return true;
-    if (combined.includes('usability') || combined.includes('user flow')) return true;
-  }
-
-  // If reassigning from UX/UI, be more permissive
-  if (from === 'UX/UI') {
-    // Typography technical should stay in UX/UI
-    if (to === 'Copywriting' && (combined.includes('typography') && (combined.includes('size') || combined.includes('line-height')))) {
+  // If reassigning from Performance, be more permissive
+  if (from === 'Performance') {
+    // Typography technical should stay in Performance
+    if (to === 'On-Page SEO' && (combined.includes('typography') && (combined.includes('size') || combined.includes('line-height')))) {
       return false;
     }
     // Allow reassignment if semantic match found above
@@ -885,46 +659,67 @@ function normalizeLlmOutput(raw: unknown): NormalizedSummary {
 
   const kindMap: Record<string, NormalizedFinding['kind']> = {
     // Exact matches (handle spaces and case)
-    'marketing strategy': 'Marketing Strategy',
-    'marketingstrategy': 'Marketing Strategy',
-    'copywriting': 'Copywriting',
-    'ux/ui': 'UX/UI',
-    'uxui': 'UX/UI',
-    // Performance/Conversion → Marketing Strategy
-    performance: 'Marketing Strategy',
-    perf: 'Marketing Strategy',
-    speed: 'Marketing Strategy',
-    conversion: 'Marketing Strategy',
-    optimization: 'Marketing Strategy',
-    seo: 'Marketing Strategy',
-    // Accessibility/Design → UX/UI
-    a11y: 'UX/UI',
-    accessibility: 'UX/UI',
-    ux: 'UX/UI',
-    ui: 'UX/UI',
-    usability: 'UX/UI',
-    interaction: 'UX/UI',
-    flow: 'UX/UI',
-    layout: 'UX/UI',
-    design: 'UX/UI',
-    visual: 'UX/UI',
-    typography: 'UX/UI', // Technical typography → UX/UI
-    // Messaging/Content → Copywriting
-    copy: 'Copywriting',
-    messaging: 'Copywriting',
-    headline: 'Copywriting',
-    'value proposition': 'Copywriting',
+    'technical seo': 'Technical SEO',
+    'technicalseo': 'Technical SEO',
+    'on-page seo': 'On-Page SEO',
+    'on page seo': 'On-Page SEO',
+    'onpageseo': 'On-Page SEO',
+    'performance': 'Performance',
+    'links': 'Links',
+    // Legacy names → new names
+    'marketing strategy': 'Technical SEO',
+    'marketingstrategy': 'Technical SEO',
+    'copywriting': 'On-Page SEO',
+    'ux/ui': 'Performance',
+    'uxui': 'Performance',
+    // Accessibility findings → Technical SEO
+    a11y: 'Technical SEO',
+    accessibility: 'Technical SEO',
+    'structured data': 'Technical SEO',
+    schema: 'Technical SEO',
+    crawl: 'Technical SEO',
+    canonical: 'Technical SEO',
+    robots: 'Technical SEO',
+    sitemap: 'Technical SEO',
+    meta: 'Technical SEO',
+    // Typography/design findings → On-Page SEO
+    copy: 'On-Page SEO',
+    messaging: 'On-Page SEO',
+    headline: 'On-Page SEO',
+    'value proposition': 'On-Page SEO',
+    typography: 'On-Page SEO',
+    content: 'On-Page SEO',
+    // Performance findings → Performance
+    perf: 'Performance',
+    speed: 'Performance',
+    optimization: 'Performance',
+    'image optimization': 'Performance',
+    'lcp': 'Performance',
+    'cls': 'Performance',
+    'inp': 'Performance',
+    'tbt': 'Performance',
+    design: 'Performance',
+    visual: 'Performance',
+    layout: 'Performance',
+    // Link/navigation findings → Links
+    navigation: 'Links',
+    link: 'Links',
+    anchor: 'Links',
+    flow: 'Links',
+    usability: 'Links',
+    interaction: 'Links',
     // Additional semantic mappings
-    marketing: 'Marketing Strategy',
-    strategy: 'Marketing Strategy',
-    positioning: 'Marketing Strategy',
-    funnel: 'Marketing Strategy',
-    'business impact': 'Marketing Strategy',
-    'image optimization': 'Marketing Strategy',
-    'lcp': 'Marketing Strategy',
-    'cls': 'Marketing Strategy',
-    'inp': 'Marketing Strategy',
-    'tbt': 'Marketing Strategy',
+    seo: 'Technical SEO',
+    marketing: 'Technical SEO',
+    strategy: 'Technical SEO',
+    positioning: 'On-Page SEO',
+    funnel: 'Links',
+    'business impact': 'Technical SEO',
+    conversion: 'On-Page SEO',
+    responsive: 'Technical SEO',
+    mobile: 'Technical SEO',
+    ux: 'Performance',
+    ui: 'Performance',
   };
 
   const rawFindings = Array.isArray(summary.findings) ? summary.findings : [];
@@ -950,10 +745,11 @@ function normalizeLlmOutput(raw: unknown): NormalizedSummary {
     // Normalize kind value - handle spaces and special characters
     const kindRaw = typeof (finding as any).kind === 'string' ? (finding as any).kind.trim() : '';
     const kindKey = kindRaw.toLowerCase().replace(/[\/\s]+/g, ' ').trim();
-    const kind = kindMap[kindKey] ?? 
-                 (kindRaw === 'Marketing Strategy' ? 'Marketing Strategy' :
-                  kindRaw === 'Copywriting' ? 'Copywriting' :
-                  kindRaw === 'UX/UI' ? 'UX/UI' : 'UX/UI'); // Default to UX/UI if unclear
+    const kind = kindMap[kindKey] ??
+                 (kindRaw === 'Technical SEO' ? 'Technical SEO' :
+                  kindRaw === 'On-Page SEO' ? 'On-Page SEO' :
+                  kindRaw === 'Performance' ? 'Performance' :
+                  kindRaw === 'Links' ? 'Links' : 'On-Page SEO'); // Default to On-Page SEO if unclear
 
     const evidenceList: unknown[] = Array.isArray((finding as any).evidenceRefs)
       ? ((finding as any).evidenceRefs as unknown[])
@@ -1065,7 +861,7 @@ function generateExperimentsFromFindings(
   // Look for CTA-related findings
   const ctaFinding = findings.find(
     (f) =>
-      f.kind === 'Copywriting' &&
+      f.kind === 'On-Page SEO' &&
       (f.issue.toLowerCase().includes('cta') ||
         f.issue.toLowerCase().includes('call to action') ||
         f.issue.toLowerCase().includes('button'))
@@ -1082,7 +878,7 @@ function generateExperimentsFromFindings(
   // Look for headline/messaging findings
   const headlineFinding = findings.find(
     (f) =>
-      f.kind === 'Copywriting' &&
+      f.kind === 'On-Page SEO' &&
       (f.issue.toLowerCase().includes('headline') ||
         f.issue.toLowerCase().includes('messaging') ||
         f.issue.toLowerCase().includes('value proposition'))
@@ -1096,10 +892,10 @@ function generateExperimentsFromFindings(
     });
   }
 
-  // Look for UX/UI interaction findings that could benefit from motion
+  // Look for Performance interaction findings that could benefit from motion
   const interactionFinding = findings.find(
     (f) =>
-      f.kind === 'UX/UI' &&
+      f.kind === 'Performance' &&
       (f.issue.toLowerCase().includes('static') ||
         f.issue.toLowerCase().includes('interaction') ||
         f.issue.toLowerCase().includes('engagement'))
@@ -1116,7 +912,7 @@ function generateExperimentsFromFindings(
   // Look for trust signal findings
   const trustFinding = findings.find(
     (f) =>
-      (f.kind === 'Copywriting' || f.kind === 'Marketing Strategy') &&
+      (f.kind === 'On-Page SEO' || f.kind === 'Technical SEO') &&
       (f.issue.toLowerCase().includes('trust') ||
         f.issue.toLowerCase().includes('testimonial') ||
         f.issue.toLowerCase().includes('social proof'))
@@ -1133,7 +929,7 @@ function generateExperimentsFromFindings(
   // Look for performance/optimization findings
   const perfFinding = findings.find(
     (f) =>
-      f.kind === 'Marketing Strategy' &&
+      f.kind === 'Performance' &&
       (f.issue.toLowerCase().includes('performance') ||
         f.issue.toLowerCase().includes('lcp') ||
         f.issue.toLowerCase().includes('slow') ||

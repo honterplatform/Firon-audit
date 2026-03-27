@@ -72,7 +72,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a211f' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       <div className="flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="mb-12">
@@ -89,7 +89,7 @@ export default function HomePage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="target" className="block text-sm font-medium mb-2" style={{ color: '#a4ada8' }}>
+              <label htmlFor="target" className="block text-sm font-medium mb-2" style={{ color: '#888888' }}>
                 Website URL
               </label>
               <input
@@ -100,17 +100,17 @@ export default function HomePage() {
                 onChange={(e) => setFormData({ ...formData, target: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
                 style={{
-                  backgroundColor: '#223734',
-                  border: '1px solid #2a3a38',
+                  backgroundColor: '#0F0F0F',
+                  border: '1px solid #212121',
                   color: '#ffffff',
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#d8ff85';
-                  e.target.style.backgroundColor = '#2a3a38';
+                  e.target.style.borderColor = '#FB3B24';
+                  e.target.style.backgroundColor = '#212121';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#2a3a38';
-                  e.target.style.backgroundColor = '#223734';
+                  e.target.style.borderColor = '#212121';
+                  e.target.style.backgroundColor = '#0F0F0F';
                 }}
                 placeholder="example.com"
                 disabled={loading}
@@ -122,8 +122,8 @@ export default function HomePage() {
               disabled={loading || !formData.target.trim()}
               className="w-full py-3 px-4 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                backgroundColor: loading || !formData.target.trim() ? '#223734' : '#d8ff85',
-                color: loading || !formData.target.trim() ? '#6f7c79' : '#0a211f',
+                backgroundColor: loading || !formData.target.trim() ? '#2A2A2A' : '#FB3B24',
+                color: loading || !formData.target.trim() ? '#666666' : '#ffffff',
                 boxSizing: 'border-box',
                 height: '48px',
               }}

@@ -7,48 +7,53 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Map database enum values to display strings
-function mapKindToDisplay(kind: FindingKind): 'Marketing Strategy' | 'Copywriting' | 'UX/UI' {
+function mapKindToDisplay(kind: FindingKind): 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links' {
   switch (kind) {
-    case FindingKind.MarketingStrategy:
-      return 'Marketing Strategy';
-    case FindingKind.Copywriting:
-      return 'Copywriting';
-    case FindingKind.UXUI:
-      return 'UX/UI';
+    case FindingKind.TechnicalSEO:
+      return 'Technical SEO';
+    case FindingKind.OnPageSEO:
+      return 'On-Page SEO';
+    case FindingKind.Performance:
+      return 'Performance';
+    case FindingKind.Links:
+      return 'Links';
     default:
-      return 'UX/UI';
+      return 'Performance';
   }
 }
 
 // Normalize kind values from summaryJson (handles old enum values)
-function normalizeKindFromSummary(kind: string): 'Marketing Strategy' | 'Copywriting' | 'UX/UI' {
+function normalizeKindFromSummary(kind: string): 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links' {
   const kindLower = kind.toLowerCase().trim();
-  // Map old enum values to new assignment values
+  // Map new Prisma enum values (case-insensitive)
+  if (kindLower === 'technicalseo' || kindLower === 'technical seo') {
+    return 'Technical SEO';
+  }
+  if (kindLower === 'onpageseo' || kindLower === 'on-page seo' || kindLower === 'on page seo') {
+    return 'On-Page SEO';
+  }
   if (kindLower === 'performance' || kindLower === 'perf' || kindLower === 'speed') {
-    return 'Marketing Strategy';
+    return 'Performance';
   }
-  if (kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
-    return 'UX/UI';
+  if (kindLower === 'links' || kindLower === 'link') {
+    return 'Links';
   }
-  if (kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
-    return 'Copywriting';
-  }
-  // Check for new values (case-insensitive)
+  // Map old values to new SEO categories
   if (kindLower === 'marketing strategy' || kindLower === 'marketingstrategy') {
-    return 'Marketing Strategy';
+    return 'Technical SEO';
   }
-  if (kindLower === 'copywriting') {
-    return 'Copywriting';
+  if (kindLower === 'copywriting' || kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
+    return 'On-Page SEO';
   }
-  if (kindLower === 'ux/ui' || kindLower === 'uxui') {
-    return 'UX/UI';
+  if (kindLower === 'ux/ui' || kindLower === 'uxui' || kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
+    return 'Performance';
   }
-  // Map Motion and Generalist to UX/UI as fallback
+  // Map Motion and Generalist to Performance as fallback
   if (kindLower === 'motion' || kindLower === 'animation' || kindLower === 'transition' || kindLower === 'generalist' || kindLower === 'general') {
-    return 'UX/UI';
+    return 'Performance';
   }
   // Default fallback
-  return 'UX/UI';
+  return 'Performance';
 }
 
 export default async function AuditDetailPage({
@@ -113,7 +118,7 @@ export default async function AuditDetailPage({
         ...summary,
         findings: summary.findings.map((f: any) => ({
           ...f,
-          kind: normalizeKindFromSummary(f.kind || 'UX/UI'),
+          kind: normalizeKindFromSummary(f.kind || 'Performance'),
         })),
       };
     } else {

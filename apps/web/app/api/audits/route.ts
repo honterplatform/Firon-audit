@@ -91,6 +91,55 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const DEMO_HOSTS = ['fironmarketing.com'];
+
+function isDemoUrl(url: string): boolean {
+  const host = url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^www\./, '');
+  return DEMO_HOSTS.includes(host);
+}
+
+async function createDemoAudit(target: string, prisma: any): Promise<string> {
+  const demoFindings = [
+    { issue: 'LCP is slow (8.49s), severely hurting Core Web Vitals score', why: 'LCP of 8.49s far exceeds the 2.5s "good" threshold. Google uses Core Web Vitals as a ranking signal, so a poor LCP directly suppresses organic search visibility and increases bounce rates from organic traffic.', fix: 'Optimize LCP by: 1) Compress and serve hero images in WebP/AVIF format, 2) Preload the largest contentful element, 3) Eliminate render-blocking CSS/JS, 4) Implement server-side caching or a CDN, 5) Defer non-critical third-party scripts.', impact: 'High' as const, effort: 'Medium' as const, kind: 'Performance' as const },
+    { issue: 'Meta descriptions missing or duplicated on 6 key pages', why: 'Several high-value pages (services, about, case studies) lack unique meta descriptions. Google may auto-generate snippets that fail to convey value, reducing click-through rates from SERPs by up to 30%.', fix: 'Write unique, compelling meta descriptions (120-155 characters) for every indexable page. Include primary keywords naturally and a clear call-to-action. Prioritize pages with the highest impressions in Google Search Console.', impact: 'High' as const, effort: 'Small' as const, kind: 'OnPageSEO' as const },
+    { issue: 'Missing canonical tags on paginated and filtered URLs', why: 'Without canonical tags, search engines may index duplicate or near-duplicate versions of pages, diluting ranking signals and wasting crawl budget across URL variants.', fix: 'Add self-referencing canonical tags to all pages. For paginated content, point canonical to the primary page or implement rel="next/prev". Audit with Screaming Frog to identify all pages missing canonicals.', impact: 'Medium' as const, effort: 'Small' as const, kind: 'TechnicalSEO' as const },
+    { issue: 'Broken internal links found on 4 pages (404 errors)', why: 'Broken internal links waste crawl budget, break link equity flow, and create dead ends for both users and search engines. This signals poor site maintenance to Google and can reduce overall domain authority.', fix: 'Audit all internal links using Screaming Frog or Ahrefs Site Audit. Fix or redirect broken URLs (301 redirects for moved content, update href for typos). Implement a custom 404 page with navigation to retain users.', impact: 'Medium' as const, effort: 'Small' as const, kind: 'Links' as const },
+  ];
+
+  const summaryJson = {
+    findings: demoFindings.map(f => ({ ...f, kind: f.kind === 'TechnicalSEO' ? 'Technical SEO' : f.kind === 'OnPageSEO' ? 'On-Page SEO' : f.kind, evidenceRefs: [] })),
+    plan: {
+      quickWins: ['Write unique meta descriptions for the 6 pages missing them', 'Add self-referencing canonical tags to all indexable pages', 'Fix the 4 broken internal links returning 404 errors'],
+      next: ['Optimize LCP to under 2.5s by compressing images and eliminating render-blocking resources', 'Submit an updated XML sitemap to Google Search Console after fixes', 'Implement structured data (LocalBusiness, FAQ) on key landing pages'],
+      experiments: [{ hypothesis: 'Optimizing meta descriptions on high-impression pages will increase organic CTR by 15-20%', variant: 'A/B test new meta descriptions vs auto-generated snippets on top 5 pages by impressions', metric: 'Organic click-through rate and average position in Google Search Console' }],
+    },
+  };
+
+  const run = await prisma.auditRun.create({
+    data: {
+      target,
+      status: 'queued',
+      inputsJson: { target, fidelity: 'full' },
+    },
+  });
+
+  // Simulate stages with delays in background
+  (async () => {
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    await prisma.auditRun.update({ where: { id: run.id }, data: { status: 'running', startedAt: new Date() } });
+    await sleep(4000);
+    await sleep(5000);
+    await sleep(3000);
+    for (const f of demoFindings) {
+      await prisma.auditFinding.create({ data: { runId: run.id, ...f } });
+    }
+    await sleep(2000);
+    await prisma.auditRun.update({ where: { id: run.id }, data: { status: 'completed', completedAt: new Date(), summaryJson: summaryJson as any } });
+  })();
+
+  return run.id;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check critical environment variables first
@@ -123,6 +172,14 @@ export async function POST(request: NextRequest) {
 
     // Validate with Zod
     const parsed = auditInputSchema.parse(body);
+
+    // Demo mode — curated audit for specific URLs
+    if (isDemoUrl(parsed.target)) {
+      const prismaDemo = await getPrisma();
+      const runId = await createDemoAudit(parsed.target, prismaDemo);
+      return NextResponse.json({ runId, status: 'queued' }, { status: 202 });
+    }
+
     const normalizedInputs = {
       target: parsed.target,
       goal: parsed.goal ?? 'Improve conversions',

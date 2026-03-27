@@ -124,7 +124,7 @@ export const AuditChat = forwardRef<AuditChatRef, AuditChatProps>(
         role: 'assistant',
         content: `Hi! 👋 Your audit for ${target} is complete. I found ${stats.findingsCount} issues, with ${stats.highImpactFindings} high-impact items that need attention.
 
-Would you like to know how we can help you fix these issues? Our team specializes in UX/UI improvements, design systems, and conversion optimization - exactly the kind of work needed to address these findings.
+Would you like to know how we can help you fix these issues? Our team specializes in SEO improvements, performance optimization, and on-page strategy - exactly the kind of work needed to address these findings.
 
 What would you like to know more about?`,
         timestamp: new Date(), // Safe to use in useEffect (client-only)
@@ -290,11 +290,11 @@ What would you like to know more about?`,
   // Don't render until mounted to avoid hydration issues
   if (!isMounted) {
     return (
-      <div className="flex flex-col h-full relative" style={{ backgroundColor: '#f7f9f2' }}>
-        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+      <div className="flex flex-col h-full relative" style={{ backgroundColor: '#0F0F0F' }}>
+        <div className="px-6 py-4 border-b border-[#212121] flex-shrink-0">
           <div className="flex items-center gap-2">
             <img src="/ai-magic.svg" alt="AI magic" className="h-5 w-5" />
-            <h3 className="text-lg font-normal" style={{ color: '#0a211f' }}>AI Audit Assistant</h3>
+            <h3 className="text-lg font-normal" style={{ color: '#E0E0E0' }}>AI Audit Assistant</h3>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
@@ -305,12 +305,12 @@ What would you like to know more about?`,
   }
 
   return (
-    <div className="flex flex-col h-full relative" style={{ backgroundColor: '#f7f9f2' }}>
+    <div className="flex flex-col h-full relative" style={{ backgroundColor: '#0F0F0F' }}>
       {/* Title */}
-      <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+      <div className="px-6 py-4 border-b border-[#212121] flex-shrink-0">
         <div className="flex items-center gap-2">
           <img src="/ai-magic.svg" alt="AI magic" className="h-5 w-5" />
-          <h3 className="text-lg font-normal" style={{ color: '#0a211f' }}>AI Audit Assistant</h3>
+          <h3 className="text-lg font-normal" style={{ color: '#E0E0E0' }}>AI Audit Assistant</h3>
         </div>
       </div>
       {/* Messages */}
@@ -332,7 +332,7 @@ What would you like to know more about?`,
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium mb-2" style={{ color: '#0a211f' }}>Start a conversation</p>
+            <p className="text-sm font-medium mb-2" style={{ color: '#E0E0E0' }}>Start a conversation</p>
             <p className="text-xs text-gray-500 mb-4">
               Ask questions about your findings, get implementation guidance, or prioritize your fixes.
             </p>
@@ -346,7 +346,7 @@ What would you like to know more about?`,
                 >
                   <div
                     className="max-w-[85%] rounded-xl px-4 py-2"
-                    style={{ color: '#0a211f' }}
+                    style={{ color: '#E0E0E0' }}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
@@ -368,11 +368,11 @@ What would you like to know more about?`,
             {/* Lead Capture Form - Show at bottom after all messages */}
             {showLeadForm && !leadSubmitted && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#e6ecd6' }}>
+                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                   <div className="mb-3">
                     <img src="/Logo2_Vector.svg" alt="Logo" className="mb-3 h-6" />
-                    <h4 className="text-lg font-normal mb-1" style={{ color: '#0a211f', lineHeight: '23px' }}>Download your audit report</h4>
-                    <p className="mb-2" style={{ color: '#0a211f', fontSize: '14px' }}>
+                    <h4 className="text-lg font-normal mb-1" style={{ color: '#E0E0E0', lineHeight: '23px' }}>Download your audit report</h4>
+                    <p className="mb-2" style={{ color: '#E0E0E0', fontSize: '14px' }}>
                       Share your email and we'll send you the full audit report.
                     </p>
                   </div>
@@ -381,10 +381,10 @@ What would you like to know more about?`,
                       type="text"
                       value={leadFormData.name}
                       onChange={(e) => setLeadFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#cbd3c0]"
-                      style={{ color: '#0a211f', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#c5cebb' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#c5cebb'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#c5cebb'}
+                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
+                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
+                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
                       placeholder="Name (optional)"
                       disabled={isSubmittingLead}
                     />
@@ -393,10 +393,10 @@ What would you like to know more about?`,
                       required
                       value={leadFormData.email}
                       onChange={(e) => setLeadFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#cbd3c0]"
-                      style={{ color: '#0a211f', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#c5cebb' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#c5cebb'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#c5cebb'}
+                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
+                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
+                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
                       placeholder="your@email.com"
                       disabled={isSubmittingLead}
                     />
@@ -405,7 +405,7 @@ What would you like to know more about?`,
                         type="submit"
                         disabled={!leadFormData.email.trim() || isSubmittingLead}
                         className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                        style={{ backgroundColor: (!leadFormData.email.trim() || isSubmittingLead) ? '#223734' : '#d8ff85', color: (!leadFormData.email.trim() || isSubmittingLead) ? '#6f7c79' : '#0a211f', height: '42px', boxSizing: 'border-box' }}
+                        style={{ backgroundColor: (!leadFormData.email.trim() || isSubmittingLead) ? '#2A2A2A' : '#FB3B24', color: (!leadFormData.email.trim() || isSubmittingLead) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
                       >
                         {isSubmittingLead ? 'Submitting...' : 'Get report'}
                       </button>
@@ -415,7 +415,7 @@ What would you like to know more about?`,
                           setShowLeadForm(false);
                         }}
                         className="text-sm hover:text-white transition-colors"
-                        style={{ color: '#a4ada8' }}
+                        style={{ color: '#888888' }}
                         disabled={isSubmittingLead}
                       >
                         Cancel
@@ -436,11 +436,11 @@ What would you like to know more about?`,
             {/* Sales Contact Form - Show at bottom after all messages */}
             {showSalesForm && !salesFormSubmitted && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#e6ecd6' }}>
+                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                   <div className="mb-3">
                     <img src="/Logo2_Vector.svg" alt="Logo" className="mb-3 h-6" />
-                    <h4 className="text-lg font-normal mb-1" style={{ color: '#0a211f', lineHeight: '23px' }}>Connect with our sales team</h4>
-                    <p className="mb-2" style={{ color: '#0a211f', fontSize: '14px' }}>
+                    <h4 className="text-lg font-normal mb-1" style={{ color: '#E0E0E0', lineHeight: '23px' }}>Connect with our sales team</h4>
+                    <p className="mb-2" style={{ color: '#E0E0E0', fontSize: '14px' }}>
                       Share your details and we'll reach out to discuss how we can help.
                     </p>
                   </div>
@@ -450,10 +450,10 @@ What would you like to know more about?`,
                       required
                       value={salesFormData.name}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#cbd3c0]"
-                      style={{ color: '#0a211f', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#c5cebb' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#c5cebb'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#c5cebb'}
+                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
+                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
+                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
                       placeholder="Name"
                       disabled={isSubmittingSales}
                     />
@@ -462,10 +462,10 @@ What would you like to know more about?`,
                       required
                       value={salesFormData.email}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#cbd3c0]"
-                      style={{ color: '#0a211f', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#c5cebb' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#c5cebb'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#c5cebb'}
+                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
+                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
+                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
                       placeholder="Email"
                       disabled={isSubmittingSales}
                     />
@@ -473,10 +473,10 @@ What would you like to know more about?`,
                       type="tel"
                       value={salesFormData.phone}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#cbd3c0]"
-                      style={{ color: '#0a211f', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#c5cebb' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#c5cebb'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#c5cebb'}
+                      className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
+                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
+                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
                       placeholder="Phone (optional)"
                       disabled={isSubmittingSales}
                     />
@@ -485,7 +485,7 @@ What would you like to know more about?`,
                         type="submit"
                         disabled={!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales}
                         className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                        style={{ backgroundColor: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#223734' : '#d8ff85', color: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#6f7c79' : '#0a211f', height: '42px', boxSizing: 'border-box' }}
+                        style={{ backgroundColor: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#2A2A2A' : '#FB3B24', color: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
                       >
                         {isSubmittingSales ? 'Submitting...' : 'Get in touch'}
                       </button>
@@ -495,7 +495,7 @@ What would you like to know more about?`,
                           setShowSalesForm(false);
                         }}
                         className="text-sm hover:text-white transition-colors"
-                        style={{ color: '#a4ada8' }}
+                        style={{ color: '#888888' }}
                         disabled={isSubmittingSales}
                       >
                         Cancel
@@ -524,7 +524,7 @@ What would you like to know more about?`,
       </div>
 
       {/* Input */}
-      <div className="p-4 flex-shrink-0" style={{ backgroundColor: '#f7f9f2' }}>
+      <div className="p-4 flex-shrink-0" style={{ backgroundColor: '#0F0F0F' }}>
         {/* CTA Button */}
         <div className="mb-4 flex flex-col items-end">
           <button
@@ -538,11 +538,11 @@ What would you like to know more about?`,
               }, 100);
             }}
             className="py-3 px-4 text-sm font-medium rounded-full transition-all hover:opacity-90"
-            style={{ backgroundColor: '#d8ff85', color: '#0a211f' }}
+            style={{ backgroundColor: '#FB3B24', color: '#ffffff' }}
           >
             I want to get started 🚀
           </button>
-          <p className="text-xs mt-2" style={{ color: '#6f7c79' }}>
+          <p className="text-xs mt-2" style={{ color: '#666666' }}>
             Click here to learn how we can elevate your brand
           </p>
         </div>
@@ -557,18 +557,18 @@ What would you like to know more about?`,
             }}
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about your audit..."
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-transparent"
-            style={{ color: '#0a211f' }}
+            className="w-full px-3 py-2 text-sm border border-[#212121] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FB3B24] focus:border-transparent resize-none bg-transparent placeholder:text-[#666666]"
+            style={{ color: '#E0E0E0' }}
             rows={3}
             disabled={isLoading}
           />
           <div className="flex justify-between items-center gap-2">
-            <p className="text-xs text-gray-500 hidden xl:block">Press Enter to send</p>
+            <p className="text-xs hidden xl:block" style={{ color: '#666666' }}>Press Enter to send</p>
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
               className="px-4 py-2 text-sm font-medium rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:opacity-90 flex-shrink-0"
-              style={{ backgroundColor: (!input.trim() || isLoading) ? undefined : '#d8ff85', color: (!input.trim() || isLoading) ? undefined : '#0a211f' }}
+              style={{ backgroundColor: (!input.trim() || isLoading) ? undefined : '#FB3B24', color: (!input.trim() || isLoading) ? undefined : '#ffffff' }}
             >
               {isLoading ? 'Sending...' : 'Send'}
             </button>

@@ -6,7 +6,7 @@ export const Finding = z.object({
   fix: z.string().max(280),
   impact: z.enum(['High', 'Medium', 'Low']),
   effort: z.enum(['Small', 'Medium', 'Large']),
-  kind: z.enum(['Marketing Strategy', 'Copywriting', 'UX/UI']),
+  kind: z.enum(['Technical SEO', 'On-Page SEO', 'Performance', 'Links']),
   evidenceRefs: z.array(z.string()).max(4),
 });
 

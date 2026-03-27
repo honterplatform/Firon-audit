@@ -109,7 +109,7 @@ export function ScreenshotWithPins({ screenshotUrl, viewport, elementCoordinates
   }
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ backgroundColor: '#0a211f' }}>
+    <div ref={containerRef} className="relative w-full" style={{ backgroundColor: '#0A0A0A' }}>
       <img
         ref={imageRef}
         src={screenshotUrl}
@@ -158,7 +158,7 @@ export function ScreenshotWithPins({ screenshotUrl, viewport, elementCoordinates
                   <div
                     className="absolute inset-0 rounded-full animate-ping"
                     style={{
-                      backgroundColor: matchingFinding ? '#d8ff85' : '#8dfdba',
+                      backgroundColor: matchingFinding ? '#FB3B24' : '#FF7A6B',
                       opacity: hoveredPin === selector ? 0.6 : 0.3,
                     }}
                   />
@@ -168,9 +168,9 @@ export function ScreenshotWithPins({ screenshotUrl, viewport, elementCoordinates
                     className="absolute inset-0 rounded-full border-2 flex items-center justify-center transition-all"
                     style={{
                       backgroundColor: hoveredPin === selector 
-                        ? (matchingFinding ? '#d8ff85' : '#8dfdba')
-                        : (matchingFinding ? '#d8ff85' : '#8dfdba'),
-                      borderColor: '#0a211f',
+                        ? (matchingFinding ? '#FB3B24' : '#FF7A6B')
+                        : (matchingFinding ? '#FB3B24' : '#FF7A6B'),
+                      borderColor: '#0A0A0A',
                       transform: hoveredPin === selector ? 'scale(1.2)' : 'scale(1)',
                     }}
                   />
@@ -181,9 +181,9 @@ export function ScreenshotWithPins({ screenshotUrl, viewport, elementCoordinates
                   <div
                     className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs z-50 max-w-xs"
                     style={{
-                      backgroundColor: '#0a211f',
-                      color: '#d8ff85',
-                      border: '1px solid #223734',
+                      backgroundColor: '#0A0A0A',
+                      color: '#FB3B24',
+                      border: '1px solid #212121',
                       whiteSpace: 'normal',
                       wordWrap: 'break-word',
                     }}
@@ -196,7 +196,7 @@ export function ScreenshotWithPins({ screenshotUrl, viewport, elementCoordinates
                         height: 0,
                         borderLeft: '4px solid transparent',
                         borderRight: '4px solid transparent',
-                        borderTop: '4px solid #0a211f',
+                        borderTop: '4px solid #0A0A0A',
                       }}
                     />
                   </div>

@@ -60,7 +60,7 @@ const CONTACT_STATUSES = [
   { value: 'contacted',   label: 'Contacted',   icon: '→', bg: 'rgba(96, 165, 250, 0.15)',  text: '#60a5fa' },
   { value: 'no_response', label: 'No Response', icon: '✗', bg: 'rgba(251, 191, 36, 0.15)',  text: '#fbbf24' },
   { value: 'responded',   label: 'Responded',   icon: '✓', bg: 'rgba(134, 239, 172, 0.15)', text: '#86efac' },
-  { value: 'closed',      label: 'Closed',      icon: '★', bg: 'rgba(216, 255, 133, 0.15)', text: '#d8ff85' },
+  { value: 'closed',      label: 'Closed',      icon: '★', bg: 'rgba(216, 255, 133, 0.15)', text: '#FB3B24' },
 ];
 
 function StatusBadge({ status }: { status: string }) {
@@ -98,7 +98,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
     <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
       <div
         className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm shadow-lg"
-        style={{ backgroundColor: '#162624', color: '#d8ff85', border: '1px solid #2a3a38' }}
+        style={{ backgroundColor: '#0F0F0F', color: '#FB3B24', border: '1px solid #212121' }}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -169,27 +169,27 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
   };
 
   const statCards = [
-    { label: 'Total Audits', value: liveStats.totalRuns, color: '#f7f9f2' },
-    { label: 'Leads', value: liveStats.totalContacts, color: '#d8ff85' },
+    { label: 'Total Audits', value: liveStats.totalRuns, color: '#F5F5F5' },
+    { label: 'Leads', value: liveStats.totalContacts, color: '#FB3B24' },
     { label: 'New', value: liveStats.newLeads, color: '#94a3b8' },
     { label: 'Contacted', value: liveStats.contacted, color: '#60a5fa' },
     { label: 'No Response', value: liveStats.noResponse, color: '#fbbf24' },
     { label: 'Responded', value: liveStats.responded, color: '#86efac' },
-    { label: 'Closed', value: liveStats.closed, color: '#d8ff85' },
+    { label: 'Closed', value: liveStats.closed, color: '#FB3B24' },
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a211f' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Toast */}
       {toast && <Toast message={toast} onDone={clearToast} />}
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-normal mb-1" style={{ color: '#f7f9f2' }}>
+          <h1 className="text-2xl font-normal mb-1" style={{ color: '#F5F5F5' }}>
             Admin Dashboard
           </h1>
-          <p className="text-sm" style={{ color: '#6b7c79' }}>
+          <p className="text-sm" style={{ color: '#666666' }}>
             Manage audit runs and track sales contacts
           </p>
         </div>
@@ -200,12 +200,12 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
             <div
               key={card.label}
               className="rounded-xl p-4"
-              style={{ backgroundColor: '#162624' }}
+              style={{ backgroundColor: '#0F0F0F' }}
             >
               <div className="text-2xl font-medium mb-1" style={{ color: card.color }}>
                 {card.value}
               </div>
-              <div className="text-xs" style={{ color: '#6b7c79' }}>
+              <div className="text-xs" style={{ color: '#666666' }}>
                 {card.label}
               </div>
             </div>
@@ -215,7 +215,7 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
         {/* Tabs */}
         <div
           className="flex gap-1 p-1 mb-6 rounded-xl w-fit"
-          style={{ backgroundColor: '#162624' }}
+          style={{ backgroundColor: '#0F0F0F' }}
         >
           {TABS.map((tab) => {
             const isActive = tab.key === activeTab;
@@ -226,8 +226,8 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                 href={href}
                 className="px-4 py-2 text-sm rounded-lg transition-all"
                 style={{
-                  backgroundColor: isActive ? '#d8ff85' : 'transparent',
-                  color: isActive ? '#0a211f' : '#6b7c79',
+                  backgroundColor: isActive ? '#FB3B24' : 'transparent',
+                  color: isActive ? '#ffffff' : '#666666',
                   fontWeight: isActive ? 500 : 400,
                 }}
               >
@@ -238,23 +238,23 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
         </div>
 
         {/* Table */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#162624' }}>
-          <table className="w-full text-sm" style={{ color: '#e2e8f0' }}>
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#0F0F0F' }}>
+          <table className="w-full text-sm" style={{ color: '#E0E0E0' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #2a3a38' }}>
-                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#6b7c79' }}>
+              <tr style={{ borderBottom: '1px solid #212121' }}>
+                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Target
                 </th>
-                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#6b7c79' }}>
+                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Status
                 </th>
-                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#6b7c79' }}>
+                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Date
                 </th>
-                <th className="text-center px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#6b7c79' }}>
+                <th className="text-center px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Findings
                 </th>
-                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#6b7c79' }}>
+                <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Contact
                 </th>
               </tr>
@@ -271,8 +271,8 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                     <tr
                       className="transition-colors cursor-pointer"
                       style={{
-                        borderBottom: isExpanded ? 'none' : '1px solid #2a3a38',
-                        backgroundColor: isExpanded ? '#1a2f2d' : 'transparent',
+                        borderBottom: isExpanded ? 'none' : '1px solid #212121',
+                        backgroundColor: isExpanded ? '#111111' : 'transparent',
                       }}
                       onMouseEnter={(e) => {
                         if (!isExpanded) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)';
@@ -288,7 +288,7 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                         <Link
                           href={`/audits/${run.id}`}
                           className="hover:underline text-sm"
-                          style={{ color: '#d8ff85' }}
+                          style={{ color: '#FB3B24' }}
                           onClick={(e) => e.stopPropagation()}
                         >
                           {run.target.replace(/^https?:\/\//, '')}
@@ -297,7 +297,7 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                       <td className="px-6 py-4">
                         <StatusBadge status={run.status} />
                       </td>
-                      <td className="px-6 py-4 text-xs" style={{ color: '#6b7c79' }}>
+                      <td className="px-6 py-4 text-xs" style={{ color: '#666666' }}>
                         {new Date(run.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -306,23 +306,23 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                       </td>
                       <td className="px-6 py-4 text-center text-xs">
                         {run.findingsCount > 0 ? (
-                          <span className="font-medium" style={{ color: '#e2e8f0' }}>
+                          <span className="font-medium" style={{ color: '#E0E0E0' }}>
                             {run.findingsCount}
                           </span>
                         ) : (
-                          <span style={{ color: '#4a5a58' }}>0</span>
+                          <span style={{ color: '#212121' }}>0</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {hasContact ? (
                           <div className="flex items-center gap-2">
                             <ContactStatusBadge status={latestContact.contactStatus} />
-                            <span className="text-xs truncate max-w-[120px]" style={{ color: '#6b7c79' }}>
+                            <span className="text-xs truncate max-w-[120px]" style={{ color: '#666666' }}>
                               {latestContact.name}
                             </span>
                             <svg
                               className={`w-3.5 h-3.5 ml-auto transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                              style={{ color: '#6b7c79' }}
+                              style={{ color: '#666666' }}
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -331,7 +331,7 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                             </svg>
                           </div>
                         ) : (
-                          <span className="text-xs" style={{ color: '#3a4a48' }}>No contact</span>
+                          <span className="text-xs" style={{ color: '#212121' }}>No contact</span>
                         )}
                       </td>
                     </tr>
@@ -343,8 +343,8 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                           colSpan={5}
                           className="px-6 pb-4 pt-0"
                           style={{
-                            backgroundColor: '#1a2f2d',
-                            borderBottom: '1px solid #2a3a38',
+                            backgroundColor: '#111111',
+                            borderBottom: '1px solid #212121',
                           }}
                         >
                           <div className="space-y-3">
@@ -367,10 +367,10 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
               {runs.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
-                    <div className="text-sm mb-1" style={{ color: '#6b7c79' }}>
+                    <div className="text-sm mb-1" style={{ color: '#666666' }}>
                       No audit runs found
                     </div>
-                    <div className="text-xs" style={{ color: '#3a4a48' }}>
+                    <div className="text-xs" style={{ color: '#212121' }}>
                       Audits will appear here once created
                     </div>
                   </td>
@@ -405,7 +405,7 @@ function ContactCard({
   return (
     <div
       className="rounded-xl p-5"
-      style={{ backgroundColor: '#162624', border: '1px solid #2a3a38' }}
+      style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}
     >
       {/* Top: contact info */}
       <div className="flex items-center justify-between mb-4">
@@ -413,15 +413,15 @@ function ContactCard({
           {/* Avatar circle */}
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-            style={{ backgroundColor: '#2a3a38', color: '#d8ff85' }}
+            style={{ backgroundColor: '#212121', color: '#FB3B24' }}
           >
             {contact.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <div className="text-sm font-medium" style={{ color: '#f7f9f2' }}>
+            <div className="text-sm font-medium" style={{ color: '#F5F5F5' }}>
               {contact.name}
             </div>
-            <div className="flex items-center gap-3 text-xs" style={{ color: '#6b7c79' }}>
+            <div className="flex items-center gap-3 text-xs" style={{ color: '#666666' }}>
               <a
                 href={`mailto:${contact.email}`}
                 className="hover:underline"
@@ -447,10 +447,10 @@ function ContactCard({
           {isSaving && (
             <div
               className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: '#d8ff85', borderTopColor: 'transparent' }}
+              style={{ borderColor: '#FB3B24', borderTopColor: 'transparent' }}
             />
           )}
-          <span className="text-xs" style={{ color: '#4a5a58' }}>
+          <span className="text-xs" style={{ color: '#212121' }}>
             {new Date(contact.createdAt).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -461,7 +461,7 @@ function ContactCard({
 
       {/* Pipeline status selector */}
       <div className="mb-4">
-        <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#4a5a58' }}>
+        <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#212121' }}>
           Status
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -474,9 +474,9 @@ function ContactCard({
                 disabled={isSaving}
                 className="px-3.5 py-2 text-xs rounded-lg transition-all cursor-pointer"
                 style={{
-                  backgroundColor: isActive ? s.bg : '#0a211f',
-                  color: isActive ? s.text : '#6b7c79',
-                  border: `1px solid ${isActive ? s.text + '50' : '#2a3a38'}`,
+                  backgroundColor: isActive ? s.bg : '#0A0A0A',
+                  color: isActive ? s.text : '#666666',
+                  border: `1px solid ${isActive ? s.text + '50' : '#212121'}`,
                   fontWeight: isActive ? 500 : 400,
                   opacity: isSaving ? 0.6 : 1,
                 }}
@@ -488,8 +488,8 @@ function ContactCard({
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.borderColor = '#2a3a38';
-                    e.currentTarget.style.color = '#6b7c79';
+                    e.currentTarget.style.borderColor = '#212121';
+                    e.currentTarget.style.color = '#666666';
                   }
                 }}
               >
@@ -513,9 +513,9 @@ function ContactCard({
           rows={2}
           className="w-full px-3 py-2.5 text-xs rounded-lg resize-none focus:outline-none transition-colors"
           style={{
-            backgroundColor: '#0a211f',
-            color: '#e2e8f0',
-            border: `1px solid ${notesChanged ? '#d8ff8560' : '#2a3a38'}`,
+            backgroundColor: '#0A0A0A',
+            color: '#E0E0E0',
+            border: `1px solid ${notesChanged ? '#FB3B2460' : '#212121'}`,
           }}
         />
         {notesChanged && (
@@ -527,7 +527,7 @@ function ContactCard({
               }}
               disabled={isSaving}
               className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: '#d8ff85', color: '#0a211f' }}
+              style={{ backgroundColor: '#FB3B24', color: '#ffffff' }}
             >
               Save
             </button>
@@ -537,7 +537,7 @@ function ContactCard({
                 setNotesChanged(false);
               }}
               className="px-3 py-1.5 text-xs rounded-lg transition-all"
-              style={{ color: '#6b7c79' }}
+              style={{ color: '#666666' }}
             >
               Cancel
             </button>

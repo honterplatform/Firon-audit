@@ -10,11 +10,115 @@ import { prisma } from '@audit/db';
 import { logger } from '@audit/pipeline';
 import type { CrawlJobData } from '@audit/pipeline';
 
+const DEMO_HOSTS = ['fironmarketing.com'];
+
+function isDemoTarget(target: string): boolean {
+  const host = target.toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^www\./, '');
+  return DEMO_HOSTS.includes(host);
+}
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+async function runDemoAudit(runId: string, target: string) {
+  logger.info(`Running demo audit for ${target}`, { runId });
+
+  // Simulate crawl stage
+  await prisma.auditRun.update({ where: { id: runId }, data: { status: 'running', startedAt: new Date() } });
+  await sleep(3000);
+
+  // Simulate parallel analysis (lighthouse, axe, heuristics)
+  await sleep(4000);
+
+  // Simulate summarize
+  await sleep(3000);
+
+  const demoFindings = [
+    {
+      issue: 'Hero section lacks a clear value proposition',
+      why: 'Visitors need to understand what Firon offers within 3 seconds. The current hero is visually strong but the headline is too vague to drive conversions.',
+      fix: 'Rewrite the hero headline to focus on the specific outcome clients get.',
+      impact: 'High' as const,
+      effort: 'Small' as const,
+      kind: 'OnPageSEO' as const,
+    },
+    {
+      issue: 'No social proof visible above the fold',
+      why: 'Trust signals like client logos, testimonials, or case study metrics dramatically increase conversion rates. Without them, visitors bounce before scrolling.',
+      fix: 'Add a row of client logos or a short testimonial directly below the hero section.',
+      impact: 'High' as const,
+      effort: 'Small' as const,
+      kind: 'TechnicalSEO' as const,
+    },
+    {
+      issue: 'Mobile navigation is hard to use and hides key pages',
+      why: 'Over 60% of traffic comes from mobile devices. The current hamburger menu buries important pages like case studies and pricing, forcing users to dig for critical info.',
+      fix: 'Add a sticky bottom navigation bar on mobile with direct links to Services, Case Studies, and Contact.',
+      impact: 'Medium' as const,
+      effort: 'Small' as const,
+      kind: 'Links' as const,
+    },
+    {
+      issue: 'Services section does not connect to client outcomes',
+      why: 'Listing services without tying them to results makes Firon look like every other agency. Visitors want to know what they will achieve, not just what you do.',
+      fix: 'Reframe each service as a benefit with outcome-focused copy.',
+      impact: 'Medium' as const,
+      effort: 'Medium' as const,
+      kind: 'OnPageSEO' as const,
+    },
+  ];
+
+  const summaryJson = {
+    findings: demoFindings.map(f => ({
+      ...f,
+      kind: f.kind,
+      evidenceRefs: [],
+    })),
+    plan: {
+      quickWins: [
+        'Rewrite hero headline with a clear value proposition',
+        'Add client logos below the fold',
+        'Update CTA button copy and increase contrast',
+      ],
+      next: [
+        'Reframe services as client outcomes',
+        'Add case study metrics to build trust',
+      ],
+      experiments: [{
+        hypothesis: 'A specific headline will increase scroll depth by 20%',
+        variant: 'Test outcome-focused headline vs current',
+        metric: 'Scroll depth and CTA click rate',
+      }],
+    },
+  };
+
+  // Create findings
+  for (const f of demoFindings) {
+    await prisma.auditFinding.create({ data: { runId, ...f } });
+  }
+
+  // Simulate report generation
+  await sleep(2000);
+
+  // Mark completed
+  await prisma.auditRun.update({
+    where: { id: runId },
+    data: { status: 'completed', completedAt: new Date(), summaryJson: summaryJson as any },
+  });
+
+  logger.info(`Demo audit completed for ${target}`, { runId });
+}
+
 export async function processOrchestrator(job: Job<CrawlJobData>) {
   const { runId, target, inputs } = job.data;
   logger.info(`Starting orchestration for ${target}`, { runId });
 
   try {
+    // Demo mode for specific targets
+    logger.info(`Checking demo target: "${target}" -> isDemoTarget: ${isDemoTarget(target)}`, { runId });
+    if (isDemoTarget(target)) {
+      return await runDemoAudit(runId, target);
+    }
+
     // Step 1: Run crawl
     const crawlResult = await processCrawl(job);
 

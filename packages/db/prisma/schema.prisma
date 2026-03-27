@@ -29,9 +29,10 @@ enum FindingEffort {
 }
 
 enum FindingKind {
-  MarketingStrategy
-  Copywriting
-  UXUI
+  TechnicalSEO
+  OnPageSEO
+  Performance
+  Links
 }
 
 enum ArtifactType {
