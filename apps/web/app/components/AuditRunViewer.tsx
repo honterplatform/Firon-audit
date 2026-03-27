@@ -138,6 +138,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let hasReloaded = false;
 
     const poll = async () => {
       try {
@@ -152,11 +153,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
           return;
         }
         setRun(data);
-        // Update screenshot URLs if provided in the response
         if (data.screenshotUrls) {
           setScreenshotUrls((prev) => ({ ...prev, ...data.screenshotUrls }));
         }
-        // Update blocked status if provided in the response
         if (data.blockedStatus) {
           setBlockedStatusState(data.blockedStatus);
         }
@@ -164,9 +163,12 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
         if (data.status === 'running' || data.status === 'queued') {
           timer = setTimeout(poll, POLL_INTERVAL_MS);
-        } else {
+        } else if (isPolling && !hasReloaded) {
           // Audit just finished — reload to get full server-rendered page with findings
+          hasReloaded = true;
           window.location.reload();
+        } else {
+          setIsPolling(false);
         }
       } catch (err) {
         console.error('Failed to poll audit status', err);
@@ -177,9 +179,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
       }
     };
 
-    if (isPolling) {
-      timer = setTimeout(poll, POLL_INTERVAL_MS);
-    }
+    // Always fetch once on mount to get latest data
+    poll();
 
     return () => {
       active = false;
@@ -187,7 +188,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         clearTimeout(timer);
       }
     };
-  }, [runId, isPolling]);
+  }, [runId]);
 
   const hasSummary = Boolean(run.summaryJson);
   const hasFindings = Boolean(run.summaryJson && run.summaryJson.findings && run.summaryJson.findings.length > 0);
