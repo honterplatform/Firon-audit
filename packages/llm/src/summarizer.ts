@@ -1,4 +1,4 @@
-import { createOpenAIClient } from './openai';
+import { createAnthropicClient } from './openai';
 import { logger } from '@audit/pipeline';
 import { AuditSummary, AuditSummaryType } from './schemas';
 
@@ -150,11 +150,11 @@ export interface SummarizeInput {
 }
 
 export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummaryType> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   const isPlaceholderKey =
     !apiKey ||
     apiKey.trim().length === 0 ||
-    apiKey.includes('your-openai-key');
+    apiKey.includes('your-key');
 
   if (isPlaceholderKey) {
     const error = new Error('OPENAI_API_KEY missing or placeholder; cannot produce authenticated summary');
@@ -171,7 +171,7 @@ export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummar
     },
   });
 
-  const client = createOpenAIClient();
+  const client = createAnthropicClient();
 
   const formatList = (items: string[], fallback: string) =>
     items && items.length > 0 ? items.join('; ') : fallback;
@@ -372,27 +372,37 @@ Focus on what impacts search rankings and organic traffic most.`;
         messages.push({ role: 'user', content: correctionPrompt });
       }
 
-      const completion = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: messages as any,
-        response_format: { type: 'json_object' },
+      // Build Claude messages — system prompt goes in the system param, not in messages
+      const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+      const claudeMessages = messages.filter(m => m.role !== 'system').map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+      const completion = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemMsg + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code fences, no prose.',
+        messages: claudeMessages,
         temperature: attempt > 0 ? 0.2 : 0.4,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const textBlock = completion.content.find(b => b.type === 'text');
+      const content = textBlock?.text;
       if (!content) {
-        throw new Error('Empty response from OpenAI');
+        throw new Error('Empty response from Claude');
       }
 
       lastContent = content;
-      const json = JSON.parse(content);
+      // Strip markdown code fences if present
+      const cleaned = content.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+      const json = JSON.parse(cleaned);
       const normalized = normalizeLlmOutput(json);
-      // Enforce distribution across categories
       const distributed = enforceDistribution(normalized.findings, input);
       const normalizedWithDistribution = { ...normalized, findings: distributed };
       const validated = ensurePlan(AuditSummary.parse(normalizedWithDistribution), input.goal);
 
-      logger.info('OpenAI summarization succeeded', {
+      logger.info('Claude summarization succeeded', {
         findings: validated.findings.length,
         quickWins: validated.plan.quickWins.length,
       });

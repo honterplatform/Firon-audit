@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@audit/db": "workspace:*",
     "@audit/llm": "workspace:*",
     "@audit/pipeline": "workspace:*",
@@ -35,4 +36,3 @@
     "typescript": "^5.3.3"
   }
 }
-

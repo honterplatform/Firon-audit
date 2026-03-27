@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@audit/pipeline": "workspace:*",
     "@axe-core/playwright": "^4.8.2",
     "axe-core": "^4.8.2",
@@ -20,4 +21,3 @@
     "typescript": "^5.3.3"
   }
 }
-

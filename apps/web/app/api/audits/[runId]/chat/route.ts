@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@audit/db';
-import { createOpenAIClient } from '@audit/llm';
+import Anthropic from '@anthropic-ai/sdk';
 
 export async function POST(
   request: NextRequest,
@@ -157,26 +157,34 @@ CRITICAL: Write like you're talking to a friend, not like you're reading from a 
     // Add current message
     messages.push({ role: 'user', content: message });
 
-    // Call OpenAI with more conversational settings
-    const client = createOpenAIClient();
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: messages as any,
-      temperature: 0.85, // Higher temperature for more natural, varied responses
-      max_tokens: 500, // Reduced for more concise responses
+    // Call Claude
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+    const claudeMessages = messages.filter(m => m.role !== 'system').map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
+
+    const completion = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      system: systemMsg,
+      messages: claudeMessages,
+      temperature: 0.85,
     });
 
-    const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    const textBlock = completion.content.find(b => b.type === 'text');
+    const response = textBlock?.text || 'I apologize, but I could not generate a response.';
 
     return NextResponse.json({ response });
   } catch (error) {
     console.error('Chat API error:', error);
-    
+
     // Handle specific error cases
     if (error instanceof Error) {
-      if (error.message.includes('OPENAI_API_KEY')) {
+      if (error.message.includes('ANTHROPIC_API_KEY')) {
         return NextResponse.json(
-          { error: 'OpenAI API key is not configured. Please check your environment variables.' },
+          { error: 'Anthropic API key is not configured. Please check your environment variables.' },
           { status: 500 }
         );
       }

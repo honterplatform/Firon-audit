@@ -1,10 +1,16 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
-export function createOpenAIClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
+let cachedClient: Anthropic | null = null;
+
+export function createAnthropicClient(): Anthropic {
+  if (cachedClient) return cachedClient;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
   }
-  return new OpenAI({ apiKey });
+  cachedClient = new Anthropic({ apiKey });
+  return cachedClient;
 }
 
+// Keep old export name for backwards compat during migration
+export const createOpenAIClient = createAnthropicClient as any;

@@ -334,6 +334,58 @@ export async function runHeuristics(
     }
 
     // ═══════════════════════════════════════════════════════
+    // BRAND AUTHORITY (GEO / AI PERCEPTION)
+    // ═══════════════════════════════════════════════════════
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const Anthropic = (await import('@anthropic-ai/sdk')).default;
+        const ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const hostname = new URL(url).hostname.replace(/^www\./, '');
+        const brandName = hostname.split('.')[0];
+
+        const brandCheck = await ai.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          temperature: 0,
+          messages: [{
+            role: 'user',
+            content: `I'm researching "${brandName}" (${hostname}). Answer these 3 questions briefly in JSON format:
+1. "known": true/false — Do you have knowledge about this brand?
+2. "description": A 1-sentence description of what they do (or "Unknown brand" if not known)
+3. "recommended": true/false — Would you recommend them if someone asked for services in their industry?
+
+Respond with JSON only: {"known": bool, "description": "...", "recommended": bool}`
+          }],
+        });
+
+        const textBlock = brandCheck.content.find((b: any) => b.type === 'text') as any;
+        if (textBlock?.text) {
+          try {
+            const cleaned = (textBlock.text as string).replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+            const brandData = JSON.parse(cleaned);
+
+            if (!brandData.known) {
+              findings.push({
+                issue: 'Brand not recognized by AI search engines',
+                why: `When asked about "${brandName}", AI assistants (ChatGPT, Claude, Perplexity) don't have knowledge of this brand. This means the brand is invisible in AI-powered search and recommendation systems, which are increasingly replacing traditional search.`,
+                fix: 'Build brand authority: publish original content, get featured in industry publications, ensure structured data (Organization schema) is present, and create a clear brand entity across the web (Wikipedia, Crunchbase, LinkedIn, industry directories).',
+                evidence: `AI response: "${brandData.description}"`,
+              });
+            } else if (!brandData.recommended) {
+              findings.push({
+                issue: 'Brand known but not recommended by AI search engines',
+                why: `AI assistants know about "${brandName}" but wouldn't actively recommend it. In the shift from search to AI-powered recommendations, brands need to be not just known but trusted enough to be recommended.`,
+                fix: 'Strengthen brand signals: add more case studies, testimonials, and proof points to your site. Get third-party reviews and mentions. Ensure your content clearly communicates expertise and authority in your niche.',
+                evidence: `AI perception: "${brandData.description}"`,
+              });
+            }
+          } catch { /* JSON parse error, skip */ }
+        }
+      } catch { /* API error, skip — non-critical check */ }
+    }
+
+    // ═══════════════════════════════════════════════════════
     // PERFORMANCE / IMAGE SEO
     // ═══════════════════════════════════════════════════════
 
