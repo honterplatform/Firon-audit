@@ -3,6 +3,8 @@ import { runCrawl } from '@audit/plugins';
 import { prisma, ArtifactType } from '@audit/db';
 import { logger } from '@audit/pipeline';
 import type { CrawlJobData } from '@audit/pipeline';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function processCrawl(job: Job<CrawlJobData>) {
   const { runId, target } = job.data;
@@ -59,6 +61,25 @@ export async function processCrawl(job: Job<CrawlJobData>) {
         },
       ],
     });
+
+    // Save screenshots to database for cross-service access (Railway)
+    const storageDir = process.env.LOCAL_STORAGE_DIR || './data/uploads';
+    for (const [viewport, screenshotPath] of Object.entries(result.screenshots || {})) {
+      if (!screenshotPath) continue;
+      try {
+        const filePath = path.join(storageDir, screenshotPath as string);
+        if (fs.existsSync(filePath)) {
+          const data = fs.readFileSync(filePath).toString('base64');
+          await prisma.storedFile.upsert({
+            where: { key: screenshotPath as string },
+            create: { key: screenshotPath as string, data, contentType: 'image/png' },
+            update: { data, contentType: 'image/png' },
+          });
+        }
+      } catch (e) {
+        logger.warn(`Failed to save ${viewport} screenshot to DB`, { error: (e as Error).message });
+      }
+    }
 
     logger.info(`Crawl completed for ${target}`, { runId });
     return result;
