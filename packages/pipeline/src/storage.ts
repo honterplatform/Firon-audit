@@ -120,31 +120,6 @@ export class LocalStorageProvider implements StorageProvider {
   }
 }
 
-export class DatabaseStorageProvider implements StorageProvider {
-  private baseUrl: string;
-
-  constructor() {
-    this.baseUrl = process.env.APP_BASE_URL || 'http://localhost:5001';
-  }
-
-  async putObject(key: string, buffer: Buffer, contentType: string): Promise<string> {
-    // Hidden from webpack static analysis — resolved at runtime in the monorepo
-    const moduleName = '@audit' + '/db';
-    const { prisma } = require(moduleName) as any;
-    const b64 = buffer.toString('base64');
-    await prisma.storedFile.upsert({
-      where: { key },
-      create: { key, data: b64, contentType },
-      update: { data: b64, contentType },
-    });
-    return key;
-  }
-
-  async getSignedUrl(key: string): Promise<string> {
-    return `${this.baseUrl}/api/storage/${encodeURIComponent(key)}`;
-  }
-}
-
 const dataUrlStore = new Map<string, string>();
 
 class DataUrlStorageProvider implements StorageProvider {
@@ -172,11 +147,9 @@ function isPlaceholder(value?: string | null): boolean {
 }
 
 export function createStorageProvider(): StorageProvider {
-  const provider = process.env.STORAGE_PROVIDER || 'database';
+  const provider = process.env.STORAGE_PROVIDER || 'local';
 
-  if (provider === 'database' || provider === 'db') {
-    return new DatabaseStorageProvider();
-  } else if (provider === 'local') {
+  if (provider === 'local') {
     return new LocalStorageProvider();
   } else if (provider === 's3') {
     return new S3StorageProvider();
