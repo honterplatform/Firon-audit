@@ -267,9 +267,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     const stages = [
       { name: 'Crawl', completed: false },
       { name: 'Performance', completed: false },
-      { name: 'Accessibility', completed: false },
-      { name: 'UX Analysis', completed: false },
-      { name: 'AI Analysis', completed: false },
+      { name: 'Technical SEO', completed: false },
+      { name: 'SEO Analysis', completed: false },
+      { name: 'AI Summary', completed: false },
     ];
 
     if (run.status === 'completed' || run.status === 'partial' || run.status === 'failed') {
@@ -299,9 +299,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     
     stages[0].completed = hasScreenshots; // Crawl
     stages[1].completed = hasLighthouse; // Performance
-    stages[2].completed = hasAxe; // Accessibility
-    stages[3].completed = hasHeuristics; // UX Analysis
-    stages[4].completed = hasSummary; // AI Analysis
+    stages[2].completed = hasAxe; // Technical SEO
+    stages[3].completed = hasHeuristics; // SEO Analysis
+    stages[4].completed = hasSummary; // AI Summary
 
     return stages;
   }, [run.status, run.artifacts, run.fallbackFindings, hasSummary]);
@@ -408,9 +408,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                     if (!currentStage) return 'Finalizing audit report...';
                     if (currentStage.name === 'Crawl') return 'Collecting data from the website...';
                     if (currentStage.name === 'Performance') return 'Analyzing performance metrics...';
-                    if (currentStage.name === 'Accessibility') return 'Checking accessibility issues...';
-                    if (currentStage.name === 'UX Analysis') return 'Analyzing UX patterns...';
-                    if (currentStage.name === 'AI Analysis') return 'Generating AI insights...';
+                    if (currentStage.name === 'Technical SEO') return 'Checking technical SEO issues...';
+                    if (currentStage.name === 'SEO Analysis') return 'Analyzing SEO and GEO signals...';
+                    if (currentStage.name === 'AI Summary') return 'Generating AI-powered SEO summary...';
                     return 'Processing...';
                   })()}
                 </p>
