@@ -263,13 +263,15 @@ export async function runCrawl(
     await desktopPage.evaluate(() => window.scrollTo(0, 0));
     await desktopPage.waitForTimeout(500);
 
-    // Capture FULL PAGE screenshot - we'll show only top 500px in UI
-    const desktopScreenshot = await desktopPage.screenshot({
-      fullPage: true, // Capture entire homepage
-    });
-    const desktopScreenshotPath = `runs/${runId}/screens/desktop.png`;
-    await storage.putObject(desktopScreenshotPath, Buffer.from(desktopScreenshot), 'image/png');
-    results.screenshots!.desktop = desktopScreenshotPath;
+    // Capture viewport screenshot (not full page — saves memory on constrained servers)
+    try {
+      const desktopScreenshot = await desktopPage.screenshot({ fullPage: false });
+      const desktopScreenshotPath = `runs/${runId}/screens/desktop.png`;
+      await storage.putObject(desktopScreenshotPath, Buffer.from(desktopScreenshot), 'image/png');
+      results.screenshots!.desktop = desktopScreenshotPath;
+    } catch (e) {
+      console.warn('Desktop screenshot failed, continuing without it:', (e as Error).message);
+    }
 
     const desktopHtml = await desktopPage.content();
     const desktopHtmlPath = `runs/${runId}/html/desktop.html`;
@@ -801,13 +803,15 @@ export async function runCrawl(
     await mobilePage.evaluate(() => window.scrollTo(0, 0));
     await mobilePage.waitForTimeout(500);
 
-    // Capture FULL PAGE screenshot - we'll show only top 500px in UI
-    const mobileScreenshot = await mobilePage.screenshot({
-      fullPage: true, // Capture entire homepage
-    });
-    const mobileScreenshotPath = `runs/${runId}/screens/mobile.png`;
-    await storage.putObject(mobileScreenshotPath, Buffer.from(mobileScreenshot), 'image/png');
-    results.screenshots!.mobile = mobileScreenshotPath;
+    // Capture viewport screenshot (not full page — saves memory)
+    try {
+      const mobileScreenshot = await mobilePage.screenshot({ fullPage: false });
+      const mobileScreenshotPath = `runs/${runId}/screens/mobile.png`;
+      await storage.putObject(mobileScreenshotPath, Buffer.from(mobileScreenshot), 'image/png');
+      results.screenshots!.mobile = mobileScreenshotPath;
+    } catch (e) {
+      console.warn('Mobile screenshot failed, continuing without it:', (e as Error).message);
+    }
 
     const mobileHtml = await mobilePage.content();
     const mobileHtmlPath = `runs/${runId}/html/mobile.html`;
