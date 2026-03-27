@@ -337,6 +337,15 @@ export async function runHeuristics(
     // BRAND AUTHORITY (GEO / AI PERCEPTION)
     // ═══════════════════════════════════════════════════════
 
+    // Gather page context for AI analysis
+    const pageContext = await page.evaluate(() => {
+      const title = document.title || '';
+      const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+      const h1 = document.querySelector('h1')?.textContent?.trim() || '';
+      const headings = Array.from(document.querySelectorAll('h2')).slice(0, 5).map(h => h.textContent?.trim()).filter(Boolean);
+      return { title, metaDesc, h1, headings };
+    });
+
     if (process.env.ANTHROPIC_API_KEY) {
       try {
         const Anthropic = (await import('@anthropic-ai/sdk')).default;
@@ -344,41 +353,91 @@ export async function runHeuristics(
         const hostname = new URL(url).hostname.replace(/^www\./, '');
         const brandName = hostname.split('.')[0];
 
-        const brandCheck = await ai.messages.create({
+        const geoAnalysis = await ai.messages.create({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
+          max_tokens: 800,
           temperature: 0,
           messages: [{
             role: 'user',
-            content: `I'm researching "${brandName}" (${hostname}). Answer these 3 questions briefly in JSON format:
-1. "known": true/false — Do you have knowledge about this brand?
-2. "description": A 1-sentence description of what they do (or "Unknown brand" if not known)
-3. "recommended": true/false — Would you recommend them if someone asked for services in their industry?
+            content: `Analyze this brand for AI search visibility. The website is ${hostname}.
+Page title: "${pageContext.title}"
+Meta description: "${pageContext.metaDesc}"
+H1: "${pageContext.h1}"
+Key sections: ${pageContext.headings.join(', ')}
 
-Respond with JSON only: {"known": bool, "description": "...", "recommended": bool}`
+Answer in JSON format:
+{
+  "brandAuthority": {
+    "known": true/false,
+    "description": "1-sentence description of what they do or 'Unknown brand'",
+    "recommended": true/false,
+    "authorityScore": 1-10 (how authoritative is this brand in AI recommendations)
+  },
+  "competitors": {
+    "topCompetitors": ["name1", "name2", "name3"],
+    "competitorAdvantages": "1-2 sentences on what competitors do better for online visibility",
+    "trafficThreats": "1-2 sentences on where competitors are likely stealing traffic"
+  },
+  "contentGaps": {
+    "missingTopics": ["topic1", "topic2", "topic3"],
+    "recommendation": "1-2 sentences on content this site should create to compete"
+  }
+}
+
+Respond with JSON only.`
           }],
         });
 
-        const textBlock = brandCheck.content.find((b: any) => b.type === 'text') as any;
+        const textBlock = geoAnalysis.content.find((b: any) => b.type === 'text') as any;
         if (textBlock?.text) {
           try {
             const cleaned = (textBlock.text as string).replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
-            const brandData = JSON.parse(cleaned);
+            const data = JSON.parse(cleaned);
 
-            if (!brandData.known) {
-              findings.push({
-                issue: 'Brand not recognized by AI search engines',
-                why: `When asked about "${brandName}", AI assistants (ChatGPT, Claude, Perplexity) don't have knowledge of this brand. This means the brand is invisible in AI-powered search and recommendation systems, which are increasingly replacing traditional search.`,
-                fix: 'Build brand authority: publish original content, get featured in industry publications, ensure structured data (Organization schema) is present, and create a clear brand entity across the web (Wikipedia, Crunchbase, LinkedIn, industry directories).',
-                evidence: `AI response: "${brandData.description}"`,
-              });
-            } else if (!brandData.recommended) {
-              findings.push({
-                issue: 'Brand known but not recommended by AI search engines',
-                why: `AI assistants know about "${brandName}" but wouldn't actively recommend it. In the shift from search to AI-powered recommendations, brands need to be not just known but trusted enough to be recommended.`,
-                fix: 'Strengthen brand signals: add more case studies, testimonials, and proof points to your site. Get third-party reviews and mentions. Ensure your content clearly communicates expertise and authority in your niche.',
-                evidence: `AI perception: "${brandData.description}"`,
-              });
+            // Brand Authority findings
+            if (data.brandAuthority) {
+              const ba = data.brandAuthority;
+              if (!ba.known) {
+                findings.push({
+                  issue: 'Brand not recognized by AI search engines',
+                  why: `AI assistants (ChatGPT, Claude, Perplexity) have no knowledge of "${brandName}". As search shifts to AI-powered recommendations, invisible brands lose traffic to competitors that AI does recommend.`,
+                  fix: 'Build brand entity: publish original research, get featured in industry publications, add Organization schema, and establish presence on Wikipedia, Crunchbase, LinkedIn, and industry directories.',
+                  evidence: `AI perception: "${ba.description}"`,
+                });
+              } else if (!ba.recommended || ba.authorityScore < 5) {
+                findings.push({
+                  issue: `Low AI authority score (${ba.authorityScore}/10)`,
+                  why: `AI assistants know "${brandName}" but rate it ${ba.authorityScore}/10 for authority. Brands scoring below 7 are rarely recommended by AI search engines, losing traffic to higher-authority competitors.`,
+                  fix: 'Strengthen authority signals: publish case studies with metrics, get third-party reviews, earn mentions in industry publications, and ensure consistent NAP (name, address, phone) across the web.',
+                  evidence: `AI perception: "${ba.description}"`,
+                });
+              }
+            }
+
+            // Competitive Threat findings
+            if (data.competitors) {
+              const comp = data.competitors;
+              if (comp.topCompetitors && comp.topCompetitors.length > 0) {
+                findings.push({
+                  issue: `${comp.topCompetitors.length} competitors threatening search visibility`,
+                  why: `${comp.competitorAdvantages || 'Competitors have stronger online presence.'} ${comp.trafficThreats || ''}`.trim(),
+                  fix: `Analyze what ${comp.topCompetitors.slice(0, 2).join(' and ')} are doing for SEO. Create content targeting their ranking keywords. Build backlinks from the same industry sources they use.`,
+                  evidence: `Top competitors: ${comp.topCompetitors.join(', ')}`,
+                });
+              }
+            }
+
+            // Content Gap findings
+            if (data.contentGaps) {
+              const gaps = data.contentGaps;
+              if (gaps.missingTopics && gaps.missingTopics.length > 0) {
+                findings.push({
+                  issue: `${gaps.missingTopics.length} content gaps vs competitors`,
+                  why: `Competitors are ranking for topics this site doesn't cover. Missing content means missing search traffic and AI recommendations for these subjects.`,
+                  fix: `Create content for: ${gaps.missingTopics.join(', ')}. ${gaps.recommendation || ''}`.trim(),
+                  evidence: `Missing topics: ${gaps.missingTopics.join(', ')}`,
+                });
+              }
             }
           } catch { /* JSON parse error, skip */ }
         }
