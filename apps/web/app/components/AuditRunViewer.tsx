@@ -197,31 +197,25 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   // Merge all findings: database findings (heuristics, Axe, LLM) + summaryJson findings (AI curated)
   // Database findings are the source of truth and include ALL findings from all sources
   // SummaryJson findings are AI-curated but we still want to show all database findings
+  const isAuditDone = run.status === 'completed' || run.status === 'partial' || run.status === 'failed';
+
   const findingsToRender = useMemo(() => {
-    // Always start with database findings (includes heuristics, Axe, and LLM findings)
+    // Only show findings once the audit is fully done — prevents partial results from showing
+    if (!isAuditDone) return [];
+
     const dbFindings = run.fallbackFindings.map((f, index) => ({
       ...f,
       kind: normalizeKind(f.kind || 'Performance'),
-      _index: index, // Store original index for selection tracking
+      _index: index,
     }));
 
-    // If summaryJson has findings, we might want to merge them, but database findings are authoritative
-    // Since LLM findings are already in the database, summaryJson.findings are just a subset
-    // So we use database findings as the primary source
-    // However, if we want to prioritize the AI's curated findings, we could merge and deduplicate
-    
-    // For now, use all database findings (this includes everything: heuristics, Axe, LLM)
-    // Sort by impact (High first)
     return dbFindings.sort((a, b) => {
-      // First sort by impact (High > Medium > Low)
       const impactOrder: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
       const impactDiff = (impactOrder[b.impact] || 0) - (impactOrder[a.impact] || 0);
       if (impactDiff !== 0) return impactDiff;
-      
-      // Finally sort by issue text for consistency
       return a.issue.localeCompare(b.issue);
     });
-  }, [run.fallbackFindings]);
+  }, [run.fallbackFindings, isAuditDone]);
 
   // Group findings by kind (Assign To)
   const findingsByKind = useMemo(() => {
