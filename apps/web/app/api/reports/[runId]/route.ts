@@ -6,46 +6,22 @@ import { AuditTable } from '@/app/components/AuditTable';
 // Map database enum values to display strings
 function mapKindToDisplay(kind: FindingKind): string {
   switch (kind) {
-    case FindingKind.MarketingStrategy:
-      return 'Marketing Strategy';
-    case FindingKind.Copywriting:
-      return 'Copywriting';
-    case FindingKind.UXUI:
-      return 'UX/UI';
-    default:
-      return 'UX/UI';
+    case FindingKind.TechnicalSEO: return 'Technical SEO';
+    case FindingKind.OnPageSEO: return 'On-Page SEO';
+    case FindingKind.Performance: return 'Performance';
+    case FindingKind.Links: return 'Links';
+    default: return 'Technical SEO';
   }
 }
 
-// Normalize kind values from summaryJson (handles old enum values)
+// Normalize kind values from summaryJson
 function normalizeKindFromSummary(kind: string): string {
-  const kindLower = kind.toLowerCase().trim();
-  // Map old enum values to new assignment values
-  if (kindLower === 'performance' || kindLower === 'perf' || kindLower === 'speed') {
-    return 'Marketing Strategy';
-  }
-  if (kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
-    return 'UX/UI';
-  }
-  if (kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
-    return 'Copywriting';
-  }
-  // Check for new values (case-insensitive)
-  if (kindLower === 'marketing strategy' || kindLower === 'marketingstrategy') {
-    return 'Marketing Strategy';
-  }
-  if (kindLower === 'copywriting') {
-    return 'Copywriting';
-  }
-  if (kindLower === 'ux/ui' || kindLower === 'uxui') {
-    return 'UX/UI';
-  }
-  // Map Motion and Generalist to UX/UI as fallback
-  if (kindLower === 'motion' || kindLower === 'animation' || kindLower === 'transition' || kindLower === 'generalist' || kindLower === 'general') {
-    return 'UX/UI';
-  }
-  // Default fallback
-  return 'UX/UI';
+  const k = kind.toLowerCase().trim();
+  if (k.includes('technical')) return 'Technical SEO';
+  if (k.includes('on-page') || k.includes('onpage')) return 'On-Page SEO';
+  if (k.includes('performance') || k.includes('speed') || k.includes('core web')) return 'Performance';
+  if (k.includes('link')) return 'Links';
+  return 'Technical SEO';
 }
 
 export async function GET(
