@@ -549,7 +549,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
           <div className="mb-12 pt-16">
             <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#4ADE80' }}>Performance Overview</h2>
+                <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Performance Overview</h2>
                 <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
                   Visual preview and key performance metrics
                 </p>
@@ -757,7 +757,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.lcp, 2.5), fontFamily: 'var(--font-instrument-serif), serif' }}
+                            style={{ color: getScoreColor(lighthouseMetrics.lcp, 2.5) }}
                           >
                             {lighthouseMetrics.lcp?.toFixed(2)}s
           </div>
@@ -774,7 +774,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.cls, 0.1), fontFamily: 'var(--font-instrument-serif), serif' }}
+                            style={{ color: getScoreColor(lighthouseMetrics.cls, 0.1) }}
                           >
                             {lighthouseMetrics.cls?.toFixed(3)}
             </div>
@@ -791,7 +791,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <div className="mt-auto">
                           <div 
                             className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.inp, 200), fontFamily: 'var(--font-instrument-serif), serif' }}
+                            style={{ color: getScoreColor(lighthouseMetrics.inp, 200) }}
                           >
                             {lighthouseMetrics.inp?.toFixed(0)}ms
             </div>
@@ -809,7 +809,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                           <div className="mt-auto">
                             <div 
                               className="text-6xl font-light mb-1"
-                              style={{ color: getScoreColor(lighthouseMetrics.tbt, 200), fontFamily: 'var(--font-instrument-serif), serif' }}
+                              style={{ color: getScoreColor(lighthouseMetrics.tbt, 200) }}
                             >
                               {lighthouseMetrics.tbt?.toFixed(0)}ms
                             </div>
@@ -822,7 +822,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                         <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
                           <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#666666' }}>Total Size</div>
                           <div className="mt-auto">
-                            <div className="text-6xl font-light mb-1" style={{ color: '#4ADE80', fontFamily: 'var(--font-instrument-serif), serif' }}>
+                            <div className="text-6xl font-light mb-1" style={{ color: '#4ADE80' }}>
                               {(lighthouseMetrics.totalBytes / 1024 / 1024).toFixed(2)} MB
                             </div>
                             <div className="text-sm" style={{ color: '#666666' }}>
@@ -852,13 +852,13 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             <section className="space-y-6">
               <div className="mb-6 mt-24">
                 <div>
-                  <h2 className="text-5xl font-light italic mb-1 font-serif" style={{ color: '#4ADE80' }}>Findings</h2>
+                  <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Findings</h2>
                   {hasSummary && run.summaryJson && (
                     <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
-                      {run.stats.highImpactFindings > 0 && `${run.stats.highImpactFindings} high-impact ${run.stats.highImpactFindings === 1 ? 'item' : 'items'} need attention. `}
-                      {findingsToRender.length > 0 && `This audit identified ${findingsToRender.length} ${findingsToRender.length === 1 ? 'issue' : 'issues'} across design, UX, messaging, and performance. `}
+                      {run.stats.highImpactFindings > 0 && `${run.stats.highImpactFindings} high-impact ${run.stats.highImpactFindings === 1 ? 'issue' : 'issues'} found. `}
+                      {findingsToRender.length > 0 && `This audit identified ${findingsToRender.length} SEO ${findingsToRender.length === 1 ? 'issue' : 'issues'} across technical health, on-page optimization, performance, and link structure. `}
                       <br />
-                      Review the findings below to prioritize improvements and optimize your website's conversion&nbsp;potential.
+                      Review the findings below to prioritize fixes and improve your search&nbsp;visibility.
                     </p>
                   )}
                 </div>
