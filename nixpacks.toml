@@ -1,5 +1,4 @@
 [phases.setup]
-# System dependencies for Playwright/Chromium (needed by worker)
 nixPkgs = [
   "nodejs-18_x",
   "pnpm",
