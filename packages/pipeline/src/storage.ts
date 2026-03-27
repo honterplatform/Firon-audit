@@ -128,8 +128,9 @@ export class DatabaseStorageProvider implements StorageProvider {
   }
 
   async putObject(key: string, buffer: Buffer, contentType: string): Promise<string> {
-    // Dynamic require to avoid circular dependency — @audit/db is available at runtime in the monorepo
-    const { prisma } = require('@audit/db') as any;
+    // Hidden from webpack static analysis — resolved at runtime in the monorepo
+    const moduleName = '@audit' + '/db';
+    const { prisma } = require(moduleName) as any;
     const b64 = buffer.toString('base64');
     await prisma.storedFile.upsert({
       where: { key },
