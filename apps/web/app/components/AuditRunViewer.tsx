@@ -138,7 +138,6 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    let hasReloaded = false;
 
     const poll = async () => {
       try {
@@ -163,11 +162,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
         if (data.status === 'running' || data.status === 'queued') {
           timer = setTimeout(poll, POLL_INTERVAL_MS);
-        } else if (isPolling && !hasReloaded) {
-          // Audit just finished — reload to get full server-rendered page with findings
-          hasReloaded = true;
-          window.location.reload();
         } else {
+          // Audit done — data already updated via setRun, no reload needed
           setIsPolling(false);
         }
       } catch (err) {
@@ -252,19 +248,15 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     });
   }, [findingsByKind]);
 
-  // Active tab state - initialize after availableTabs is computed
-  const [activeTab, setActiveTab] = useState<string>('');
+  // Active tab — initialize synchronously from available tabs
+  const [activeTab, setActiveTab] = useState<string>(() => availableTabs[0] || '');
 
-  // Initialize and update active tab when available tabs change
-  useEffect(() => {
-    if (availableTabs.length > 0) {
-      if (!activeTab || !availableTabs.includes(activeTab as any)) {
-        setActiveTab(availableTabs[0]);
-      }
-    }
-  }, [availableTabs]);
+  // Update active tab if current selection becomes invalid
+  if (availableTabs.length > 0 && (!activeTab || !availableTabs.includes(activeTab as any))) {
+    setActiveTab(availableTabs[0]);
+  }
 
-  // Get current tab findings with their indices in the full list
+  // Get current tab findings
   const currentTabFindings = useMemo(() => {
     const kind = activeTab as keyof typeof findingsByKind;
     return (findingsByKind[kind] || []) as typeof findingsToRender;

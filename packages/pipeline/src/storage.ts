@@ -100,12 +100,10 @@ export class S3StorageProvider implements StorageProvider {
 
 export class LocalStorageProvider implements StorageProvider {
   private baseDir: string;
-  private baseUrl: string;
 
   constructor() {
     this.baseDir = process.env.LOCAL_STORAGE_DIR || './data/uploads';
-    this.baseUrl = process.env.APP_BASE_URL || 'http://localhost:5001';
-    fs.mkdirSync(this.baseDir, { recursive: true });
+    try { fs.mkdirSync(this.baseDir, { recursive: true }); } catch { /* read-only FS is fine for web service */ }
   }
 
   async putObject(key: string, buffer: Buffer, contentType: string): Promise<string> {
@@ -116,7 +114,8 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async getSignedUrl(key: string): Promise<string> {
-    return `${this.baseUrl}/api/storage/${encodeURIComponent(key)}`;
+    // Relative URL — works regardless of APP_BASE_URL config
+    return `/api/storage/${encodeURIComponent(key)}`;
   }
 }
 
