@@ -120,6 +120,23 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
   });
   const [savingId, setSavingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteAudit = async (runId: string) => {
+    if (!confirm('Delete this audit? This cannot be undone.')) return;
+    setDeletingId(runId);
+    try {
+      const res = await fetch(`/api/audits/${runId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      setDeletedIds((prev) => new Set(prev).add(runId));
+      setToast('Audit deleted');
+    } catch {
+      setToast('Failed to delete audit');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const updateContact = async (
     contactId: string,
@@ -257,10 +274,12 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                 <th className="text-left px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
                   Contact
                 </th>
+                <th className="text-right px-6 py-3.5 font-medium text-xs uppercase tracking-wider" style={{ color: '#666666' }}>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {runs.map((run) => {
+              {runs.filter((r) => !deletedIds.has(r.id)).map((run) => {
                 const runContacts = contacts[run.id] ?? [];
                 const latestContact = runContacts[0] ?? null;
                 const isExpanded = expandedRunId === run.id;
@@ -334,13 +353,24 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
                           <span className="text-xs" style={{ color: '#212121' }}>No contact</span>
                         )}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteAudit(run.id); }}
+                          disabled={deletingId === run.id}
+                          className="text-xs px-2 py-1 rounded-lg transition-all hover:opacity-80"
+                          style={{ color: '#666666' }}
+                          title="Delete audit"
+                        >
+                          {deletingId === run.id ? '...' : '✕'}
+                        </button>
+                      </td>
                     </tr>
 
                     {/* Expanded panel */}
                     {isExpanded && runContacts.length > 0 && (
                       <tr key={`${run.id}-detail`}>
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-6 pb-4 pt-0"
                           style={{
                             backgroundColor: '#111111',
@@ -366,7 +396,7 @@ export function AdminDashboard({ runs, activeTab, stats }: Props) {
               })}
               {runs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
+                  <td colSpan={6} className="px-6 py-16 text-center">
                     <div className="text-sm mb-1" style={{ color: '#666666' }}>
                       No audit runs found
                     </div>

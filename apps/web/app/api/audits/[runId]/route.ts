@@ -199,3 +199,16 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ runId: string }> }
+) {
+  try {
+    const { runId } = await context.params;
+    await prisma.auditRun.delete({ where: { id: runId } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete audit' }, { status: 500 });
+  }
+}
+

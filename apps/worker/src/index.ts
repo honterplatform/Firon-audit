@@ -76,4 +76,4 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// deploy 1774621695
+// v2 — Claude with Haiku fallback
