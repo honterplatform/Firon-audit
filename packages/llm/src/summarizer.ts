@@ -157,7 +157,7 @@ export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummar
     apiKey.includes('your-key');
 
   if (isPlaceholderKey) {
-    const error = new Error('OPENAI_API_KEY missing or placeholder; cannot produce authenticated summary');
+    const error = new Error('ANTHROPIC_API_KEY missing or placeholder; cannot produce authenticated summary');
     logger.error('OPENAI summarization unavailable', error);
     throw error;
   }
