@@ -963,6 +963,67 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             {run.summaryJson?.plan && (
               <FindingsPlan plan={run.summaryJson.plan} />
             )}
+
+            {/* Locked Premium Data Section */}
+            {isAuditDone && findingsToRender.length > 0 && (
+              <div className="mt-12 relative">
+                <div className="rounded-xl p-8 relative overflow-hidden" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
+                  {/* Blur overlay */}
+                  <div className="absolute inset-0 backdrop-blur-[2px]" style={{ backgroundColor: 'rgba(15, 15, 15, 0.4)' }} />
+
+                  {/* Blurred fake data behind */}
+                  <div className="opacity-30 select-none pointer-events-none">
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
+                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Domain Authority</div>
+                        <div className="text-3xl font-light" style={{ color: '#FB3B24' }}>██</div>
+                      </div>
+                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
+                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Backlink Trust Flow</div>
+                        <div className="text-3xl font-light" style={{ color: '#FBBF24' }}>██</div>
+                      </div>
+                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
+                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Competitor Gap</div>
+                        <div className="text-3xl font-light" style={{ color: '#4ADE80' }}>██ keywords</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
+                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Branded vs Non-Branded Traffic</div>
+                        <div className="h-4 rounded-full" style={{ backgroundColor: '#212121' }}><div className="h-4 rounded-full w-1/3" style={{ backgroundColor: '#FB3B24' }} /></div>
+                      </div>
+                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
+                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Backlink Velocity (30d)</div>
+                        <div className="h-4 rounded-full" style={{ backgroundColor: '#212121' }}><div className="h-4 rounded-full w-2/3" style={{ backgroundColor: '#FBBF24' }} /></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lock overlay content */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(251, 59, 36, 0.15)' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="11" width="18" height="11" rx="2" stroke="#FB3B24" strokeWidth="2"/>
+                        <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="#FB3B24" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-medium mb-2" style={{ color: '#ffffff' }}>Off-Page Authority &amp; Competitor Market Share</h3>
+                    <p className="text-sm max-w-lg mb-6" style={{ color: '#888888' }}>
+                      This automated scan checks your technical foundation. However, it cannot extract your proprietary Domain Authority, Backlink Velocity, or Branded vs. Non-Branded traffic splits. To see exactly how much market share you are losing to competitors, request a Deep-Dive Manual Audit.
+                    </p>
+                    <a
+                      href="https://fironmarketing.com/audit"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 text-sm font-medium rounded-full transition-all hover:opacity-90"
+                      style={{ backgroundColor: '#FB3B24', color: '#ffffff' }}
+                    >
+                      Unlock Enterprise Data — Speak to an Analyst
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
             
