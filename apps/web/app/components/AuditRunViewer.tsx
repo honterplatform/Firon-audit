@@ -136,6 +136,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   const [pdfEmailInput, setPdfEmailInput] = useState('');
   const chatRef = useRef<AuditChatRef>(null);
 
+  const extraFetchCount = useRef(0);
+
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -162,20 +164,13 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         setError(null);
 
         if (data.status === 'running' || data.status === 'queued') {
+          extraFetchCount.current = 0;
           timer = setTimeout(poll, POLL_INTERVAL_MS);
-        } else if (isPolling) {
-          // Audit just finished — wait a moment for all findings to be written, then fetch final data
+        } else if (extraFetchCount.current < 3) {
+          // Audit is done but keep fetching a few more times to catch late-arriving findings
+          extraFetchCount.current += 1;
           setIsPolling(false);
-          setTimeout(async () => {
-            try {
-              const finalResp = await fetch(`/api/audits/${runId}`, { cache: 'no-store' });
-              if (finalResp.ok) {
-                const finalData = (await finalResp.json()) as AuditRun;
-                setRun(finalData);
-                if (finalData.screenshotUrls) setScreenshotUrls(prev => ({ ...prev, ...finalData.screenshotUrls }));
-              }
-            } catch {}
-          }, 3000);
+          timer = setTimeout(poll, 3000);
         }
       } catch (err) {
         console.error('Failed to poll audit status', err);
