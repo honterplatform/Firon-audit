@@ -567,8 +567,8 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="px-4 py-2 text-sm font-medium rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:opacity-90 flex-shrink-0"
-              style={{ backgroundColor: (!input.trim() || isLoading) ? undefined : '#FB3B24', color: (!input.trim() || isLoading) ? undefined : '#ffffff' }}
+              className="px-4 py-2 text-sm font-medium rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90 flex-shrink-0"
+              style={{ backgroundColor: (!input.trim() || isLoading) ? '#2A2A2A' : '#FB3B24', color: (!input.trim() || isLoading) ? '#666666' : '#ffffff' }}
             >
               {isLoading ? 'Sending...' : 'Send'}
             </button>
