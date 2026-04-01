@@ -37,7 +37,8 @@ export async function POST(
     // Store lead information
     // For now, we'll log it and could store in a leads table later
     // Notify Slack
-    auditLeadAlert({ name: parsed.name, email: parsed.email, target: run.target, runId, type: 'lead' });
+    await auditLeadAlert({ name: parsed.name, email: parsed.email, target: run.target, runId, type: 'lead' });
+    console.log('Slack notification sent for lead:', parsed.email);
 
     return NextResponse.json({ success: true });
   } catch (error) {

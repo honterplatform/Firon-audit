@@ -43,7 +43,8 @@ export async function POST(
     });
 
     // Notify Slack
-    auditLeadAlert({ name: parsed.name, email: parsed.email, phone: parsed.phone, target: run.target, runId, type: 'sales' });
+    await auditLeadAlert({ name: parsed.name, email: parsed.email, phone: parsed.phone, target: run.target, runId, type: 'sales' });
+    console.log('Slack notification sent for sales contact:', parsed.email);
 
     return NextResponse.json({ success: true });
   } catch (error) {

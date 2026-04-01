@@ -47,3 +47,4 @@ export function auditLeadAlert(data: { name?: string; email: string; phone?: str
 export function auditCompletedAlert(data: { target: string; runId: string; findingsCount: number }) {
   return notifySlack(`✅ Audit completed for *${data.target}* — ${data.findingsCount} findings. <${process.env.APP_BASE_URL || 'https://auditweb-production-ce4e.up.railway.app'}/audits/${data.runId}|View Audit>`);
 }
+// slack 1775059932
