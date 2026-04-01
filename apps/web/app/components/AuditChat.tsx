@@ -274,11 +274,8 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
       sendMessage(message);
     },
     openLeadForm: () => {
-      console.log('openLeadForm called, setting showLeadForm to true');
-      setShowLeadForm(true);
-      // Ensure scroll to bottom when form opens
+      setShowSalesForm(true);
       setTimeout(() => {
-        console.log('Scrolling to bottom, messagesContainerRef:', messagesContainerRef.current);
         messagesContainerRef.current?.scrollTo({
           top: messagesContainerRef.current.scrollHeight,
           behavior: 'smooth'
