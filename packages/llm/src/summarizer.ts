@@ -673,6 +673,7 @@ type NormalizedExperiment = {
 type NormalizedPlan = {
   quickWins: string[];
   next: string[];
+  scaleAuthority?: string[];
   experiments: NormalizedExperiment[];
 };
 
@@ -836,6 +837,7 @@ function normalizeLlmOutput(raw: unknown): NormalizedSummary {
 
   const quickWins = normalizeStringArray((rawPlan as any).quickWins, 5);
   const next = normalizeStringArray((rawPlan as any).next, 5);
+  const scaleAuthority = normalizeStringArray((rawPlan as any).scaleAuthority, 5);
 
   const experimentsRaw = Array.isArray((rawPlan as any).experiments)
     ? ((rawPlan as any).experiments as Array<Record<string, unknown>>)
@@ -852,6 +854,7 @@ function normalizeLlmOutput(raw: unknown): NormalizedSummary {
     plan: {
       quickWins,
       next,
+      scaleAuthority,
       experiments,
     },
   };
