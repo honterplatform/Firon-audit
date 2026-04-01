@@ -316,9 +316,9 @@ FIRON SOLUTION FRAMEWORKS — reference these in your "fix" field:
 - "The Cluster Bomb" — 50+ interlinked content pieces to saturate the Knowledge Graph and force AI to recognize you as the Source of Truth.
 
 PLAN STRUCTURE — the plan MUST follow Firon's three-phase methodology:
-- quickWins = "Phase 1: Infrastructure Sprint" items — fix the technical foundation (metadata, schema, sitemap cleanup)
-- next = "Phase 2: AEO & GEO" items — structured data overhaul, AI-optimized content, trust engineering
-- experiments = "Phase 3: Scale & Authority" items — content cluster strategy, AI advertising, authority amplification
+- quickWins = "Phase 1: Infrastructure Sprint" items — fix the technical foundation (metadata, schema, sitemap cleanup). Use Velocity Engine framing.
+- next = "Phase 2: AEO & GEO" items — structured data overhaul, AI-optimized content, trust engineering, Answer-First content.
+- scaleAuthority = "Phase 3: Scale & Authority" items — content cluster strategy (Cluster Bomb), AI advertising, authority amplification, Knowledge Graph saturation. ALWAYS include 2-3 items here.
 
 TONE:
 - Frame every finding as a BUSINESS LIABILITY, not just a technical error
@@ -373,7 +373,7 @@ Generate 5-8 SEO findings using categories: "Technical SEO", "On-Page SEO", "Per
 Use Firon's liability frameworks (Identity Void, Empty Aisle, Hallucination Risk, etc.) when the data matches.
 Frame findings as business risks, not just technical errors. Connect to the Invisibility Tax.
 In the fix field, reference Firon solutions (Velocity Engine, Structured Attribute Model, Cluster Bomb, Answer-First content).
-Structure the plan as: quickWins = Phase 1 Infrastructure Sprint, next = Phase 2 AEO & GEO, experiments = Phase 3 Scale & Authority.`;
+Structure the plan as: quickWins = Phase 1 Infrastructure Sprint, next = Phase 2 AEO & GEO, scaleAuthority = Phase 3 Scale & Authority (ALWAYS include 2-3 items like Cluster Bomb strategy, AI advertising, authority amplification).`;
 
   const maxRetries = 2;
   let lastError: Error | null = null;
@@ -892,8 +892,8 @@ function ensurePlan(summary: AuditSummaryType, goal?: string): AuditSummaryType 
 
   // Generate experiments from findings if AI didn't provide any
   const experiments =
-    summary.plan.experiments.length > 0
-      ? summary.plan.experiments
+    (summary.plan.experiments ?? []).length > 0
+      ? summary.plan.experiments ?? []
       : generateExperimentsFromFindings(sortedFindings, goal);
 
   return {

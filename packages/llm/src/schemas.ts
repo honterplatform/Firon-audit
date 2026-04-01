@@ -13,12 +13,13 @@ export const Finding = z.object({
 export const Plan = z.object({
   quickWins: z.array(z.string()).max(5),
   next: z.array(z.string()).max(5),
+  scaleAuthority: z.array(z.string()).max(5).optional(),
   experiments: z.array(z.object({
     hypothesis: z.string(),
     variant: z.string(),
     metric: z.string(),
     risk: z.string().optional(),
-  })).max(3),
+  })).max(3).optional(),
 });
 
 export const AuditSummary = z.object({

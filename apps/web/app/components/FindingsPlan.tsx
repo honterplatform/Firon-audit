@@ -3,7 +3,8 @@
 interface Plan {
   quickWins: string[];
   next: string[];
-  experiments: Array<{
+  scaleAuthority?: string[];
+  experiments?: Array<{
     hypothesis: string;
     variant: string;
     metric: string;
@@ -16,7 +17,8 @@ interface FindingsPlanProps {
 }
 
 export function FindingsPlan({ plan }: FindingsPlanProps) {
-  const hasContent = plan.quickWins.length > 0 || plan.next.length > 0 || plan.experiments.length > 0;
+  const phase3Items = plan.scaleAuthority ?? [];
+  const hasContent = plan.quickWins.length > 0 || plan.next.length > 0 || phase3Items.length > 0;
   if (!hasContent) return null;
 
   return (
@@ -66,7 +68,7 @@ export function FindingsPlan({ plan }: FindingsPlanProps) {
         )}
 
         {/* Phase 3 */}
-        {plan.experiments.length > 0 && (
+        {phase3Items.length > 0 && (
           <div className="rounded-xl p-5" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(74, 222, 128, 0.15)', color: '#4ADE80' }}>Phase 3</span>
@@ -74,10 +76,10 @@ export function FindingsPlan({ plan }: FindingsPlanProps) {
             <h3 className="text-lg font-medium mb-1" style={{ color: '#ffffff' }}>Scale &amp; Authority</h3>
             <p className="text-xs mb-4" style={{ color: '#666666' }}>Content clusters. AI advertising. Authority amplification.</p>
             <ul className="space-y-2">
-              {plan.experiments.map((exp, i) => (
+              {phase3Items.map((item, i) => (
                 <li key={i} className="flex gap-2 text-sm" style={{ color: '#CCCCCC' }}>
                   <span style={{ color: '#4ADE80' }}>→</span>
-                  <span>{exp.hypothesis}</span>
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
