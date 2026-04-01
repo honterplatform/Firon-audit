@@ -163,9 +163,19 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
         if (data.status === 'running' || data.status === 'queued') {
           timer = setTimeout(poll, POLL_INTERVAL_MS);
-        } else {
-          // Audit done — data already updated via setRun, no reload needed
+        } else if (isPolling) {
+          // Audit just finished — wait a moment for all findings to be written, then fetch final data
           setIsPolling(false);
+          setTimeout(async () => {
+            try {
+              const finalResp = await fetch(`/api/audits/${runId}`, { cache: 'no-store' });
+              if (finalResp.ok) {
+                const finalData = (await finalResp.json()) as AuditRun;
+                setRun(finalData);
+                if (finalData.screenshotUrls) setScreenshotUrls(prev => ({ ...prev, ...finalData.screenshotUrls }));
+              }
+            } catch {}
+          }, 3000);
         }
       } catch (err) {
         console.error('Failed to poll audit status', err);
