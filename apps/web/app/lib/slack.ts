@@ -21,34 +21,17 @@ export async function notifySlack(message: string, blocks?: any[]) {
 }
 
 export function auditLeadAlert(data: { name?: string; email: string; phone?: string; target: string; runId: string; type: 'lead' | 'sales' }) {
-  const emoji = data.type === 'sales' ? '🔥' : '📩';
-  const label = data.type === 'sales' ? 'Sales Contact Request' : 'New Lead Captured';
+  const label = data.type === 'sales' ? ':fire: Sales Contact Request' : ':envelope: New Lead Captured';
+  const auditUrl = `${process.env.APP_BASE_URL || 'https://auditweb-production-ce4e.up.railway.app'}/audits/${data.runId}`;
+  const fields = [
+    `*Name:* ${data.name || 'Not provided'}`,
+    `*Email:* ${data.email}`,
+    ...(data.phone ? [`*Phone:* ${data.phone}`] : []),
+    `*Website:* ${data.target}`,
+    `<${auditUrl}|View Audit>`,
+  ];
 
-  return notifySlack('', [
-    {
-      type: 'header',
-      text: { type: 'plain_text', text: `${emoji} ${label}` },
-    },
-    {
-      type: 'section',
-      fields: [
-        { type: 'mrkdwn', text: `*Name:*\n${data.name || 'Not provided'}` },
-        { type: 'mrkdwn', text: `*Email:*\n${data.email}` },
-        ...(data.phone ? [{ type: 'mrkdwn', text: `*Phone:*\n${data.phone}` }] : []),
-        { type: 'mrkdwn', text: `*Website Audited:*\n${data.target}` },
-      ],
-    },
-    {
-      type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: 'View Audit' },
-          url: `${process.env.APP_BASE_URL || 'https://auditweb-production-ce4e.up.railway.app'}/audits/${data.runId}`,
-        },
-      ],
-    },
-  ]);
+  return notifySlack(`${label}\n${fields.join('\n')}`);
 }
 
 export function auditCompletedAlert(data: { target: string; runId: string; findingsCount: number }) {
