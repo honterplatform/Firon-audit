@@ -1,13 +1,20 @@
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
-
 export async function notifySlack(message: string, blocks?: any[]) {
-  if (!SLACK_WEBHOOK_URL) return;
+  const url = process.env.SLACK_WEBHOOK_URL;
+  console.log('Slack webhook URL present:', !!url);
+  if (!url) {
+    console.warn('SLACK_WEBHOOK_URL not set, skipping notification');
+    return;
+  }
   try {
-    await fetch(SLACK_WEBHOOK_URL, {
+    const payload = blocks ? { blocks, text: message || 'New notification' } : { text: message };
+    console.log('Sending Slack payload:', JSON.stringify(payload).substring(0, 200));
+    const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-type': 'application/json' },
-      body: JSON.stringify(blocks ? { blocks } : { text: message }),
+      body: JSON.stringify(payload),
     });
+    const text = await resp.text();
+    console.log('Slack response:', resp.status, text);
   } catch (e) {
     console.error('Slack notification failed:', e);
   }
