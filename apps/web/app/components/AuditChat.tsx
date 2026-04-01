@@ -122,11 +122,11 @@ export const AuditChat = forwardRef<AuditChatRef, AuditChatProps>(
       const introMessage: Message = {
         id: `intro-${messageIdCounter.current}`,
         role: 'assistant',
-        content: `Hi! 👋 Your audit for ${target} is complete. I found ${stats.findingsCount} issues, with ${stats.highImpactFindings} high-impact items that need attention.
+        content: `Your audit for ${target} is complete — we found ${stats.findingsCount} issues, ${stats.highImpactFindings} of which are high-impact and costing you visibility right now.
 
-Would you like to know how we can help you fix these issues? Our team specializes in SEO improvements, performance optimization, and on-page strategy - exactly the kind of work needed to address these findings.
+The good news: most of these can be fixed fast. Our Infrastructure Sprint typically resolves the critical technical debt in the first month using our Velocity Engine.
 
-What would you like to know more about?`,
+Want me to walk you through the key liabilities, or would you prefer to get straight on a call with our SEO team to discuss the fix?`,
         timestamp: new Date(), // Safe to use in useEffect (client-only)
       };
       
@@ -540,10 +540,10 @@ What would you like to know more about?`,
             className="py-3 px-4 text-sm font-medium rounded-full transition-all hover:opacity-90"
             style={{ backgroundColor: '#FB3B24', color: '#ffffff' }}
           >
-            I want to get started 🚀
+            Talk to an SEO Strategist 🚀
           </button>
           <p className="text-xs mt-2" style={{ color: '#666666' }}>
-            Click here to learn how we can elevate your brand
+            Get a custom fix plan from our senior team
           </p>
         </div>
         

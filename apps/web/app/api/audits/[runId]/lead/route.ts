@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@audit/db';
+import { auditLeadAlert } from '@/app/lib/slack';
 
 const leadSchema = z.object({
   email: z.string().email(),
@@ -35,26 +36,8 @@ export async function POST(
 
     // Store lead information
     // For now, we'll log it and could store in a leads table later
-    console.log('Lead captured:', {
-      runId,
-      target: run.target,
-      email: parsed.email,
-      name: parsed.name,
-      company: parsed.company,
-      selectedCategories: parsed.selectedCategories || [],
-      categoryOrder: parsed.categoryOrder || [],
-      timestamp: new Date().toISOString(),
-    });
-
-    // TODO: Store in database if you add a Lead model
-    // await prisma.lead.create({
-    //   data: {
-    //     runId,
-    //     email: parsed.email,
-    //     name: parsed.name,
-    //     company: parsed.company,
-    //   },
-    // });
+    // Notify Slack
+    auditLeadAlert({ name: parsed.name, email: parsed.email, target: run.target, runId, type: 'lead' });
 
     return NextResponse.json({ success: true });
   } catch (error) {

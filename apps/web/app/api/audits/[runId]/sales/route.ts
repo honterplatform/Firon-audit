@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@audit/db';
+import { auditLeadAlert } from '@/app/lib/slack';
 
 const salesSchema = z.object({
   email: z.string().email(),
@@ -41,12 +42,8 @@ export async function POST(
       },
     });
 
-    console.log('Sales contact stored:', {
-      id: salesContact.id,
-      runId,
-      target: run.target,
-      email: parsed.email,
-    });
+    // Notify Slack
+    auditLeadAlert({ name: parsed.name, email: parsed.email, phone: parsed.phone, target: run.target, runId, type: 'sales' });
 
     return NextResponse.json({ success: true });
   } catch (error) {

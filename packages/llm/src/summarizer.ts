@@ -896,11 +896,22 @@ function ensurePlan(summary: AuditSummaryType, goal?: string): AuditSummaryType 
       ? summary.plan.experiments ?? []
       : generateExperimentsFromFindings(sortedFindings, goal);
 
+  // Ensure Phase 3 scaleAuthority has content
+  const scaleAuthority =
+    (summary.plan.scaleAuthority ?? []).length > 0
+      ? summary.plan.scaleAuthority
+      : [
+          'Deploy Cluster Bomb strategy — 50+ interlinked content pieces to saturate the Knowledge Graph',
+          'Launch Citations Production to build external trust signals across the web',
+          'Activate SEO Amplification with AI Max Advertising to drive high-quality traffic to optimized pages',
+        ];
+
   return {
     ...summary,
     plan: {
       quickWins,
       next: nextSteps,
+      scaleAuthority,
       experiments,
     },
   };
