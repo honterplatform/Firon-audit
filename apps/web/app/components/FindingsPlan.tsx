@@ -22,7 +22,7 @@ export function FindingsPlan({ plan }: FindingsPlanProps) {
   if (!hasContent) return null;
 
   return (
-    <div className="mt-24 space-y-6">
+    <div className="mt-40 space-y-6">
       <div className="mb-6">
         <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Action Plan</h2>
         <p className="text-base font-light max-w-5xl" style={{ color: '#888888' }}>
