@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { AuditTable } from './AuditTable';
 import { Badge } from './Badge';
 import { AuditChat, type AuditChatRef } from './AuditChat';
+import { FindingsPlan } from './FindingsPlan';
 
 type AuditStatus = 'queued' | 'running' | 'partial' | 'completed' | 'failed';
 
@@ -958,7 +959,10 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               })()}
             </section>
 
-            {/* Action Plan section - hidden per user request */}
+            {/* Action Plan — Firon's Three-Phase Methodology */}
+            {run.summaryJson?.plan && (
+              <FindingsPlan plan={run.summaryJson.plan} />
+            )}
           </div>
         ) : null}
             

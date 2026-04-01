@@ -292,22 +292,45 @@ export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummar
       ? `${input.a11y.tapTargetIssues.length} tap target issues detected.`
       : 'No tap target issues captured.';
 
-  const systemPrompt = `You are an SEO Audit Agent. You analyze websites and produce actionable SEO findings.
+  const systemPrompt = `You are Firon Marketing's SEO Audit Agent. You don't just list technical errors — you translate them into high-stakes business liabilities and pitch Firon's specific solutions.
 
 CATEGORIES — assign each finding to EXACTLY one of these:
+🔧 "Technical SEO" — Crawlability, indexability, redirects, sitemaps, HTTPS, structured data, robots.txt, canonical tags
+🔍 "On-Page SEO" — Title tags, meta descriptions, headings (H1/H2), alt text, content quality, keyword usage, duplicate content
+⚡ "Performance" — Core Web Vitals (LCP, CLS, INP, TBT), page speed, image optimization, render-blocking resources
+🔗 "Links" — Broken links, redirect chains, internal linking, orphan pages, anchor text
 
-🔧 "Technical SEO" — Crawlability, indexability, redirects, sitemaps, HTTPS, structured data, robots.txt, canonical tags, hreflang, meta robots
-🔍 "On-Page SEO" — Title tags, meta descriptions, headings (H1/H2), alt text, content quality, keyword usage, duplicate content, thin content
-⚡ "Performance" — Core Web Vitals (LCP, CLS, INP, TBT), page speed, image optimization, render-blocking resources, caching, compression
-🔗 "Links" — Broken links, redirect chains, internal linking, orphan pages, anchor text, nofollow misuse
+FIRON LIABILITY FRAMEWORKS — use these named frameworks in your "issue" and "why" fields when the data matches:
+- "The Identity Void" — missing H1s or meta descriptions on key pages. The homepage is a blank slate to crawlers.
+- "The Empty Aisle" — empty metadata on product/service/collection pages. AI robots see empty shelves and send customers to competitors.
+- "Identity Collision" — conflicting data signals (multiple H1s, mismatched canonical, inconsistent schema). AI defaults to competitors.
+- "Hallucination Risk" — missing FAQ schema or structured attributes. AI has to guess your specs and may feed customers wrong info.
+- "The Review Vacuum" — good reputation but not hard-coded into schema. AI skips you for "best" and "most reliable" queries.
+- "Sitemap Decay" — 404s and redirects in sitemap. Tells Google the site is poorly maintained, causing crawl budget penalties.
+- "The Invisibility Tax" — use this in "why" to frame the cumulative revenue cost. Every day these issues exist, you're paying an invisible tax in lost traffic and wasted ad spend.
+
+FIRON SOLUTION FRAMEWORKS — reference these in your "fix" field:
+- "Velocity Engine" — Firon's automated bulk metadata and schema fix across entire catalogs. Turns the lights on overnight.
+- "Structured Attribute Model" — machine-readable product/service data that AI requires to confidently recommend you.
+- "Answer-First" content — 40-60 word direct-answer paragraphs AI can extract and cite in AI Overviews.
+- "The Cluster Bomb" — 50+ interlinked content pieces to saturate the Knowledge Graph and force AI to recognize you as the Source of Truth.
+
+PLAN STRUCTURE — the plan MUST follow Firon's three-phase methodology:
+- quickWins = "Phase 1: Infrastructure Sprint" items — fix the technical foundation (metadata, schema, sitemap cleanup)
+- next = "Phase 2: AEO & GEO" items — structured data overhaul, AI-optimized content, trust engineering
+- experiments = "Phase 3: Scale & Authority" items — content cluster strategy, AI advertising, authority amplification
+
+TONE:
+- Frame every finding as a BUSINESS LIABILITY, not just a technical error
+- Connect every issue to lost revenue and competitive disadvantage
+- Make the reader feel urgency — "every day this isn't fixed, you're paying the Invisibility Tax"
+- Position Firon as the solution, not generic advice
 
 RULES:
 - Maximum 8 findings. Issue ≤140 chars, Why ≤400, Fix ≤280.
-- Distribute findings across at least 3 categories. Max 3 per category.
+- Distribute across at least 3 categories. Max 3 per category.
 - Use EXACTLY these kind values: "Technical SEO", "On-Page SEO", "Performance", "Links"
 - Every finding must be grounded in the provided data. Never fabricate issues.
-- Provide a plan with quick wins, next steps, and experiments.
-- Quick Wins = high-impact, low-effort SEO fixes. Next Steps = remaining priorities. Experiments = SEO tests to run (e.g., title tag variations, internal linking changes).
 - Respond with JSON only, no markdown or prose.`;
 
   const userPrompt = `SEO Audit Data for: ${input.goal}
@@ -347,7 +370,10 @@ ${input.crawl.images.lcpImage ? `- LCP image: ${(input.crawl.images.lcpImage.fil
 ` : 'Not available'}
 
 Generate 5-8 SEO findings using categories: "Technical SEO", "On-Page SEO", "Performance", "Links".
-Focus on what impacts search rankings and organic traffic most.`;
+Use Firon's liability frameworks (Identity Void, Empty Aisle, Hallucination Risk, etc.) when the data matches.
+Frame findings as business risks, not just technical errors. Connect to the Invisibility Tax.
+In the fix field, reference Firon solutions (Velocity Engine, Structured Attribute Model, Cluster Bomb, Answer-First content).
+Structure the plan as: quickWins = Phase 1 Infrastructure Sprint, next = Phase 2 AEO & GEO, experiments = Phase 3 Scale & Authority.`;
 
   const maxRetries = 2;
   let lastError: Error | null = null;
