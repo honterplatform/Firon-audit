@@ -136,7 +136,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   const [pdfEmailInput, setPdfEmailInput] = useState('');
   const chatRef = useRef<AuditChatRef>(null);
 
-  const extraFetchCount = useRef(0);
+  const prevFindingsCount = useRef(0);
+  const stablePollCount = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -163,14 +164,29 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         }
         setError(null);
 
-        if (data.status === 'running' || data.status === 'queued') {
-          extraFetchCount.current = 0;
+        const isDone = data.status === 'completed' || data.status === 'partial' || data.status === 'failed';
+        const currentFindings = data.fallbackFindings?.length || 0;
+
+        if (!isDone) {
+          // Still running — keep polling
+          prevFindingsCount.current = 0;
+          stablePollCount.current = 0;
           timer = setTimeout(poll, POLL_INTERVAL_MS);
-        } else if (extraFetchCount.current < 3) {
-          // Audit is done but keep fetching a few more times to catch late-arriving findings
-          extraFetchCount.current += 1;
-          setIsPolling(false);
-          timer = setTimeout(poll, 3000);
+        } else if (currentFindings === prevFindingsCount.current) {
+          // Done and findings count is stable
+          stablePollCount.current += 1;
+          if (stablePollCount.current < 2) {
+            // Poll one more time to confirm findings are stable
+            timer = setTimeout(poll, 2000);
+          } else {
+            // Findings stable for 2 polls — we have everything
+            setIsPolling(false);
+          }
+        } else {
+          // Done but findings count changed — more are arriving, keep polling
+          prevFindingsCount.current = currentFindings;
+          stablePollCount.current = 0;
+          timer = setTimeout(poll, 2000);
         }
       } catch (err) {
         console.error('Failed to poll audit status', err);
