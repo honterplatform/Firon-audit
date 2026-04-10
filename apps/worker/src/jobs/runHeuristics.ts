@@ -23,9 +23,7 @@ export async function processHeuristics(job: Job<HeuristicsJobData>) {
       kind: FindingKind.OnPageSEO as FindingKind,
     }));
 
-    if (findings.length > 0) {
-      await prisma.auditFinding.createMany({ data: findings });
-    }
+    // Findings are NOT saved here — only the LLM summary creates authoritative findings
 
     logger.info(`Heuristics completed for ${target}`, { runId, findingsCount: findings.length });
     return result;

@@ -393,7 +393,15 @@ Generate 5-8 SEO findings using categories: "Technical SEO", "On-Page SEO", "Per
 Use Firon's liability frameworks (Identity Void, Empty Aisle, Hallucination Risk, etc.) when the data matches.
 Frame findings as business risks, not just technical errors. Connect to the Invisibility Tax.
 In the fix field, reference Firon solutions (Velocity Engine, Structured Attribute Model, Cluster Bomb, Answer-First content).
-Structure the plan as: quickWins = Phase 1 Infrastructure Sprint, next = Phase 2 AEO & GEO, scaleAuthority = Phase 3 Scale & Authority (ALWAYS include 2-3 items like Cluster Bomb strategy, AI advertising, authority amplification).`;
+Structure the plan as: quickWins = Phase 1 Infrastructure Sprint, next = Phase 2 AEO & GEO, scaleAuthority = Phase 3 Scale & Authority (ALWAYS include 2-3 items like Cluster Bomb strategy, AI advertising, authority amplification).
+
+CRITICAL ACCURACY REQUIREMENTS:
+- YOU are the ONLY source of findings. Do NOT duplicate what the heuristics already found — synthesize and improve.
+- For EVERY finding, specify WHICH PAGE it applies to: "on the homepage", "on product pages", "across the site", etc.
+- For schema/structured data: this scan only checked the homepage. If schema is missing on the homepage, say "Homepage missing [schema type]." Add a note that product/inner pages should be verified separately.
+- For meta descriptions: if the homepage has one, say so. If it seems auto-generated or templated, call that out specifically. Don't just say "missing meta descriptions" without qualifying WHERE.
+- For performance: ONLY create a finding for a metric if it genuinely FAILS its threshold. Do NOT create separate findings for each metric. Group performance issues into ONE finding that mentions only the failing metrics.
+- Do NOT repeat the same issue in both "Technical SEO" and "Performance" categories (e.g., don't flag LCP in both).`;
 
   const maxRetries = 2;
   let lastError: Error | null = null;

@@ -79,9 +79,7 @@ export async function processAxe(job: Job<AxeJobData>) {
       });
     }
 
-    if (findings.length > 0) {
-      await prisma.auditFinding.createMany({ data: findings });
-    }
+    // Findings are NOT saved here — only the LLM summary creates authoritative findings
 
     logger.info(`Axe completed for ${target}`, { runId });
     return result;

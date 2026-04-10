@@ -101,9 +101,8 @@ export async function processLighthouse(job: Job<LighthouseJobData>) {
       });
     }
 
-    if (findings.length > 0) {
-      await prisma.auditFinding.createMany({ data: findings });
-    }
+    // Findings are NOT saved here — only the LLM summary creates authoritative findings
+    // This prevents duplicates between plugin findings and LLM findings
 
     logger.info(`Lighthouse completed for ${target}`, { runId, findingsCount: findings.length });
     return result;
