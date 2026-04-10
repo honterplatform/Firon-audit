@@ -43,26 +43,26 @@ export async function runHeuristics(
     // TECHNICAL SEO
     // ═══════════════════════════════════════════════════════
 
-    // Title tag
+    // Title tag (homepage)
     const title = await page.title();
     if (!title || title.trim().length === 0) {
-      findings.push({ issue: 'Missing page title tag', why: 'The title tag is the #1 on-page ranking factor. Without it, search engines cannot properly index or display the page in SERPs.', fix: 'Add a unique, descriptive <title> tag (50-60 characters) with the primary keyword.' });
+      findings.push({ issue: 'Homepage missing title tag', why: 'The homepage title tag is the #1 on-page ranking factor. Without it, search engines cannot properly index or display the page in SERPs.', fix: 'Add a unique, descriptive <title> tag (50-60 characters) with the primary keyword.' });
     } else if (title.length > 60) {
-      findings.push({ issue: `Title tag too long (${title.length} chars)`, why: 'Titles over 60 characters get truncated in SERPs, cutting off keywords and reducing CTR.', fix: `Shorten to under 60 characters. Current: "${title.substring(0, 60)}..."`, evidence: `${title.length} characters` });
+      findings.push({ issue: `Homepage title tag too long (${title.length} chars)`, why: 'Titles over 60 characters get truncated in SERPs, cutting off keywords and reducing CTR.', fix: `Shorten to under 60 characters. Current: "${title.substring(0, 60)}..."`, evidence: `${title.length} characters` });
     }
 
-    // Meta description
+    // Meta description (homepage)
     const metaDesc = await page.$eval('meta[name="description"]', (el) => el.getAttribute('content')).catch(() => null);
     if (!metaDesc || metaDesc.trim().length === 0) {
-      findings.push({ issue: 'Missing meta description', why: 'Without a meta description, Google auto-generates snippets that may not convey value, reducing CTR from SERPs by up to 30%.', fix: 'Add a compelling meta description (120-155 chars) with the primary keyword and a call-to-action.' });
+      findings.push({ issue: 'Homepage missing meta description', why: 'Without a homepage meta description, Google auto-generates snippets that may not convey value, reducing CTR from SERPs by up to 30%.', fix: 'Add a compelling meta description (120-155 chars) with the primary keyword and a call-to-action.' });
     } else if (metaDesc.length > 160) {
-      findings.push({ issue: `Meta description too long (${metaDesc.length} chars)`, why: 'Descriptions over 160 characters get truncated, potentially cutting off the CTA.', fix: 'Shorten to 120-155 characters. Front-load keywords and value prop.', evidence: `${metaDesc.length} characters` });
+      findings.push({ issue: `Homepage meta description too long (${metaDesc.length} chars)`, why: 'Descriptions over 160 characters get truncated, potentially cutting off the CTA.', fix: 'Shorten to 120-155 characters. Front-load keywords and value prop.', evidence: `${metaDesc.length} characters` });
     }
 
-    // Canonical tag
+    // Canonical tag (homepage)
     const canonical = await page.$eval('link[rel="canonical"]', (el) => el.getAttribute('href')).catch(() => null);
     if (!canonical) {
-      findings.push({ issue: 'Missing canonical tag', why: 'Without a canonical tag, search engines may index duplicate versions of this page (trailing slashes, query params, etc.), diluting ranking signals and wasting crawl budget.', fix: 'Add a self-referencing <link rel="canonical"> tag pointing to the preferred URL.' });
+      findings.push({ issue: 'Homepage missing canonical tag', why: 'Without a canonical tag, search engines may index duplicate versions of this page (trailing slashes, query params, etc.), diluting ranking signals and wasting crawl budget.', fix: 'Add a self-referencing <link rel="canonical"> tag pointing to the preferred URL.' });
     }
 
     // HTML lang
@@ -194,22 +194,108 @@ export async function runHeuristics(
       return schemas;
     });
 
+    // Collect all schema types from homepage
+    const homepageSchemaTypes = schemaData.map(s => s.type);
+
     if (schemaData.length === 0) {
-      findings.push({ issue: 'No structured data (JSON-LD) found', why: 'Structured data enables rich results in SERPs (stars, FAQs, breadcrumbs, sitelinks) which can increase CTR by 20-30%. It also helps AI search engines understand your content.', fix: 'Add JSON-LD structured data: Organization schema (brand info), FAQ schema (common questions), Breadcrumb schema (navigation), and Service/Product schema as relevant.' });
+      findings.push({ issue: 'No structured data (JSON-LD) on homepage', why: 'The homepage has no structured data. Rich results (stars, FAQs, breadcrumbs) require schema markup. This also helps AI search engines understand your content.', fix: 'Add JSON-LD structured data to the homepage: Organization schema (brand info), FAQ schema, Breadcrumb schema, and Service/Product schema as relevant.' });
     } else {
-      const types = schemaData.map(s => s.type);
-      if (!types.some(t => /organization|localbusiness|company/i.test(t))) {
-        findings.push({ issue: 'Missing Organization schema markup', why: 'Organization schema tells search engines and AI assistants who you are, your logo, social profiles, and contact info. This strengthens your Knowledge Panel and brand entity in Google.', fix: 'Add Organization JSON-LD with name, url, logo, description, sameAs (social profiles), and contactPoint.' });
+      if (!homepageSchemaTypes.some(t => /organization|localbusiness|company/i.test(t))) {
+        findings.push({ issue: 'Homepage missing Organization schema', why: 'Organization schema tells search engines and AI assistants who you are. This strengthens your Knowledge Panel and brand entity in Google.', fix: 'Add Organization JSON-LD with name, url, logo, description, sameAs (social profiles), and contactPoint.' });
       }
-      if (!types.some(t => /faq/i.test(t))) {
-        findings.push({ issue: 'Missing FAQ schema markup', why: 'FAQ schema can display expandable Q&A directly in search results, significantly increasing SERP real estate and click-through rates.', fix: 'Add FAQ schema for common questions about your services. Each Q&A pair becomes a rich result in Google.' });
+      if (!homepageSchemaTypes.some(t => /faq/i.test(t))) {
+        findings.push({ issue: 'Homepage missing FAQ schema', why: 'FAQ schema can display expandable Q&A directly in search results, increasing SERP real estate and click-through rates.', fix: 'Add FAQ schema for common questions. Each Q&A pair becomes a rich result in Google.' });
       }
-      if (!types.some(t => /breadcrumb/i.test(t))) {
-        findings.push({ issue: 'Missing Breadcrumb schema markup', why: 'Breadcrumb schema displays navigation paths in SERPs (e.g., Home > Services > Paid Media), improving user orientation and click-through.', fix: 'Add BreadcrumbList JSON-LD that reflects your site navigation hierarchy.' });
+      if (!homepageSchemaTypes.some(t => /breadcrumb/i.test(t))) {
+        findings.push({ issue: 'Homepage missing Breadcrumb schema', why: 'Breadcrumb schema displays navigation paths in SERPs, improving user orientation and click-through.', fix: 'Add BreadcrumbList JSON-LD that reflects your site navigation hierarchy.' });
       }
       if (schemaData.some(s => s.type === 'Invalid JSON')) {
-        findings.push({ issue: 'Invalid JSON-LD structured data detected', why: 'Malformed JSON-LD is ignored by search engines, meaning your structured data provides zero SEO benefit. Google may also flag this in Search Console.', fix: 'Validate your JSON-LD at schema.org or Google Rich Results Test. Fix syntax errors.' });
+        findings.push({ issue: 'Invalid JSON-LD on homepage', why: 'Malformed JSON-LD is ignored by search engines. Your structured data provides zero SEO benefit.', fix: 'Validate your JSON-LD at schema.org or Google Rich Results Test.' });
       }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // INNER PAGE CRAWL (check product/service pages for schema + meta)
+    // ═══════════════════════════════════════════════════════
+
+    try {
+      // Find product or inner page links from homepage
+      const innerPageUrl = await page.evaluate((currentOrigin: string) => {
+        const links = Array.from(document.querySelectorAll('a[href]'));
+        const candidates: string[] = [];
+        for (const a of links) {
+          const href = a.getAttribute('href') || '';
+          try {
+            const linkUrl = new URL(href, window.location.origin);
+            if (linkUrl.origin !== currentOrigin) continue;
+            const path = linkUrl.pathname.toLowerCase();
+            // Look for product, service, or collection pages
+            if (path.match(/\/(product|item|shop|store|collection|service|work|case|portfolio)\//i) ||
+                path.match(/\/products\//i) ||
+                path.match(/\/collections\//i)) {
+              candidates.push(linkUrl.href);
+            }
+          } catch {}
+        }
+        // If no product pages found, try any internal page that isn't the homepage
+        if (candidates.length === 0) {
+          for (const a of links) {
+            const href = a.getAttribute('href') || '';
+            try {
+              const linkUrl = new URL(href, window.location.origin);
+              if (linkUrl.origin !== currentOrigin) continue;
+              if (linkUrl.pathname !== '/' && linkUrl.pathname.length > 1 && !linkUrl.pathname.startsWith('/#')) {
+                candidates.push(linkUrl.href);
+              }
+            } catch {}
+          }
+        }
+        return candidates[0] || null;
+      }, origin);
+
+      if (innerPageUrl) {
+        await page.goto(innerPageUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(500);
+
+        const innerPagePath = new URL(innerPageUrl).pathname;
+
+        // Check inner page meta description
+        const innerMeta = await page.$eval('meta[name="description"]', (el) => el.getAttribute('content')).catch(() => null);
+        if (!innerMeta || innerMeta.trim().length === 0) {
+          findings.push({ issue: `Inner page missing meta description (${innerPagePath})`, why: `The page at ${innerPagePath} has no meta description. Each page needs a unique meta description to rank effectively and attract clicks from SERPs.`, fix: `Add a unique, compelling meta description to ${innerPagePath}. Avoid auto-generated or templated descriptions.`, evidence: `Page: ${innerPagePath}` });
+        } else if (metaDesc && innerMeta.trim() === metaDesc.trim()) {
+          findings.push({ issue: 'Duplicate meta descriptions across pages', why: `The homepage and ${innerPagePath} share the same meta description. Duplicate metas reduce click-through because Google shows the same snippet for different pages.`, fix: 'Write unique meta descriptions for each page targeting that page\'s specific keywords and content.', evidence: `Homepage and ${innerPagePath} have identical meta descriptions` });
+        }
+
+        // Check inner page schema
+        const innerSchemaData = await page.evaluate(() => {
+          const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+          const schemas: string[] = [];
+          scripts.forEach((s) => {
+            try {
+              const data = JSON.parse(s.textContent || '');
+              if (data['@type']) schemas.push(data['@type']);
+              if (data['@graph'] && Array.isArray(data['@graph'])) {
+                data['@graph'].forEach((item: any) => { if (item['@type']) schemas.push(item['@type']); });
+              }
+            } catch {}
+          });
+          return schemas;
+        });
+
+        const isProductPage = innerPageUrl.toLowerCase().match(/product|item|shop|store/);
+        if (isProductPage && !innerSchemaData.some(t => /product/i.test(t))) {
+          findings.push({ issue: `Product page missing Product schema (${innerPagePath})`, why: 'Product schema enables rich results (price, availability, reviews) in SERPs. Without it, your products appear as plain blue links while competitors show rich cards.', fix: `Add Product JSON-LD to ${innerPagePath} with name, price, availability, image, and aggregateRating.`, evidence: `Page: ${innerPagePath}, Schema found: ${innerSchemaData.join(', ') || 'none'}` });
+        } else if (!isProductPage && innerSchemaData.length === 0) {
+          findings.push({ issue: `Inner page has no structured data (${innerPagePath})`, why: `The page at ${innerPagePath} has no JSON-LD schema. Adding relevant schema (Service, Article, FAQ) helps search engines and AI understand page content.`, fix: `Add appropriate JSON-LD schema to ${innerPagePath} based on its content type.`, evidence: `Page: ${innerPagePath}` });
+        }
+
+        // Navigate back to homepage for remaining checks
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(500);
+      }
+    } catch {
+      // Inner page crawl failed — non-critical, continue
     }
 
     // ═══════════════════════════════════════════════════════

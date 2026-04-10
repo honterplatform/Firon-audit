@@ -75,9 +75,14 @@ export default function HomePage() {
     <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       <div className="flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <div className="mb-12">
+        <div className="mb-16">
           <img src="/Logo.svg" alt="Logo" className="h-8" />
         </div>
+
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl text-center max-w-2xl mb-10" style={{ color: '#ffffff', lineHeight: '1.4', fontWeight: 500 }}>
+          Enter your URL to see how AI agents<br />view your business today.
+        </h1>
 
         {/* Form Container */}
         <div className="w-full max-w-md space-y-6">
@@ -112,7 +117,7 @@ export default function HomePage() {
                   e.target.style.borderColor = '#212121';
                   e.target.style.backgroundColor = '#0F0F0F';
                 }}
-                placeholder="example.com"
+                placeholder="https://yourwebsite.com"
                 disabled={loading}
               />
             </div>
@@ -128,7 +133,7 @@ export default function HomePage() {
                 height: '48px',
               }}
             >
-              {loading ? 'Creating Audit...' : 'Create Audit'}
+              {loading ? 'Running Test...' : 'Run Live AI Readiness Test'}
             </button>
           </form>
         </div>

@@ -287,11 +287,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
   // Calculate progress stages based on artifacts and status
   const progressStages = useMemo(() => {
     const stages = [
-      { name: 'Crawl', completed: false },
-      { name: 'Performance', completed: false },
-      { name: 'Technical SEO', completed: false },
-      { name: 'SEO Analysis', completed: false },
-      { name: 'AI Summary', completed: false },
+      { name: 'AI Search', completed: false },
+      { name: 'Technical Infrastructure', completed: false },
+      { name: 'Brand Authority', completed: false },
     ];
 
     if (run.status === 'completed' || run.status === 'partial' || run.status === 'failed') {
@@ -300,30 +298,15 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
     // Check which artifacts exist to determine completed stages
     const hasScreenshots = run.artifacts?.some((a: Artifact) => a.type === 'screenshot' || a.type?.toString().toLowerCase() === 'screenshot') || false;
-    const hasLighthouse = run.artifacts?.some((a: Artifact) => {
-      const path = a.path?.toString().toLowerCase() || '';
-      const meta = a.meta as any;
-      return path.includes('lighthouse') || (meta?.lcp !== undefined || meta?.cls !== undefined || meta?.inp !== undefined);
-    }) || false;
     const hasAxe = run.artifacts?.some((a: Artifact) => {
       const path = a.path?.toString().toLowerCase() || '';
       const meta = a.meta as any;
       return path.includes('axe') || (meta?.violationsCount !== undefined || meta?.contrastIssuesCount !== undefined);
     }) || false;
-    // Heuristics findings are Performance findings that aren't from Axe (no contrast/tap target issues)
-    const hasHeuristics = run.fallbackFindings.some(f => {
-      const issueLower = f.issue.toLowerCase();
-      return f.kind === 'Performance' &&
-             !issueLower.includes('contrast') &&
-             !issueLower.includes('tap target') &&
-             !issueLower.includes('accessibility violation');
-    }) || false;
-    
-    stages[0].completed = hasScreenshots; // Crawl
-    stages[1].completed = hasLighthouse; // Performance
-    stages[2].completed = hasAxe; // Technical SEO
-    stages[3].completed = hasHeuristics; // SEO Analysis
-    stages[4].completed = hasSummary; // AI Summary
+
+    stages[0].completed = hasScreenshots; // AI Search (crawl + initial scan)
+    stages[1].completed = hasAxe; // Technical Infrastructure
+    stages[2].completed = hasSummary; // Brand Authority (final synthesis)
 
     return stages;
   }, [run.status, run.artifacts, run.fallbackFindings, hasSummary]);
@@ -428,11 +411,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                   {(() => {
                     const currentStage = progressStages.find(s => !s.completed);
                     if (!currentStage) return 'Finalizing audit report...';
-                    if (currentStage.name === 'Crawl') return 'Collecting data from the website...';
-                    if (currentStage.name === 'Performance') return 'Analyzing performance metrics...';
-                    if (currentStage.name === 'Technical SEO') return 'Checking technical SEO issues...';
-                    if (currentStage.name === 'SEO Analysis') return 'Analyzing SEO and GEO signals...';
-                    if (currentStage.name === 'AI Summary') return 'Generating AI-powered SEO summary...';
+                    if (currentStage.name === 'AI Search') return 'Connecting to AI Search Engines...';
+                    if (currentStage.name === 'Technical Infrastructure') return 'Analyzing Technical Infrastructure...';
+                    if (currentStage.name === 'Brand Authority') return 'Compiling Brand Authority...';
                     return 'Processing...';
                   })()}
                 </p>

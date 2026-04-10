@@ -326,11 +326,31 @@ TONE:
 - Make the reader feel urgency — "every day this isn't fixed, you're paying the Invisibility Tax"
 - Position Firon as the solution, not generic advice
 
-RULES:
+PERFORMANCE ACCURACY RULES:
+- ONLY flag a Core Web Vital as a problem if it ACTUALLY FAILS its threshold:
+  * LCP > 2.5s = problem. LCP ≤ 2.5s = fine, do NOT flag it.
+  * CLS > 0.1 = problem. CLS ≤ 0.1 = fine, do NOT flag it.
+  * INP > 200ms = problem. INP ≤ 200ms = fine, do NOT flag it.
+  * TBT > 0.2s = problem. TBT ≤ 0.2s = fine, do NOT flag it.
+- If only ONE metric fails (e.g., just CLS), only mention that ONE metric. Do NOT bundle all performance metrics into one finding.
+- Do NOT overstate performance issues. If metrics are borderline or passing, acknowledge what's working and focus on what's actually broken.
+- Be specific: "CLS of 0.15 causes layout shifts" not "Performance is poor across the board."
+
+META DESCRIPTION ACCURACY RULES:
+- Be SPECIFIC about which pages have meta issues. Say "homepage meta description" or "product pages" not just "missing meta descriptions."
+- If meta descriptions exist but appear auto-generated or templated (e.g., all starting with the same pattern), flag it as "auto-generated meta descriptions lack uniqueness" not "missing meta descriptions."
+- Do NOT say "missing" if data doesn't clearly show they're missing. Say "could not verify" instead.
+
+SCHEMA ACCURACY RULES:
+- Schema was checked on the HOMEPAGE ONLY. If you report missing schema, clarify: "No [type] schema found on the homepage."
+- Do NOT say "missing product schema" without qualifying that inner pages may have it.
+- If the page appears to be an e-commerce site, note: "Product schema should be verified on individual product pages."
+
+GENERAL RULES:
 - Maximum 8 findings. Issue ≤140 chars, Why ≤400, Fix ≤280.
 - Distribute across at least 3 categories. Max 3 per category.
 - Use EXACTLY these kind values: "Technical SEO", "On-Page SEO", "Performance", "Links"
-- Every finding must be grounded in the provided data. Never fabricate issues.
+- Every finding must be grounded in the provided data. Never fabricate or exaggerate issues.
 - Respond with JSON only, no markdown or prose.`;
 
   const userPrompt = `SEO Audit Data for: ${input.goal}
