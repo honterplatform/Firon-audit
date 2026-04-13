@@ -131,42 +131,43 @@ export async function runHeuristics(
       findings.push({ issue: `Multiple H1 headings (${h1Elements.length})`, why: 'Multiple H1s dilute the topical signal and confuse page hierarchy. Best practice is exactly one H1 per page.', fix: 'Keep one H1 for the main heading. Convert extras to H2 or H3.', evidence: `Found ${h1Elements.length} H1 elements` });
     }
 
-    // Heading hierarchy
+    // Heading hierarchy — only check MAIN CONTENT headings (ignore nav, footer, sidebar, widgets)
     const headingData = await page.evaluate(() => {
-      const headings: Array<{ level: number; text: string; location: string }> = [];
+      const headings: Array<{ level: number; text: string; inMainContent: boolean }> = [];
       document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((h) => {
-        // Determine where on the page this heading is
-        const inNav = !!h.closest('nav, header, [role="navigation"]');
-        const inFooter = !!h.closest('footer');
+        const inNav = !!h.closest('nav, header nav, [role="navigation"]');
+        const inFooter = !!h.closest('footer, [role="contentinfo"]');
         const inSidebar = !!h.closest('aside, [role="complementary"]');
-        const location = inNav ? 'navigation' : inFooter ? 'footer' : inSidebar ? 'sidebar' : 'main content';
-        headings.push({ level: parseInt(h.tagName[1]), text: (h.textContent || '').trim().substring(0, 60), location });
+        const inWidget = !!h.closest('[class*="widget"], [class*="sidebar"], [class*="footer"], [class*="menu"]');
+        const inMainContent = !inNav && !inFooter && !inSidebar && !inWidget;
+        headings.push({ level: parseInt(h.tagName[1]), text: (h.textContent || '').trim().substring(0, 60), inMainContent });
       });
       return headings;
     });
-    if (headingData.length > 1) {
-      // Count headings by level
-      const levelCounts: Record<number, number> = {};
-      headingData.forEach(h => { levelCounts[h.level] = (levelCounts[h.level] || 0) + 1; });
 
-      for (let i = 1; i < headingData.length; i++) {
-        if (headingData[i].level > headingData[i - 1].level + 1) {
-          const fromLevel = headingData[i - 1].level;
-          const toLevel = headingData[i].level;
+    // Only check hierarchy for main content headings
+    const mainContentHeadings = headingData.filter(h => h.inMainContent);
+    if (mainContentHeadings.length > 1) {
+      for (let i = 1; i < mainContentHeadings.length; i++) {
+        if (mainContentHeadings[i].level > mainContentHeadings[i - 1].level + 1) {
+          const fromLevel = mainContentHeadings[i - 1].level;
+          const toLevel = mainContentHeadings[i].level;
+
+          const levelCounts: Record<number, number> = {};
+          mainContentHeadings.forEach(h => { levelCounts[h.level] = (levelCounts[h.level] || 0) + 1; });
           const levelSummary = Object.entries(levelCounts).map(([l, c]) => `H${l}: ${c}`).join(', ');
 
-          // Show examples of where the skip happens
-          const skipExamples = headingData
+          const skipExamples = mainContentHeadings
             .filter(h => h.level === toLevel)
             .slice(0, 3)
-            .map(h => `"${h.text}" (${h.location})`)
+            .map(h => `"${h.text}"`)
             .join(', ');
 
           findings.push({
-            issue: `Homepage heading hierarchy skips H${fromLevel} to H${toLevel}`,
-            why: `Skipping from H${fromLevel} to H${toLevel} on the homepage confuses search engines trying to understand content hierarchy. Found: ${levelSummary}.`,
-            fix: `Ensure headings follow H1 → H2 → H3 order without skipping. The H${toLevel} elements may be in widgets, footers, or sidebars that should use different heading levels.`,
-            evidence: `H${toLevel} examples: ${skipExamples}`,
+            issue: `Homepage main content skips H${fromLevel} to H${toLevel}`,
+            why: `The main content area skips from H${fromLevel} to H${toLevel}, breaking semantic hierarchy. Found in main content: ${levelSummary}. (Footer, nav, and sidebar headings are excluded from this check.)`,
+            fix: `Review the main content heading structure. Ensure it follows H1 → H2 → H3 without skipping levels.`,
+            evidence: `H${toLevel} examples in main content: ${skipExamples}`,
           });
           break;
         }
