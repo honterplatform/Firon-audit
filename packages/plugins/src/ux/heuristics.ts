@@ -133,16 +133,41 @@ export async function runHeuristics(
 
     // Heading hierarchy
     const headingData = await page.evaluate(() => {
-      const headings: Array<{ level: number; text: string }> = [];
+      const headings: Array<{ level: number; text: string; location: string }> = [];
       document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((h) => {
-        headings.push({ level: parseInt(h.tagName[1]), text: (h.textContent || '').trim().substring(0, 80) });
+        // Determine where on the page this heading is
+        const inNav = !!h.closest('nav, header, [role="navigation"]');
+        const inFooter = !!h.closest('footer');
+        const inSidebar = !!h.closest('aside, [role="complementary"]');
+        const location = inNav ? 'navigation' : inFooter ? 'footer' : inSidebar ? 'sidebar' : 'main content';
+        headings.push({ level: parseInt(h.tagName[1]), text: (h.textContent || '').trim().substring(0, 60), location });
       });
       return headings;
     });
     if (headingData.length > 1) {
+      // Count headings by level
+      const levelCounts: Record<number, number> = {};
+      headingData.forEach(h => { levelCounts[h.level] = (levelCounts[h.level] || 0) + 1; });
+
       for (let i = 1; i < headingData.length; i++) {
         if (headingData[i].level > headingData[i - 1].level + 1) {
-          findings.push({ issue: 'Heading hierarchy skips levels', why: 'Skipping heading levels (e.g., H1 → H3) breaks semantic structure. Search engines rely on hierarchy to understand content organization.', fix: 'Ensure headings follow H1 → H2 → H3 order without skipping.' });
+          const fromLevel = headingData[i - 1].level;
+          const toLevel = headingData[i].level;
+          const levelSummary = Object.entries(levelCounts).map(([l, c]) => `H${l}: ${c}`).join(', ');
+
+          // Show examples of where the skip happens
+          const skipExamples = headingData
+            .filter(h => h.level === toLevel)
+            .slice(0, 3)
+            .map(h => `"${h.text}" (${h.location})`)
+            .join(', ');
+
+          findings.push({
+            issue: `Homepage heading hierarchy skips H${fromLevel} to H${toLevel}`,
+            why: `Skipping from H${fromLevel} to H${toLevel} on the homepage confuses search engines trying to understand content hierarchy. Found: ${levelSummary}.`,
+            fix: `Ensure headings follow H1 → H2 → H3 order without skipping. The H${toLevel} elements may be in widgets, footers, or sidebars that should use different heading levels.`,
+            evidence: `H${toLevel} examples: ${skipExamples}`,
+          });
           break;
         }
       }
