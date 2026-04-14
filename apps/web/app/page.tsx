@@ -9,6 +9,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     target: '',
+    email: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,6 +35,7 @@ export default function HomePage() {
         },
         body: JSON.stringify({
           target: normalizedUrl,
+          email: formData.email.trim(),
         }),
         signal: controller.signal,
       });
@@ -92,7 +94,7 @@ export default function HomePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="target" className="block text-sm font-medium mb-2" style={{ color: '#888888' }}>
                 Website URL
@@ -122,18 +124,50 @@ export default function HomePage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: '#888888' }}>
+                Work Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                style={{
+                  backgroundColor: '#0F0F0F',
+                  border: '1px solid #212121',
+                  color: '#ffffff',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#FB3B24';
+                  e.target.style.backgroundColor = '#212121';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#212121';
+                  e.target.style.backgroundColor = '#0F0F0F';
+                }}
+                placeholder="name@company.com"
+                disabled={loading}
+              />
+              <p className="text-xs mt-2" style={{ color: '#888888', lineHeight: '1.5' }}>
+                This deep-dive takes about 60 seconds. Enter your email below, and we will send you the full diagnostic report as soon as it&apos;s ready.
+              </p>
+            </div>
+
             <button
               type="submit"
-              disabled={loading || !formData.target.trim()}
-              className="w-full py-3 px-4 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !formData.target.trim() || !formData.email.trim()}
+              className="w-full py-3 px-4 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               style={{
-                backgroundColor: loading || !formData.target.trim() ? '#2A2A2A' : '#FB3B24',
-                color: loading || !formData.target.trim() ? '#666666' : '#ffffff',
+                backgroundColor: loading || !formData.target.trim() || !formData.email.trim() ? '#2A2A2A' : '#FB3B24',
+                color: loading || !formData.target.trim() || !formData.email.trim() ? '#666666' : '#ffffff',
                 boxSizing: 'border-box',
                 height: '48px',
               }}
             >
-              {loading ? 'Running Test...' : 'Run Live AI Readiness Test'}
+              {loading ? 'Generating Report...' : 'Generate My AI Readiness Report'}
             </button>
           </form>
         </div>

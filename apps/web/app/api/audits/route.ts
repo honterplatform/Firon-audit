@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { auditLeadAlert } from '@/app/lib/slack';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,7 @@ async function getQueueClient() {
 
 const auditInputSchema = z.object({
   target: z.string().url(),
+  email: z.string().email().optional(),
   goal: z.string().min(1).optional(),
   audience: z.string().min(1).optional(),
   primaryCta: z.string().min(1).optional(),
@@ -264,6 +266,27 @@ export async function POST(request: NextRequest) {
       }
       
       throw error; // Re-throw to be caught by outer catch
+    }
+
+    // Capture lead: save email as sales contact + notify Slack immediately
+    if (parsed.email) {
+      try {
+        await prisma.salesContact.create({
+          data: {
+            runId: run.id,
+            name: parsed.email.split('@')[0],
+            email: parsed.email,
+          },
+        });
+        await auditLeadAlert({
+          email: parsed.email,
+          target: run.target,
+          runId: run.id,
+          type: 'lead',
+        });
+      } catch (leadError) {
+        console.error('Failed to capture lead (non-fatal):', leadError);
+      }
     }
 
     // Try to use Redis queue if available
