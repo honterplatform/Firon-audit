@@ -19,12 +19,21 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
       
       // PRIORITIZE SYSTEM CHROME (newer, more stable) over Puppeteer's bundled Chrome
       const possibleChromePaths = [
-        // System Chrome (preferred - newer version, more stable)
+        // Explicit env var override (highest priority)
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        process.env.CHROMIUM_PATH,
+        // Linux (Railway/Docker via nixpacks or apt)
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/nix/var/nix/profiles/default/bin/chromium',
+        // System Chrome on macOS (preferred for local dev)
         '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
         // Puppeteer's bundled Chrome (fallback)
         '/Users/axel/.cache/puppeteer/chrome/mac_arm-121.0.6167.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
-      ];
+      ].filter((p): p is string => typeof p === 'string' && p.length > 0);
       
       let executablePath: string | undefined;
       for (const chromePath of possibleChromePaths) {
