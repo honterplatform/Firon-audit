@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, FindingKind } from '@audit/db';
 import { createStorageProvider } from '@audit/pipeline';
+import { sendAuditReportEmail } from '@/app/lib/email';
+import { notifySlack } from '@/app/lib/slack';
 
 // Map database enum values to display strings
 function mapKindToDisplay(kind: FindingKind): string {
@@ -47,6 +49,10 @@ export async function GET(
             metaJson: true,
           },
         },
+        salesContacts: {
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
       },
     });
 
@@ -62,6 +68,39 @@ export async function GET(
       artifactsCount: run.artifacts.length,
       highImpactFindings: run.findings.filter((f) => f.impact === 'High').length,
     };
+
+    // Send report email when audit completes (one-time, async)
+    const isDone = run.status === 'completed' || run.status === 'partial';
+    const userEmail = run.salesContacts[0]?.email;
+    if (isDone && userEmail && !run.reportEmailSent && stats.findingsCount > 0) {
+      // Mark as sent first to prevent duplicate sends from concurrent polls
+      await prisma.auditRun.update({
+        where: { id: runId },
+        data: { reportEmailSent: true },
+      });
+
+      // Send asynchronously without blocking the response
+      sendAuditReportEmail({
+        to: userEmail,
+        target: run.target,
+        runId: run.id,
+        findingsCount: stats.findingsCount,
+        highImpactCount: stats.highImpactFindings,
+      }).then(async (result) => {
+        if (result.ok) {
+          await notifySlack(`:email: Report sent to ${userEmail} for ${run.target}`);
+        } else {
+          // Reset flag if send failed so it can retry
+          await prisma.auditRun.update({
+            where: { id: runId },
+            data: { reportEmailSent: false },
+          }).catch(() => {});
+          await notifySlack(`:warning: Failed to send report to ${userEmail} for ${run.target}: ${result.error}`);
+        }
+      }).catch((e) => {
+        console.error('Email send promise rejected:', e);
+      });
+    }
 
     const fallbackFindings = run.findings.map((finding) => {
       const evidenceJson = finding.evidenceJson as unknown;

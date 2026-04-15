@@ -50,15 +50,16 @@ enum ContactStatus {
 }
 
 model AuditRun {
-  id          String          @id @default(cuid())
-  target      String
-  inputsJson  Json
-  status      AuditRunStatus  @default(queued)
-  startedAt   DateTime?
-  completedAt DateTime?
-  summaryJson Json?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id              String          @id @default(cuid())
+  target          String
+  inputsJson      Json
+  status          AuditRunStatus  @default(queued)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  summaryJson     Json?
+  reportEmailSent Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   findings      AuditFinding[]
   artifacts     Artifact[]
