@@ -54,6 +54,7 @@ function buildReportEmailHtml(opts: {
   highImpactCount: number;
 }): string {
   const { cleanTarget, reportUrl, findingsCount, highImpactCount } = opts;
+  const logoUrl = `${APP_URL}/Logo.svg`;
 
   return `<!doctype html>
 <html>
@@ -68,7 +69,12 @@ function buildReportEmailHtml(opts: {
       <td align="center" style="padding:40px 20px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background:#0F0F0F; border:1px solid #212121; border-radius:16px; overflow:hidden;">
           <tr>
-            <td style="padding:32px 32px 16px 32px;">
+            <td align="center" style="padding:32px 32px 8px 32px;">
+              <img src="${logoUrl}" alt="Firon Marketing" width="120" style="display:block; margin:0 auto; height:auto;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 32px 16px 32px;">
               <h1 style="margin:0 0 8px 0; font-size:24px; font-weight:500; color:#ffffff;">Your AI Readiness Report is Ready</h1>
               <p style="margin:0; font-size:14px; color:#888888; line-height:1.5;">We just finished analyzing <strong style="color:#ffffff;">${cleanTarget}</strong>.</p>
             </td>

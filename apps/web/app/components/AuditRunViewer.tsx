@@ -324,9 +324,38 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
       .map(([viewport, url]) => ({ viewport, url }));
   }, [screenshotUrls]);
 
-  const handleDownloadPdf = () => {
-    // Show email form first
-    setShowPdfEmailForm(true);
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    setError(null);
+    try {
+      const pdfResponse = await fetch(`/api/reports/${runId}/pdf`);
+      if (!pdfResponse.ok) {
+        let errorMessage = 'Failed to generate PDF';
+        try {
+          const errorData = await pdfResponse.json();
+          errorMessage = errorData.details || errorData.error || errorMessage;
+        } catch {
+          errorMessage = pdfResponse.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+      const blob = await pdfResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
+      a.download = `firon-audit-${cleanTarget}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
+      setError(`PDF Download Error: ${errorMessage}`);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const handlePdfEmailSubmit = async (e: React.FormEvent) => {
