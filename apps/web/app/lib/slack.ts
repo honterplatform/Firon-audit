@@ -22,7 +22,7 @@ export async function notifySlack(message: string, blocks?: any[]) {
 
 export function auditLeadAlert(data: { name?: string; email: string; phone?: string; target: string; runId: string; type: 'lead' | 'sales' }) {
   const label = data.type === 'sales' ? ':fire: Sales Contact Request' : ':envelope: New Lead Captured';
-  const auditUrl = `${process.env.APP_BASE_URL || 'https://auditweb-production-ce4e.up.railway.app'}/audits/${data.runId}`;
+  const auditUrl = `${process.env.APP_BASE_URL || 'https://audit.fironmarketing.com'}/audits/${data.runId}`;
   const fields = [
     `*Name:* ${data.name || 'Not provided'}`,
     `*Email:* ${data.email}`,
@@ -35,6 +35,6 @@ export function auditLeadAlert(data: { name?: string; email: string; phone?: str
 }
 
 export function auditCompletedAlert(data: { target: string; runId: string; findingsCount: number }) {
-  return notifySlack(`✅ Audit completed for *${data.target}* — ${data.findingsCount} findings. <${process.env.APP_BASE_URL || 'https://auditweb-production-ce4e.up.railway.app'}/audits/${data.runId}|View Audit>`);
+  return notifySlack(`✅ Audit completed for *${data.target}* — ${data.findingsCount} findings. <${process.env.APP_BASE_URL || 'https://audit.fironmarketing.com'}/audits/${data.runId}|View Audit>`);
 }
 // slack 1775059932
