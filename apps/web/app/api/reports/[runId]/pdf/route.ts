@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generatePDFFromHTML } from '@audit/pipeline';
 
-// Force Node.js runtime (required for Puppeteer)
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 seconds max for PDF generation
+export const maxDuration = 60;
+
+async function generatePDF(html: string): Promise<Buffer> {
+  // Dynamic require hidden from webpack — resolved at runtime
+  const modulePath = ['@audit', 'plugins', 'node_modules', 'playwright'].join('/');
+  const pw = require(modulePath);
+
+  const browser = await pw.chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+
+    const pdfData = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+    });
+
+    return Buffer.from(pdfData);
+  } finally {
+    await browser.close();
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -12,70 +38,35 @@ export async function GET(
   try {
     const { runId } = await context.params;
 
-    // Get base URL from environment variable or construct from request
     let baseUrl = process.env.APP_BASE_URL;
     if (!baseUrl) {
       const host = request.headers.get('host');
       const protocol = request.headers.get('x-forwarded-proto') || 'http';
       baseUrl = `${protocol}://${host}`;
     }
-    
-    // Fetch HTML from report route instead of navigating to it
-    // This avoids navigation issues that cause SIGTRAP crashes
-    console.log(`Fetching HTML from report route: ${baseUrl}/api/reports/${runId}`);
+
     const reportResponse = await fetch(`${baseUrl}/api/reports/${runId}`, {
-      headers: {
-        'Accept': 'text/html',
-      },
+      headers: { 'Accept': 'text/html' },
     });
-    
+
     if (!reportResponse.ok) {
-      throw new Error(`Failed to fetch report HTML: ${reportResponse.status} ${reportResponse.statusText}`);
+      throw new Error(`Failed to fetch report HTML: ${reportResponse.status}`);
     }
-    
+
     const html = await reportResponse.text();
-    console.log(`Fetched HTML (${html.length} characters), generating PDF from HTML...`);
-    
-    // Generate PDF from HTML directly (avoids navigation issues)
-    const pdfBuffer = await generatePDFFromHTML(html);
+    const pdfBuffer = await generatePDF(html);
 
     return new NextResponse(pdfBuffer as any, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="audit-report-${runId}.pdf"`,
+        'Content-Disposition': `attachment; filename="firon-audit-${runId}.pdf"`,
       },
     });
   } catch (error: any) {
-    console.error('Error generating PDF:', error);
-    
-    // Handle various error types including ErrorEvent
-    let errorMessage = 'Unknown error';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (error?.[Symbol.for('kMessage')]) {
-      // ErrorEvent object from WebSocket
-      errorMessage = error[Symbol.for('kMessage')] as string;
-      const innerError = error[Symbol.for('kError')];
-      if (innerError instanceof Error) {
-        errorMessage = `${errorMessage}: ${innerError.message}`;
-      }
-    } else if (typeof error === 'string') {
-      errorMessage = error;
-    } else if (error?.message) {
-      errorMessage = error.message;
-    }
-    
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('PDF generation error details:', { errorMessage, errorStack, errorType: error?.constructor?.name });
-    
+    console.error('PDF generation error:', error?.message);
     return NextResponse.json(
-      { 
-        error: 'Failed to generate PDF',
-        details: errorMessage,
-      },
+      { error: 'Failed to generate PDF', details: error?.message || 'Unknown error' },
       { status: 500 }
     );
   }
 }
-
-// pdf-fix 1776356830
