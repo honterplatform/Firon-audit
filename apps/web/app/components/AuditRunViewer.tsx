@@ -507,18 +507,12 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
               <div className="flex flex-row gap-2">
                   <button
-                    onClick={() => {
-                      console.log('Download Audit button clicked, chatRef:', chatRef.current);
-                      if (chatRef.current) {
-                        chatRef.current.openLeadForm();
-                      } else {
-                        console.error('chatRef.current is null');
-                      }
-                    }}
-                    className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90"
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloadingPdf}
+                    className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#FB3B24', color: '#ffffff' }}
                   >
-                    Download Audit
+                    {isDownloadingPdf ? 'Generating PDF...' : 'Download Report'}
                   </button>
                 {showPdfEmailForm && (
                   <form onSubmit={handlePdfEmailSubmit} className="flex gap-2 items-center">
