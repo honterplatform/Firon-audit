@@ -46,7 +46,7 @@ function findPlaywrightChromium(): string[] {
 
 export async function generatePDFFromHTML(html: string): Promise<Buffer> {
   // Use playwright from @audit/plugins at runtime (avoids version conflicts)
-  const pw = require('@audit/plugins/node_modules/playwright') as any;
+  const pw = require('@audit/' + 'plugins/node_modules/playwright') as any;
   const executablePath = findChromium();
 
   const browser = await pw.chromium.launch({
@@ -74,7 +74,7 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
 }
 
 export async function generatePDF(reportUrl: string): Promise<Buffer> {
-  const pw = require('@audit/plugins/node_modules/playwright') as any;
+  const pw = require('@audit/' + 'plugins/node_modules/playwright') as any;
   const executablePath = findChromium();
 
   const browser = await pw.chromium.launch({
