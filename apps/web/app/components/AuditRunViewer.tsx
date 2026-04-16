@@ -328,33 +328,18 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     setIsDownloadingPdf(true);
     setError(null);
     try {
-      // Fetch the HTML report from the server
-      const reportResponse = await fetch(`/api/reports/${runId}`);
-      if (!reportResponse.ok) throw new Error('Failed to fetch report');
-      const html = await reportResponse.text();
-
-      // Generate PDF client-side using html2pdf.js
-      const html2pdf = (await import('html2pdf.js')).default;
-      const container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      document.body.appendChild(container);
-
-      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
-
-      await html2pdf()
-        .set({
-          margin: [10, 10, 10, 10],
-          filename: `firon-audit-${cleanTarget}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        })
-        .from(container)
-        .save();
-
-      document.body.removeChild(container);
+      // Open the HTML report in a new window and trigger print (Save as PDF)
+      const printWindow = window.open(`/api/reports/${runId}`, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 1500);
+        };
+      } else {
+        // Fallback: direct link download
+        window.open(`/api/reports/${runId}`, '_blank');
+      }
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
