@@ -1,4 +1,3 @@
-import { chromium } from 'playwright-core';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -6,19 +5,19 @@ function findChromium(): string | undefined {
   const candidates = [
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
     process.env.PUPPETEER_EXECUTABLE_PATH,
-    // Playwright cache locations (Railway/Linux)
     ...findPlaywrightChromium(),
-    // System chromium (nixpacks/apt)
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable',
-    // macOS
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   ].filter((p): p is string => typeof p === 'string' && p.length > 0);
 
   for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
+    if (fs.existsSync(p)) {
+      console.log('PDF: Found chromium at:', p);
+      return p;
+    }
   }
   return undefined;
 }
@@ -28,36 +27,32 @@ function findPlaywrightChromium(): string[] {
   const cacheDir = process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(process.env.HOME || '/root', '.cache', 'ms-playwright');
   try {
     if (!fs.existsSync(cacheDir)) return paths;
-    const entries = fs.readdirSync(cacheDir);
-    console.log('PDF: Playwright cache entries:', entries.join(', '));
+    const entries = fs.readdirSync(cacheDir).sort().reverse();
     for (const entry of entries) {
-      // Prefer full chromium (not headless_shell) — it supports page.pdf()
       if (entry.startsWith('chromium-') && !entry.includes('headless')) {
-        // Try multiple known path patterns
-        paths.push(path.join(cacheDir, entry, 'chrome-linux', 'chrome'));
-        paths.push(path.join(cacheDir, entry, 'chrome', 'chrome'));
-        paths.push(path.join(cacheDir, entry, 'chrome-linux', 'headless_shell'));
-        // List contents for debugging
+        const dir = path.join(cacheDir, entry);
         try {
-          const subEntries = fs.readdirSync(path.join(cacheDir, entry));
-          console.log(`PDF: Contents of ${entry}:`, subEntries.join(', '));
+          const subEntries = fs.readdirSync(dir);
+          for (const sub of subEntries) {
+            const chromePath = path.join(dir, sub, 'chrome');
+            paths.push(chromePath);
+          }
         } catch {}
       }
     }
-  } catch (e) {
-    console.error('PDF: Error scanning Playwright cache:', e);
-  }
+  } catch {}
   return paths;
 }
 
 export async function generatePDFFromHTML(html: string): Promise<Buffer> {
+  // Use playwright from @audit/plugins at runtime (avoids version conflicts)
+  const pw = require('@audit/plugins/node_modules/playwright') as any;
   const executablePath = findChromium();
-  console.log('PDF: Using chromium at:', executablePath || 'auto-detect');
 
-  const browser = await chromium.launch({
+  const browser = await pw.chromium.launch({
     headless: true,
-    ...(executablePath ? { executablePath } : { channel: 'chromium' }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer'],
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
   try {
@@ -79,12 +74,13 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
 }
 
 export async function generatePDF(reportUrl: string): Promise<Buffer> {
+  const pw = require('@audit/plugins/node_modules/playwright') as any;
   const executablePath = findChromium();
 
-  const browser = await chromium.launch({
+  const browser = await pw.chromium.launch({
     headless: true,
-    ...(executablePath ? { executablePath } : { channel: 'chromium' }),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer'],
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
   try {
