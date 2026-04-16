@@ -220,6 +220,41 @@ export async function processOrchestrator(job: Job<CrawlJobData>) {
         data: { status: 'completed', completedAt: new Date() },
       });
 
+      // Generate PDF report and store in database (worker has Chromium)
+      try {
+        const appBaseUrl = process.env.APP_BASE_URL || 'https://audit.fironmarketing.com';
+        const reportResp = await fetch(`${appBaseUrl}/api/reports/${runId}`);
+        if (reportResp.ok) {
+          const reportHtml = await reportResp.text();
+          const { chromium } = require('playwright') as any;
+          const browser = await chromium.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+          });
+          const page = await browser.newPage();
+          await page.setViewportSize({ width: 900, height: 1200 });
+          await page.setContent(reportHtml, { waitUntil: 'domcontentloaded' });
+          await page.waitForTimeout(1500);
+          const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+          });
+          await browser.close();
+
+          // Store PDF in database
+          const pdfKey = `runs/${runId}/report.pdf`;
+          await prisma.storedFile.upsert({
+            where: { key: pdfKey },
+            create: { key: pdfKey, data: Buffer.from(pdfBuffer).toString('base64'), contentType: 'application/pdf' },
+            update: { data: Buffer.from(pdfBuffer).toString('base64'), contentType: 'application/pdf' },
+          });
+          logger.info(`PDF report generated and stored for ${target}`, { runId });
+        }
+      } catch (pdfError) {
+        logger.warn(`PDF generation failed (non-fatal) for ${target}`, { runId, error: (pdfError as Error).message });
+      }
+
       logger.info(`Orchestration completed for ${target}`, { runId });
     } else {
       // All jobs failed

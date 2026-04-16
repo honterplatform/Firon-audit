@@ -328,8 +328,21 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     setIsDownloadingPdf(true);
     setError(null);
     try {
-      // Open styled report in new tab — user saves as PDF via browser
-      window.open(`/api/reports/${runId}`, '_blank');
+      const pdfResponse = await fetch(`/api/reports/${runId}/pdf`);
+      if (!pdfResponse.ok) {
+        const err = await pdfResponse.json().catch(() => ({ error: 'PDF not available' }));
+        throw new Error(err.error || 'Failed to download PDF');
+      }
+      const blob = await pdfResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
+      a.download = `firon-audit-${cleanTarget}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
@@ -493,7 +506,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                     className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#FB3B24', color: '#ffffff' }}
                   >
-                    {'Download Report'}
+                    {isDownloadingPdf ? 'Downloading...' : 'Download Report'}
                   </button>
                 {showPdfEmailForm && (
                   <form onSubmit={handlePdfEmailSubmit} className="flex gap-2 items-center">
