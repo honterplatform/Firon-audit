@@ -4,9 +4,8 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 async function generatePDF(html: string): Promise<Buffer> {
-  // Dynamic require hidden from webpack — resolved at runtime
-  const modulePath = ['@audit', 'plugins', 'node_modules', 'playwright'].join('/');
-  const pw = require(modulePath);
+  // playwright is a direct dependency of @audit/web
+  const pw = require('play' + 'wright');
 
   const browser = await pw.chromium.launch({
     headless: true,
