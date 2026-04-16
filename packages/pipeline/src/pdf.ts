@@ -29,15 +29,24 @@ function findPlaywrightChromium(): string[] {
   try {
     if (!fs.existsSync(cacheDir)) return paths;
     const entries = fs.readdirSync(cacheDir);
+    console.log('PDF: Playwright cache entries:', entries.join(', '));
     for (const entry of entries) {
-      if (entry.startsWith('chromium')) {
+      // Prefer full chromium (not headless_shell) — it supports page.pdf()
+      if (entry.startsWith('chromium-') && !entry.includes('headless')) {
         const chromePath = path.join(cacheDir, entry, 'chrome-linux', 'chrome');
         paths.push(chromePath);
-        const headlessPath = path.join(cacheDir, entry, 'chrome-linux', 'headless_shell');
+      }
+    }
+    // Only use headless_shell as last resort
+    for (const entry of entries) {
+      if (entry.includes('headless')) {
+        const headlessPath = path.join(cacheDir, entry, 'chrome-headless-shell-linux64', 'chrome-headless-shell');
         paths.push(headlessPath);
       }
     }
-  } catch {}
+  } catch (e) {
+    console.error('PDF: Error scanning Playwright cache:', e);
+  }
   return paths;
 }
 
