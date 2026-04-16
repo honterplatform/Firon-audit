@@ -342,25 +342,31 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         document.head.appendChild(script);
       });
 
-      // Create an iframe to isolate the report HTML with its own styles
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.left = '-9999px';
-      iframe.style.width = '900px';
-      iframe.style.height = '5000px';
-      iframe.style.border = 'none';
-      document.body.appendChild(iframe);
+      // Extract styles and body from the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const styles = doc.querySelectorAll('style');
+      const bodyContent = doc.body.innerHTML;
 
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!iframeDoc) throw new Error('Failed to create PDF render frame');
-      iframeDoc.open();
-      iframeDoc.write(html);
-      iframeDoc.close();
+      const container = document.createElement('div');
+      // Apply all inline styles from the report
+      styles.forEach(s => {
+        const styleEl = document.createElement('style');
+        styleEl.textContent = s.textContent;
+        container.appendChild(styleEl);
+      });
+      // Create a wrapper that mimics the body styles
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0A0A0A;color:#E0E0E0;padding:40px;width:800px;';
+      wrapper.innerHTML = bodyContent;
+      container.appendChild(wrapper);
 
-      // Wait for styles to apply
-      await new Promise(r => setTimeout(r, 500));
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      document.body.appendChild(container);
 
-      const container = iframeDoc.body;
+      // Wait for rendering
+      await new Promise(r => setTimeout(r, 300));
 
       const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
 
@@ -376,7 +382,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         .from(container)
         .save();
 
-      document.body.removeChild(iframe);
+      document.body.removeChild(container);
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
