@@ -1,8 +1,53 @@
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-core';
+import * as fs from 'fs';
+import * as path from 'path';
+
+function findChromium(): string | undefined {
+  const candidates = [
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    // Playwright cache locations (Railway/Linux)
+    ...findPlaywrightChromium(),
+    // System chromium (nixpacks/apt)
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    // macOS
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ].filter((p): p is string => typeof p === 'string' && p.length > 0);
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return undefined;
+}
+
+function findPlaywrightChromium(): string[] {
+  const paths: string[] = [];
+  const cacheDir = process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(process.env.HOME || '/root', '.cache', 'ms-playwright');
+  try {
+    if (!fs.existsSync(cacheDir)) return paths;
+    const entries = fs.readdirSync(cacheDir);
+    for (const entry of entries) {
+      if (entry.startsWith('chromium')) {
+        const chromePath = path.join(cacheDir, entry, 'chrome-linux', 'chrome');
+        paths.push(chromePath);
+        const headlessPath = path.join(cacheDir, entry, 'chrome-linux', 'headless_shell');
+        paths.push(headlessPath);
+      }
+    }
+  } catch {}
+  return paths;
+}
 
 export async function generatePDFFromHTML(html: string): Promise<Buffer> {
+  const executablePath = findChromium();
+  console.log('PDF: Using chromium at:', executablePath || 'auto-detect');
+
   const browser = await chromium.launch({
     headless: true,
+    executablePath,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
@@ -25,8 +70,11 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
 }
 
 export async function generatePDF(reportUrl: string): Promise<Buffer> {
+  const executablePath = findChromium();
+
   const browser = await chromium.launch({
     headless: true,
+    executablePath,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
