@@ -332,7 +332,16 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
       if (!reportResponse.ok) throw new Error('Failed to fetch report');
       const html = await reportResponse.text();
 
-      const html2pdf = (await import('html2pdf.js')).default;
+      // Load html2pdf.js from CDN at runtime (browser-only library)
+      const html2pdf = await new Promise<any>((resolve, reject) => {
+        if ((window as any).html2pdf) { resolve((window as any).html2pdf); return; }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
+        script.onload = () => resolve((window as any).html2pdf);
+        script.onerror = () => reject(new Error('Failed to load PDF library'));
+        document.head.appendChild(script);
+      });
+
       const container = document.createElement('div');
       container.innerHTML = html;
       container.style.position = 'absolute';
