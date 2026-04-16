@@ -328,61 +328,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     setIsDownloadingPdf(true);
     setError(null);
     try {
-      const reportResponse = await fetch(`/api/reports/${runId}`);
-      if (!reportResponse.ok) throw new Error('Failed to fetch report');
-      const html = await reportResponse.text();
-
-      // Load html2pdf.js from CDN at runtime (browser-only library)
-      const html2pdf = await new Promise<any>((resolve, reject) => {
-        if ((window as any).html2pdf) { resolve((window as any).html2pdf); return; }
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
-        script.onload = () => resolve((window as any).html2pdf);
-        script.onerror = () => reject(new Error('Failed to load PDF library'));
-        document.head.appendChild(script);
-      });
-
-      // Extract styles and body from the HTML
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const styles = doc.querySelectorAll('style');
-      const bodyContent = doc.body.innerHTML;
-
-      const container = document.createElement('div');
-      // Apply all inline styles from the report
-      styles.forEach(s => {
-        const styleEl = document.createElement('style');
-        styleEl.textContent = s.textContent;
-        container.appendChild(styleEl);
-      });
-      // Create a wrapper that mimics the body styles
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0A0A0A;color:#E0E0E0;padding:40px;width:800px;';
-      wrapper.innerHTML = bodyContent;
-      container.appendChild(wrapper);
-
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      document.body.appendChild(container);
-
-      // Wait for rendering
-      await new Promise(r => setTimeout(r, 300));
-
-      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
-
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename: `firon-audit-${cleanTarget}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#0A0A0A' },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        })
-        .from(container)
-        .save();
-
-      document.body.removeChild(container);
+      // Open styled report in new tab — user saves as PDF via browser
+      window.open(`/api/reports/${runId}`, '_blank');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
@@ -546,7 +493,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                     className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#FB3B24', color: '#ffffff' }}
                   >
-                    {isDownloadingPdf ? 'Generating PDF...' : 'Download Report'}
+                    {'Download Report'}
                   </button>
                 {showPdfEmailForm && (
                   <form onSubmit={handlePdfEmailSubmit} className="flex gap-2 items-center">
