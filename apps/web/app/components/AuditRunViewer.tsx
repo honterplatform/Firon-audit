@@ -328,27 +328,33 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     setIsDownloadingPdf(true);
     setError(null);
     try {
-      const pdfResponse = await fetch(`/api/reports/${runId}/pdf`);
-      if (!pdfResponse.ok) {
-        let errorMessage = 'Failed to generate PDF';
-        try {
-          const errorData = await pdfResponse.json();
-          errorMessage = errorData.details || errorData.error || errorMessage;
-        } catch {
-          errorMessage = pdfResponse.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-      const blob = await pdfResponse.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
+      // Fetch the HTML report from the server
+      const reportResponse = await fetch(`/api/reports/${runId}`);
+      if (!reportResponse.ok) throw new Error('Failed to fetch report');
+      const html = await reportResponse.text();
+
+      // Generate PDF client-side using html2pdf.js
+      const html2pdf = (await import('html2pdf.js')).default;
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      document.body.appendChild(container);
+
       const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
-      a.download = `firon-audit-${cleanTarget}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename: `firon-audit-${cleanTarget}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        })
+        .from(container)
+        .save();
+
+      document.body.removeChild(container);
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
