@@ -178,8 +178,8 @@ importers:
         specifier: ^5.3.2
         version: 5.8.2
       playwright-core:
-        specifier: ^1.59.1
-        version: 1.59.1
+        specifier: 1.57.0
+        version: 1.57.0
       utf-8-validate:
         specifier: ^6.0.3
         version: 6.0.6
@@ -198,7 +198,7 @@ importers:
         version: link:../pipeline
       '@axe-core/playwright':
         specifier: ^4.8.2
-        version: 4.11.0(playwright-core@1.57.0)
+        version: 4.11.0(playwright-core@1.59.1)
       axe-core:
         specifier: ^4.8.2
         version: 4.11.0
@@ -906,13 +906,13 @@ packages:
     engines: {node: '>=18.0.0'}
     dev: false
 
-  /@axe-core/playwright@4.11.0(playwright-core@1.57.0):
+  /@axe-core/playwright@4.11.0(playwright-core@1.59.1):
     resolution: {integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==}
     peerDependencies:
       playwright-core: '>= 1.0.0'
     dependencies:
       axe-core: 4.11.0
-      playwright-core: 1.57.0
+      playwright-core: 1.59.1
     dev: false
 
   /@babel/runtime@7.28.4:
