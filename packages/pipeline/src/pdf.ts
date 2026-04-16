@@ -33,15 +33,15 @@ function findPlaywrightChromium(): string[] {
     for (const entry of entries) {
       // Prefer full chromium (not headless_shell) — it supports page.pdf()
       if (entry.startsWith('chromium-') && !entry.includes('headless')) {
-        const chromePath = path.join(cacheDir, entry, 'chrome-linux', 'chrome');
-        paths.push(chromePath);
-      }
-    }
-    // Only use headless_shell as last resort
-    for (const entry of entries) {
-      if (entry.includes('headless')) {
-        const headlessPath = path.join(cacheDir, entry, 'chrome-headless-shell-linux64', 'chrome-headless-shell');
-        paths.push(headlessPath);
+        // Try multiple known path patterns
+        paths.push(path.join(cacheDir, entry, 'chrome-linux', 'chrome'));
+        paths.push(path.join(cacheDir, entry, 'chrome', 'chrome'));
+        paths.push(path.join(cacheDir, entry, 'chrome-linux', 'headless_shell'));
+        // List contents for debugging
+        try {
+          const subEntries = fs.readdirSync(path.join(cacheDir, entry));
+          console.log(`PDF: Contents of ${entry}:`, subEntries.join(', '));
+        } catch {}
       }
     }
   } catch (e) {
@@ -56,8 +56,8 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
 
   const browser = await chromium.launch({
     headless: true,
-    executablePath,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    ...(executablePath ? { executablePath } : { channel: 'chromium' }),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer'],
   });
 
   try {
@@ -83,8 +83,8 @@ export async function generatePDF(reportUrl: string): Promise<Buffer> {
 
   const browser = await chromium.launch({
     headless: true,
-    executablePath,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    ...(executablePath ? { executablePath } : { channel: 'chromium' }),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer'],
   });
 
   try {
