@@ -88,67 +88,118 @@ export async function GET(
       }
     }
 
+    const cleanTarget = run.target.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const completedDate = run.completedAt ? new Date(run.completedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A';
+
+    const impactColor = (impact: string) => {
+      if (impact === 'High') return 'background:#3B1111;color:#FF6B6B;';
+      if (impact === 'Medium') return 'background:#3B2E11;color:#FBBF24;';
+      return 'background:#113B1E;color:#4ADE80;';
+    };
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Audit Report - ${run.target}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>SEO Audit Report - ${cleanTarget}</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:#0A0A0A; color:#E0E0E0; padding:40px; }
+    .container { max-width:800px; margin:0 auto; }
+    .header { text-align:center; margin-bottom:48px; padding-bottom:32px; border-bottom:1px solid #212121; }
+    .logo { font-size:24px; font-weight:700; color:#fff; letter-spacing:2px; margin-bottom:8px; }
+    .title { font-size:32px; font-weight:300; color:#fff; margin-bottom:8px; }
+    .subtitle { font-size:14px; color:#888; }
+    .meta { display:flex; justify-content:space-between; margin-bottom:40px; padding:20px; background:#0F0F0F; border:1px solid #212121; border-radius:12px; }
+    .meta-item { text-align:center; }
+    .meta-label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+    .meta-value { font-size:24px; font-weight:300; color:#FB3B24; }
+    .meta-value-white { font-size:24px; font-weight:300; color:#fff; }
+    .section-title { font-size:24px; font-weight:300; color:#fff; margin-bottom:24px; margin-top:48px; }
+    .finding { background:#0F0F0F; border:1px solid #212121; border-radius:12px; padding:20px; margin-bottom:16px; }
+    .finding-header { display:flex; gap:8px; margin-bottom:12px; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; }
+    .finding-title { font-size:16px; font-weight:500; color:#F5F5F5; margin-bottom:8px; }
+    .finding-why-label { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .finding-why { font-size:13px; color:#CCC; line-height:1.6; margin-bottom:12px; }
+    .finding-fix-label { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .finding-fix { font-size:13px; color:#CCC; line-height:1.6; }
+    .phase { background:#0F0F0F; border:1px solid #212121; border-radius:12px; padding:20px; margin-bottom:16px; }
+    .phase-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:500; margin-bottom:8px; }
+    .phase-title { font-size:18px; font-weight:500; color:#fff; margin-bottom:12px; }
+    .phase-item { font-size:13px; color:#CCC; line-height:1.6; padding:4px 0; }
+    .phase-arrow { color:#FB3B24; margin-right:8px; }
+    .footer { text-align:center; margin-top:48px; padding-top:32px; border-top:1px solid #212121; }
+    .footer-text { font-size:12px; color:#666; }
+    .cta { display:inline-block; padding:12px 24px; background:#FB3B24; color:#fff; text-decoration:none; border-radius:999px; font-size:14px; margin-top:16px; }
+  </style>
 </head>
-<body class="bg-gray-50 p-8">
-  <div class="max-w-7xl mx-auto bg-white shadow-lg rounded-lg p-8">
-    <h1 class="text-3xl font-bold mb-4">UX/UI Audit Report</h1>
-    <div class="mb-6">
-      <p class="text-gray-600"><strong>Target:</strong> ${run.target}</p>
-      <p class="text-gray-600"><strong>Status:</strong> ${run.status}</p>
-      <p class="text-gray-600"><strong>Completed:</strong> ${run.completedAt ? new Date(run.completedAt).toLocaleString() : 'N/A'}</p>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">FIRON</div>
+      <div class="title">AI Readiness Report</div>
+      <div class="subtitle">${cleanTarget} &mdash; ${completedDate}</div>
     </div>
 
-    ${Object.keys(screenshotUrls).length > 0 ? `
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Screenshots</h2>
-      <div class="grid grid-cols-2 gap-4">
-        ${Object.entries(screenshotUrls).map(([viewport, url]) => `
-          <div>
-            <h3 class="font-medium mb-2 capitalize">${viewport}</h3>
-            <img src="${url}" alt="${viewport} screenshot" class="border rounded-lg shadow-md max-w-full" />
-          </div>
-        `).join('')}
+    <div class="meta">
+      <div class="meta-item">
+        <div class="meta-label">Total Findings</div>
+        <div class="meta-value-white">${summary.findings.length}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">High Impact</div>
+        <div class="meta-value">${summary.findings.filter((f: any) => f.impact === 'High').length}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Categories</div>
+        <div class="meta-value-white">${new Set(summary.findings.map((f: any) => f.kind)).size}</div>
       </div>
     </div>
+
+    <div class="section-title">Findings</div>
+    ${summary.findings.map((f: any) => `
+      <div class="finding">
+        <div class="finding-header">
+          <span class="badge" style="${impactColor(f.impact)}">${f.impact} Impact</span>
+          <span class="badge" style="background:#1A1A1A;color:#888;">${f.effort} Effort</span>
+          <span class="badge" style="background:#1A1A1A;color:#888;">${f.kind}</span>
+        </div>
+        <div class="finding-title">${escapeHtml(f.issue)}</div>
+        <div class="finding-why-label">Why This Matters</div>
+        <div class="finding-why">${escapeHtml(f.why)}</div>
+        <div class="finding-fix-label">How to Fix</div>
+        <div class="finding-fix">${escapeHtml(f.fix)}</div>
+      </div>
+    `).join('')}
+
+    ${summary.plan ? `
+    <div class="section-title">Action Plan</div>
+    ${summary.plan.quickWins?.length > 0 ? `
+    <div class="phase">
+      <span class="phase-badge" style="background:rgba(251,59,36,0.15);color:#FB3B24;">Phase 1</span>
+      <div class="phase-title">Infrastructure Sprint</div>
+      ${summary.plan.quickWins.map((item: string) => `<div class="phase-item"><span class="phase-arrow">&rarr;</span>${escapeHtml(item)}</div>`).join('')}
+    </div>` : ''}
+    ${summary.plan.next?.length > 0 ? `
+    <div class="phase">
+      <span class="phase-badge" style="background:rgba(251,191,36,0.15);color:#FBBF24;">Phase 2</span>
+      <div class="phase-title">AEO &amp; GEO</div>
+      ${summary.plan.next.map((item: string) => `<div class="phase-item"><span class="phase-arrow" style="color:#FBBF24;">&rarr;</span>${escapeHtml(item)}</div>`).join('')}
+    </div>` : ''}
+    ${(summary.plan.scaleAuthority?.length > 0) ? `
+    <div class="phase">
+      <span class="phase-badge" style="background:rgba(74,222,128,0.15);color:#4ADE80;">Phase 3</span>
+      <div class="phase-title">Scale &amp; Authority</div>
+      ${summary.plan.scaleAuthority.map((item: string) => `<div class="phase-item"><span class="phase-arrow" style="color:#4ADE80;">&rarr;</span>${escapeHtml(item)}</div>`).join('')}
+    </div>` : ''}
     ` : ''}
 
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Findings</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Why</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fix</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Impact</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Effort</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign To</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            ${summary.findings.map((f: any) => `
-              <tr>
-                <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(f.issue)}</td>
-                <td class="px-6 py-4 text-sm text-gray-500 max-w-md">${escapeHtml(f.why)}</td>
-                <td class="px-6 py-4 text-sm text-gray-500 max-w-md">${escapeHtml(f.fix)}</td>
-                <td class="px-6 py-4 text-sm">
-                  <span class="px-2 py-1 text-xs rounded-full ${getImpactColor(f.impact)}">${f.impact}</span>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500">${f.effort}</td>
-                <td class="px-6 py-4 text-sm text-gray-500">${f.kind || 'UX/UI'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+    <div class="footer">
+      <div class="footer-text">This report was generated by Firon Marketing&apos;s AI Audit Platform.</div>
+      <div class="footer-text" style="margin-top:8px;">Want the full picture? Our team can pull your Domain Authority, backlink trust flow, and competitor keyword gaps.</div>
+      <a href="https://audit.fironmarketing.com" class="cta">Speak to an Analyst</a>
+      <div class="footer-text" style="margin-top:24px;color:#444;">hello@fironmarketing.com</div>
     </div>
   </div>
 </body>

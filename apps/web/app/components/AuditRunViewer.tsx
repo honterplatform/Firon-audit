@@ -328,18 +328,33 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
     setIsDownloadingPdf(true);
     setError(null);
     try {
-      // Open the HTML report in a new window and trigger print (Save as PDF)
-      const printWindow = window.open(`/api/reports/${runId}`, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
-          }, 1500);
-        };
-      } else {
-        // Fallback: direct link download
-        window.open(`/api/reports/${runId}`, '_blank');
-      }
+      const reportResponse = await fetch(`/api/reports/${runId}`);
+      if (!reportResponse.ok) throw new Error('Failed to fetch report');
+      const html = await reportResponse.text();
+
+      const html2pdf = (await import('html2pdf.js')).default;
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '800px';
+      document.body.appendChild(container);
+
+      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
+
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: `firon-audit-${cleanTarget}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#0A0A0A' },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        })
+        .from(container)
+        .save();
+
+      document.body.removeChild(container);
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
