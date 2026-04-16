@@ -152,7 +152,7 @@ export default function HomePage() {
                 disabled={loading}
               />
               <p className="text-xs mt-2" style={{ color: '#888888', lineHeight: '1.5' }}>
-                This deep-dive takes about 60 seconds. Enter your email below, and we will send you the full diagnostic report as soon as it&apos;s ready. You can also wait here and it will appear.
+                This deep-dive takes about 60 seconds. Enter your email below, and we will generate the full diagnostic report and redirect you as soon as it&apos;s ready. Please be patient. It is worth it.
               </p>
             </div>
 
