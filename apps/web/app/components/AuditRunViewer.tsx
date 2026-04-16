@@ -342,12 +342,25 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         document.head.appendChild(script);
       });
 
-      const container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.width = '800px';
-      document.body.appendChild(container);
+      // Create an iframe to isolate the report HTML with its own styles
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '900px';
+      iframe.style.height = '5000px';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Failed to create PDF render frame');
+      iframeDoc.open();
+      iframeDoc.write(html);
+      iframeDoc.close();
+
+      // Wait for styles to apply
+      await new Promise(r => setTimeout(r, 500));
+
+      const container = iframeDoc.body;
 
       const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
 
@@ -363,7 +376,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         .from(container)
         .save();
 
-      document.body.removeChild(container);
+      document.body.removeChild(iframe);
     } catch (error) {
       console.error('Error downloading PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
