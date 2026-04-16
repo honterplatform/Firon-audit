@@ -61,7 +61,7 @@ export async function runAxe(
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
     // Get violations using AxeBuilder (legacy mode prevents context warnings)
-    const axeBuilder = new AxeBuilder({ page }).setLegacyMode();
+    const axeBuilder = new AxeBuilder({ page: page as any }).setLegacyMode();
     const axeResults = await axeBuilder.analyze();
     const axeViolations = axeResults.violations || [];
     
