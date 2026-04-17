@@ -172,8 +172,12 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
           prevFindingsCount.current = 0;
           stablePollCount.current = 0;
           timer = setTimeout(poll, POLL_INTERVAL_MS);
+        } else if (currentFindings === 0) {
+          // Done but no findings yet — keep polling, they're still being written
+          stablePollCount.current = 0;
+          timer = setTimeout(poll, 2000);
         } else if (currentFindings === prevFindingsCount.current) {
-          // Done and findings count is stable
+          // Done and findings count is stable (and > 0)
           stablePollCount.current += 1;
           if (stablePollCount.current < 2) {
             // Poll one more time to confirm findings are stable
