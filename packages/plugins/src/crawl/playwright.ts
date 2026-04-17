@@ -24,6 +24,7 @@ export async function runCrawl(
   const storage = createStorageProvider();
   const results: Partial<CrawlResult> = {
     screenshots: {} as any,
+    screenshotBuffers: {},
     html: {} as any,
     selectors: {},
     content: {
@@ -267,8 +268,10 @@ export async function runCrawl(
     try {
       const desktopScreenshot = await desktopPage.screenshot({ fullPage: false });
       const desktopScreenshotPath = `runs/${runId}/screens/desktop.png`;
-      await storage.putObject(desktopScreenshotPath, Buffer.from(desktopScreenshot), 'image/png');
+      const desktopBuffer = Buffer.from(desktopScreenshot);
+      await storage.putObject(desktopScreenshotPath, desktopBuffer, 'image/png');
       results.screenshots!.desktop = desktopScreenshotPath;
+      results.screenshotBuffers!.desktop = desktopBuffer;
     } catch (e) {
       console.warn('Desktop screenshot failed, continuing without it:', (e as Error).message);
     }
@@ -807,8 +810,10 @@ export async function runCrawl(
     try {
       const mobileScreenshot = await mobilePage.screenshot({ fullPage: false });
       const mobileScreenshotPath = `runs/${runId}/screens/mobile.png`;
-      await storage.putObject(mobileScreenshotPath, Buffer.from(mobileScreenshot), 'image/png');
+      const mobileBuffer = Buffer.from(mobileScreenshot);
+      await storage.putObject(mobileScreenshotPath, mobileBuffer, 'image/png');
       results.screenshots!.mobile = mobileScreenshotPath;
+      results.screenshotBuffers!.mobile = mobileBuffer;
     } catch (e) {
       console.warn('Mobile screenshot failed, continuing without it:', (e as Error).message);
     }

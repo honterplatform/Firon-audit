@@ -3,6 +3,10 @@ export interface CrawlResult {
     desktop: string;
     mobile: string;
   };
+  screenshotBuffers?: {
+    desktop?: Buffer;
+    mobile?: Buffer;
+  };
   html: {
     desktop: string;
     mobile: string;
