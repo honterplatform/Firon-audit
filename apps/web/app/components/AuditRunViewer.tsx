@@ -317,7 +317,8 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
 
   // Only show progress bar when audit is actively in progress (queued or running)
   // Hide it when completed, partial, or failed (results are shown instead)
-  const showProgressBar = run.status === 'queued' || run.status === 'running';
+  // Keep showing progress until findings are actually loaded — prevents empty findings flash
+  const showProgressBar = run.status === 'queued' || run.status === 'running' || (isAuditDone && findingsToRender.length === 0);
 
   const sortedScreenshots = useMemo(() => {
     if (!screenshotUrls) {
@@ -436,6 +437,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                 {/* Current Stage Text */}
                 <p className="text-sm text-center mb-6" style={{ color: '#888888' }}>
                   {(() => {
+                    if (isAuditDone && findingsToRender.length === 0) return 'Compiling findings... almost there.';
                     const currentStage = progressStages.find(s => !s.completed);
                     if (!currentStage) return 'Finalizing audit report...';
                     if (currentStage.name === 'AI Search') return 'Connecting to AI Search Engines...';
