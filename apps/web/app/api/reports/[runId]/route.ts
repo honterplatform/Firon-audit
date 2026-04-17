@@ -137,7 +137,7 @@ export async function GET(
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">FIRON</div>
+      <img src="${process.env.APP_BASE_URL || 'https://audit.fironmarketing.com'}/Logo.svg" alt="Firon" style="height:32px;margin:0 auto 8px auto;display:block;" />
       <div class="title">AI Readiness Report</div>
       <div class="subtitle">${cleanTarget} &mdash; ${completedDate}</div>
     </div>
