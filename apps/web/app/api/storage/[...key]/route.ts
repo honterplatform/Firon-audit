@@ -5,12 +5,11 @@ import * as path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ key: string }> }
+  { params }: { params: Promise<{ key: string[] }> }
 ) {
   const { key } = await params;
-  const decodedKey = decodeURIComponent(key);
+  const decodedKey = key.map((segment) => decodeURIComponent(segment)).join('/');
 
-  // Try database first (works across Railway services)
   try {
     const file = await prisma.storedFile.findUnique({ where: { key: decodedKey } });
     if (file) {
@@ -24,7 +23,6 @@ export async function GET(
     }
   } catch { /* DB not available, fall through to filesystem */ }
 
-  // Fall back to local filesystem
   const baseDir = process.env.LOCAL_STORAGE_DIR || './data/uploads';
   const filePath = path.join(baseDir, decodedKey);
   const resolved = path.resolve(filePath);
@@ -53,4 +51,3 @@ export async function GET(
     },
   });
 }
-// deploy 1774629986

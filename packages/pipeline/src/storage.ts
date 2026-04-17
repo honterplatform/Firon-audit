@@ -114,8 +114,11 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async getSignedUrl(key: string): Promise<string> {
-    // Relative URL — works regardless of APP_BASE_URL config
-    return `/api/storage/${encodeURIComponent(key)}`;
+    // Relative URL — works regardless of APP_BASE_URL config.
+    // Encode each path segment individually so slashes remain real separators
+    // (a single dynamic segment with %2F-encoded slashes breaks on proxies that normalize URLs).
+    const encoded = key.split('/').map(encodeURIComponent).join('/');
+    return `/api/storage/${encoded}`;
   }
 }
 
