@@ -89,10 +89,17 @@ export default async function AuditDetailPage({
     if (artifact.type === 'screenshot') {
       if (artifact.metaJson && typeof artifact.metaJson === 'object' && 'viewport' in artifact.metaJson) {
         const viewport = (artifact.metaJson as Record<string, unknown>).viewport as string;
-        try {
-          screenshotUrls[viewport] = await storage.getSignedUrl(artifact.path, 3600);
-        } catch (error) {
-          console.error(`Failed to get signed URL for ${artifact.path}:`, error);
+        // Prefer inlining as a data URL from StoredFile — avoids all routing/proxy
+        // issues around serving binary content through /api/storage.
+        const stored = await prisma.storedFile.findUnique({ where: { key: artifact.path } }).catch(() => null);
+        if (stored) {
+          screenshotUrls[viewport] = `data:${stored.contentType};base64,${stored.data}`;
+        } else {
+          try {
+            screenshotUrls[viewport] = await storage.getSignedUrl(artifact.path, 3600);
+          } catch (error) {
+            console.error(`Failed to get signed URL for ${artifact.path}:`, error);
+          }
         }
       }
     } else if (artifact.type === 'json' && artifact.path === 'elementCoordinates') {
