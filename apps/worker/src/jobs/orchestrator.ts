@@ -226,9 +226,11 @@ export async function processOrchestrator(job: Job<CrawlJobData>) {
         const reportResp = await fetch(`${appBaseUrl}/api/reports/${runId}`);
         if (reportResp.ok) {
           const reportHtml = await reportResp.text();
-          const { chromium } = require('playwright') as any;
+          const { chromium } = require('@audit/plugins');
+          // Use channel: 'chromium' to get full browser (not headless shell) — required for page.pdf()
           const browser = await chromium.launch({
             headless: true,
+            channel: 'chromium',
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
           });
           const page = await browser.newPage();

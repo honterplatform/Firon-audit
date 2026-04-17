@@ -77,3 +77,4 @@ process.on('SIGINT', async () => {
 });
 
 // v2 — Claude with Haiku fallback
+// pdf-gen 1776382978
