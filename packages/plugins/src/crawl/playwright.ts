@@ -6,8 +6,12 @@ export async function runCrawl(
   url: string,
   runId: string
 ): Promise<CrawlResult> {
-  const browser = await chromium.launch({ 
+  // Prefer the full system chromium over playwright's chrome-headless-shell download,
+  // which has missing shared-library dependencies in slim images.
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
+  const browser = await chromium.launch({
     headless: true,
+    ...(executablePath ? { executablePath } : {}),
     args: [
       '--disable-blink-features=AutomationControlled',
       '--disable-dev-shm-usage',

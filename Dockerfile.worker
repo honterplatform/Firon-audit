@@ -1,9 +1,11 @@
 FROM node:20-slim AS base
 
-# Install system dependencies for Playwright/Chromium
+# Install system dependencies for Playwright/Chromium (including chrome-headless-shell)
 RUN apt-get update && apt-get install -y \
     chromium \
+    libglib2.0-0 \
     libnss3 \
+    libnspr4 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
@@ -16,10 +18,22 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libgbm1 \
     libpango-1.0-0 \
+    libcairo2 \
     libasound2 \
     libgtk-3-0 \
+    libx11-6 \
+    libxcb1 \
+    libxext6 \
+    libxi6 \
+    libxtst6 \
+    libexpat1 \
+    libfontconfig1 \
+    libfreetype6 \
+    libuuid1 \
+    libdrm-common \
     fonts-noto-color-emoji \
     fonts-liberation \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable && corepack prepare pnpm@8.15.4 --activate
