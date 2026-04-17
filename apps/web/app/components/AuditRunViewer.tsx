@@ -499,11 +499,11 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             <img src="/Logo.svg" alt="Logo" className="h-8" />
           </div>
         ) : (
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-row items-center justify-between gap-4">
           <div>
             <img src="/Logo.svg" alt="Logo" className="h-8" />
           </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-end">
               {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
               <div className="flex flex-row gap-2">
                   <button
@@ -565,22 +565,22 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         )}
         
               {/* Divider */}
-              <div className="border-b mb-16" style={{ borderColor: '#0F0F0F' }}></div>
+              <div className="border-b mb-6 lg:mb-16" style={{ borderColor: '#0F0F0F' }}></div>
 
         {/* Show content only when audit is complete */}
         {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
           <>
             {/* Header Screenshot + Lighthouse Results - Side by Side */}
             {screenshotUrls?.desktop && (
-          <div className="mb-12 pt-16">
+          <div className="mb-12 pt-4 lg:pt-16">
             <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Performance Overview</h2>
+                <h2 className="text-3xl lg:text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Performance Overview</h2>
                 <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
                   Visual preview and key performance metrics
                 </p>
               </div>
-              <div className="flex-shrink-0 text-right">
+              <div className="flex-shrink-0 text-left sm:text-right">
                 <p className="text-gray-300 text-xs font-light uppercase mb-1" style={{ letterSpacing: '0.15em' }}>Website Audited</p>
                 <a 
                   href={run.target} 
@@ -876,9 +876,9 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         {fallbackHasFindings || hasFindings ? (
           <div className="space-y-8">
             <section className="space-y-6">
-              <div className="mb-6 mt-24">
+              <div className="mb-6 mt-12 lg:mt-24">
                 <div>
-                  <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Findings</h2>
+                  <h2 className="text-3xl lg:text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Findings</h2>
                   {hasSummary && run.summaryJson && (
                     <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
                       {run.stats.highImpactFindings > 0 && `${run.stats.highImpactFindings} high-impact ${run.stats.highImpactFindings === 1 ? 'issue' : 'issues'} found. `}

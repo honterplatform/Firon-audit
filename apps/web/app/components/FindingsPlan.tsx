@@ -22,9 +22,9 @@ export function FindingsPlan({ plan }: FindingsPlanProps) {
   if (!hasContent) return null;
 
   return (
-    <div className="pt-32 mt-16 space-y-6">
+    <div className="pt-16 mt-8 lg:pt-32 lg:mt-16 space-y-6">
       <div className="mb-6">
-        <h2 className="text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Action Plan</h2>
+        <h2 className="text-3xl lg:text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Action Plan</h2>
         <p className="text-base font-light max-w-5xl" style={{ color: '#888888' }}>
           Firon&apos;s three-phase methodology to fix your SEO liabilities and build lasting search authority.
         </p>
