@@ -1,3 +1,4 @@
+// deploy-marker: rebuild-trigger
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
