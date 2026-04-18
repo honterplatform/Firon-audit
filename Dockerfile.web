@@ -9,9 +9,11 @@ RUN apt-get update && apt-get install -y \
 RUN corepack enable && corepack prepare pnpm@8.15.4 --activate
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies. Copy Prisma schema before install so @audit/db's
+# `prisma generate` postinstall hook can find it.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/db/package.json packages/db/
+COPY packages/db/prisma packages/db/prisma
 COPY packages/pipeline/package.json packages/pipeline/
 COPY packages/llm/package.json packages/llm/
 COPY packages/plugins/package.json packages/plugins/
