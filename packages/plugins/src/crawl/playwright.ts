@@ -227,30 +227,51 @@ export async function runCrawl(
     
     // Check if we got an "Access Denied" or blocked page
     const isBlocked = await desktopPage.evaluate(() => {
-      const bodyText = document.body?.textContent?.toLowerCase() || '';
-      const title = document.title?.toLowerCase() || '';
-      const html = document.documentElement?.innerHTML?.toLowerCase() || '';
-      
-      const blockedIndicators = [
+      // A real block/challenge page is almost always tiny (no real content) and
+      // announces itself in the <title> or a prominent heading. Scanning the
+      // full HTML for loose terms like "blocked" or "cloudflare" matches
+      // countless normal pages (CDN references, CSS class names, etc.).
+      const bodyText = (document.body?.textContent || '').replace(/\s+/g, ' ').trim();
+      const title = (document.title || '').trim().toLowerCase();
+      const h1 = (document.querySelector('h1')?.textContent || '').trim().toLowerCase();
+
+      // Strong title/heading signals — unambiguous on their own.
+      const titleSignals = [
         'access denied',
         'access forbidden',
-        'blocked',
-        'forbidden',
-        'you don\'t have permission',
-        'cloudflare',
+        'attention required',
+        'just a moment',
         'checking your browser',
-        'please wait',
         'ddos protection',
-        'bot protection',
-        'captcha',
-        'challenge',
+        'bot verification',
+        'verify you are human',
       ];
-      
-      return blockedIndicators.some(indicator => 
-        bodyText.includes(indicator) || 
-        title.includes(indicator) || 
-        html.includes(indicator)
-      );
+      if (titleSignals.some((s) => title.includes(s) || h1.includes(s))) {
+        return true;
+      }
+
+      // Short-page heuristic: challenge pages are usually under ~1500 chars of
+      // visible text and contain a block phrase. Real sites have far more.
+      if (bodyText.length < 1500) {
+        const bodyLower = bodyText.toLowerCase();
+        const shortPageSignals = [
+          'access denied',
+          'access forbidden',
+          "you don't have permission",
+          'you do not have permission',
+          'please enable cookies',
+          'please enable javascript',
+          'please complete the security check',
+          'cloudflare ray id',
+          'ddos protection by',
+          'bot protection',
+        ];
+        if (shortPageSignals.some((s) => bodyLower.includes(s))) {
+          return true;
+        }
+      }
+
+      return false;
     });
     
     if (isBlocked) {
@@ -770,30 +791,44 @@ export async function runCrawl(
     
     // Check if we got an "Access Denied" or blocked page
     const isMobileBlocked = await mobilePage.evaluate(() => {
-      const bodyText = document.body?.textContent?.toLowerCase() || '';
-      const title = document.title?.toLowerCase() || '';
-      const html = document.documentElement?.innerHTML?.toLowerCase() || '';
-      
-      const blockedIndicators = [
+      const bodyText = (document.body?.textContent || '').replace(/\s+/g, ' ').trim();
+      const title = (document.title || '').trim().toLowerCase();
+      const h1 = (document.querySelector('h1')?.textContent || '').trim().toLowerCase();
+
+      const titleSignals = [
         'access denied',
         'access forbidden',
-        'blocked',
-        'forbidden',
-        'you don\'t have permission',
-        'cloudflare',
+        'attention required',
+        'just a moment',
         'checking your browser',
-        'please wait',
         'ddos protection',
-        'bot protection',
-        'captcha',
-        'challenge',
+        'bot verification',
+        'verify you are human',
       ];
-      
-      return blockedIndicators.some(indicator => 
-        bodyText.includes(indicator) || 
-        title.includes(indicator) || 
-        html.includes(indicator)
-      );
+      if (titleSignals.some((s) => title.includes(s) || h1.includes(s))) {
+        return true;
+      }
+
+      if (bodyText.length < 1500) {
+        const bodyLower = bodyText.toLowerCase();
+        const shortPageSignals = [
+          'access denied',
+          'access forbidden',
+          "you don't have permission",
+          'you do not have permission',
+          'please enable cookies',
+          'please enable javascript',
+          'please complete the security check',
+          'cloudflare ray id',
+          'ddos protection by',
+          'bot protection',
+        ];
+        if (shortPageSignals.some((s) => bodyLower.includes(s))) {
+          return true;
+        }
+      }
+
+      return false;
     });
     
     if (isMobileBlocked) {
