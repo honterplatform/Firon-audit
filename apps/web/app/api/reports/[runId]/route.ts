@@ -75,15 +75,22 @@ export async function GET(
         }
       : rawSummary;
 
-    // Get signed URLs for screenshots
+    // Get screenshot URLs — prefer inline data URLs from StoredFile so the PDF
+    // renders correctly when the HTML is captured by a headless browser that
+    // can't reach /api/storage paths on a relative basis.
     const screenshotUrls: Record<string, string> = {};
     for (const artifact of run.artifacts) {
       if (artifact.metaJson && typeof artifact.metaJson === 'object' && 'viewport' in artifact.metaJson) {
         const viewport = artifact.metaJson.viewport as string;
-        try {
-          screenshotUrls[viewport] = await storage.getSignedUrl(artifact.path, 3600);
-        } catch (error) {
-          console.error(`Failed to get signed URL for ${artifact.path}:`, error);
+        const stored = await prisma.storedFile.findUnique({ where: { key: artifact.path } }).catch(() => null);
+        if (stored) {
+          screenshotUrls[viewport] = `data:${stored.contentType};base64,${stored.data}`;
+        } else {
+          try {
+            screenshotUrls[viewport] = await storage.getSignedUrl(artifact.path, 3600);
+          } catch (error) {
+            console.error(`Failed to get signed URL for ${artifact.path}:`, error);
+          }
         }
       }
     }
@@ -132,6 +139,8 @@ export async function GET(
     .footer { text-align:center; margin-top:48px; padding-top:32px; border-top:1px solid #212121; }
     .footer-text { font-size:12px; color:#666; }
     .cta { display:inline-block; padding:12px 24px; background:#FB3B24; color:#fff; text-decoration:none; border-radius:999px; font-size:14px; margin-top:16px; }
+    .screenshot-wrap { margin-bottom:40px; border:1px solid #212121; border-radius:12px; overflow:hidden; background:#0F0F0F; }
+    .screenshot-wrap img { display:block; width:100%; height:auto; }
   </style>
 </head>
 <body>
@@ -141,6 +150,11 @@ export async function GET(
       <div class="title">AI Readiness Report</div>
       <div class="subtitle">${cleanTarget} &mdash; ${completedDate}</div>
     </div>
+
+    ${screenshotUrls.desktop ? `
+    <div class="screenshot-wrap">
+      <img src="${screenshotUrls.desktop}" alt="${cleanTarget} homepage screenshot" />
+    </div>` : ''}
 
     <div class="meta">
       <div class="meta-item">
