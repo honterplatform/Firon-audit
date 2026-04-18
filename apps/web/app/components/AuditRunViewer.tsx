@@ -615,16 +615,18 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
                       <p className="text-xs mt-1 opacity-75">Access to this website was blocked</p>
                     </div>
                   ) : (
-                    <div style={{ width: '100%', height: '500px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
                       <img
                         src={screenshotUrls.desktop}
                         alt="Website header"
-                        style={{ 
+                        style={{
                           width: '100%',
-                          height: 'auto',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'top center',
                           display: 'block',
                           margin: 0,
-                          padding: 0
+                          padding: 0,
                         }}
                         onError={(e) => {
                           console.error('Failed to load screenshot:', screenshotUrls.desktop);
