@@ -28,38 +28,13 @@ export async function sendAuditReportEmail(opts: {
   const reportUrl = `${APP_URL}/audits/${opts.runId}`;
   const cleanTarget = opts.target.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-  // Try to fetch the PDF to attach
-  let pdfAttachment: { filename: string; content: string } | null = null;
   try {
-    const pdfResp = await fetch(`${APP_URL}/api/reports/${opts.runId}/pdf`, {
-      headers: { 'Accept': 'application/pdf' },
-    });
-    if (pdfResp.ok) {
-      const buffer = Buffer.from(await pdfResp.arrayBuffer());
-      const fileSafeTarget = cleanTarget.replace(/[^a-z0-9]/gi, '-');
-      pdfAttachment = {
-        filename: `firon-audit-${fileSafeTarget}.pdf`,
-        content: buffer.toString('base64'),
-      };
-    } else {
-      console.warn('PDF generation failed for email attachment, sending email without PDF');
-    }
-  } catch (e) {
-    console.warn('Could not fetch PDF for email attachment:', e);
-  }
-
-  try {
-    const sendArgs: any = {
+    const result = await resend.emails.send({
       from: FROM_ADDRESS,
       to: opts.to,
       subject: `Your AI Readiness Report for ${cleanTarget} is ready`,
       html: buildReportEmailHtml({ ...opts, reportUrl, cleanTarget }),
-    };
-    if (pdfAttachment) {
-      sendArgs.attachments = [pdfAttachment];
-    }
-
-    const result = await resend.emails.send(sendArgs);
+    });
 
     if (result.error) {
       console.error('Resend error:', result.error);
