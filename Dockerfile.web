@@ -1,4 +1,11 @@
 FROM node:20-slim AS base
+
+# OpenSSL is required by Prisma's query engine; ca-certificates for HTTPS
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable && corepack prepare pnpm@8.15.4 --activate
 WORKDIR /app
 

@@ -1,8 +1,10 @@
 FROM node:20-slim AS base
 
 # Install system dependencies for Playwright/Chromium (including chrome-headless-shell)
+# openssl is required by Prisma's query engine
 RUN apt-get update && apt-get install -y \
     chromium \
+    openssl \
     libglib2.0-0 \
     libnss3 \
     libnspr4 \
