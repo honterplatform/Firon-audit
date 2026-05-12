@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter_Tight, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { FironTopBar } from "./components/FironTopBar";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -27,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${interTight.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
-      <body className={interTight.className} suppressHydrationWarning>{children}</body>
+      <body className={interTight.className} suppressHydrationWarning>
+        <FironTopBar />
+        {children}
+      </body>
     </html>
   );
 }
