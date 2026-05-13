@@ -182,3 +182,350 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* ============================================================
+   Editorial primitives — results page (chapters, stats, findings)
+   ============================================================ */
+
+/* Wider editorial column for the report (forms stay narrower) */
+.ed-col-report {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Section / chapter */
+.ed-section { padding: 48px 0; border-bottom: 1px solid var(--line); }
+.ed-section:last-child { border-bottom: 0; padding-bottom: 64px; }
+.ed-chapter { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; }
+.ed-chapter-num {
+  font-family: var(--font-inter-tight), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.ed-chapter-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  color: var(--text);
+  margin: 0;
+}
+.ed-prose {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+  max-width: 880px;
+}
+.ed-prose p { margin: 0 0 16px; }
+.ed-prose strong { color: var(--text); font-weight: 600; }
+.ed-prose em { color: var(--accent); font-style: normal; }
+
+/* Stats — big numeric + tiny label */
+.ed-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.ed-stat .num {
+  font-family: var(--font-inter-tight);
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ed-stat .num.good { color: var(--pos); }
+.ed-stat .num.warn { color: var(--warn); }
+.ed-stat .num.bad  { color: var(--neg); }
+.ed-stat .num .unit { color: var(--text-4); font-size: 18px; font-weight: 500; }
+.ed-stat .lbl {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  margin-top: 10px;
+  font-weight: 500;
+}
+.ed-stat .target { font-size: 11px; color: var(--text-4); margin-top: 4px; }
+
+/* Screenshot frame */
+.ed-screenshot {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+.ed-screenshot img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.ed-screenshot .blocked {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--text-3);
+  font-size: 13px;
+  gap: 6px;
+}
+.ed-screenshot .blocked .sub { color: var(--text-4); font-size: 11px; }
+
+/* Editorial tabs — slim underline */
+.ed-tabs {
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ed-tabs::-webkit-scrollbar { display: none; }
+.ed-tab {
+  background: transparent; border: 0;
+  padding: 12px 16px 14px;
+  font: inherit; font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.ed-tab:hover { color: var(--text-2); }
+.ed-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.ed-tab .count {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--bg-2);
+  color: var(--text-3);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ed-tab.active .count { background: rgba(251,59,36,0.15); color: var(--accent); }
+
+/* Finding cards — editorial grid */
+.ed-findings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.ed-finding {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color .15s, background .15s;
+}
+.ed-finding:hover { border-color: var(--line-2); background: var(--bg-2); }
+.ed-finding-meta {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.ed-pill {
+  display: inline-flex; align-items: center;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+.ed-pill.impact-high   { background: rgba(248,113,113,0.12); color: var(--neg); }
+.ed-pill.impact-medium { background: rgba(251,191,36,0.12); color: var(--warn); }
+.ed-pill.impact-low    { background: rgba(52,211,153,0.12); color: var(--pos); }
+.ed-pill.effort-small  { background: rgba(52,211,153,0.12); color: var(--pos); }
+.ed-pill.effort-medium { background: rgba(251,191,36,0.12); color: var(--warn); }
+.ed-pill.effort-large  { background: rgba(248,113,113,0.12); color: var(--neg); }
+.ed-finding-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.ed-finding-section { display: flex; flex-direction: column; gap: 4px; }
+.ed-finding-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-4);
+  font-weight: 500;
+}
+.ed-finding-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-2);
+  margin: 0;
+}
+.ed-finding-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: flex-end;
+}
+.ed-finding-explain {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: 0;
+  color: var(--text-3);
+  font: inherit; font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.ed-finding-explain:hover { color: var(--accent); background: var(--bg-3); }
+
+/* Action plan — three editorial phase cards */
+.ed-phases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.ed-phase {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 20px;
+  background: var(--bg-1);
+}
+.ed-phase-tag {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+.ed-phase[data-phase="1"] .ed-phase-tag { background: rgba(251,59,36,0.12); color: var(--accent); }
+.ed-phase[data-phase="2"] .ed-phase-tag { background: rgba(251,191,36,0.12); color: var(--warn); }
+.ed-phase[data-phase="3"] .ed-phase-tag { background: rgba(52,211,153,0.12); color: var(--pos); }
+.ed-phase-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.ed-phase-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+.ed-phase-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.ed-phase-list li {
+  display: flex; gap: 10px;
+  font-size: 13.5px; line-height: 1.5;
+  color: var(--text-2);
+}
+.ed-phase-list li::before {
+  content: "→";
+  color: var(--accent);
+  flex-shrink: 0;
+  font-family: var(--font-inter-tight);
+}
+.ed-phase[data-phase="2"] .ed-phase-list li::before { color: var(--warn); }
+.ed-phase[data-phase="3"] .ed-phase-list li::before { color: var(--pos); }
+
+/* Editorial verdict / pullquote */
+.ed-verdict {
+  font-size: 20px;
+  line-height: 1.45;
+  color: var(--text);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  padding: 18px 0 18px 22px;
+  border-left: 2px solid var(--accent);
+  margin: 8px 0 20px;
+  max-width: 880px;
+}
+
+/* Locked / premium upsell block */
+.ed-locked {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-1);
+  padding: 40px 32px;
+  text-align: center;
+  overflow: hidden;
+}
+.ed-locked-blur {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(251,59,36,0.06), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(251,59,36,0.04), transparent 40%);
+  pointer-events: none;
+}
+
+/* Progress (in-progress state) — three segments + shimmer */
+.ed-progress {
+  display: flex; gap: 14px; justify-content: center;
+  margin-top: 32px;
+}
+.ed-progress-stage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.ed-progress-bar {
+  width: 140px; height: 3px;
+  border-radius: 2px;
+  background: var(--bg-2);
+  position: relative;
+  overflow: hidden;
+}
+.ed-progress-bar.done { background: var(--accent); }
+.ed-progress-bar.active::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(251,59,36,0.5), transparent);
+  animation: shimmer 1.8s linear infinite;
+  transform: translateX(-100%);
+}
+.ed-progress-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+.ed-progress-stage.active .ed-progress-label,
+.ed-progress-stage.done .ed-progress-label { color: var(--text); }
+
+/* Right rail chat — restyled wrapper */
+.ed-chat-rail {
+  position: fixed;
+  right: 16px; top: 16px; bottom: 16px;
+  width: 400px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 40;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+@media (max-width: 1023px) {
+  .ed-chat-rail { display: none; }
+}
+.ed-with-rail { padding-right: 432px; }
+@media (max-width: 1023px) {
+  .ed-with-rail { padding-right: 0; }
+}

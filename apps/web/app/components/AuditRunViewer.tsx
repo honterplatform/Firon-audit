@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { AuditTable } from './AuditTable';
-import { Badge } from './Badge';
 import { AuditChat, type AuditChatRef } from './AuditChat';
 import { FindingsPlan } from './FindingsPlan';
 
@@ -22,20 +21,12 @@ type Summary = {
   plan: {
     quickWins: string[];
     next: string[];
-    experiments: Array<{
-      hypothesis: string;
-      variant: string;
-      metric: string;
-      risk?: string;
-    }>;
+    scaleAuthority?: string[];
+    experiments: Array<{ hypothesis: string; variant: string; metric: string; risk?: string }>;
   };
 };
 
-type Artifact = {
-  type: string;
-  path: string;
-  meta: Record<string, unknown> | null;
-};
+type Artifact = { type: string; path: string; meta: Record<string, unknown> | null };
 
 type AuditRun = {
   id: string;
@@ -45,11 +36,7 @@ type AuditRun = {
   completedAt: string | null;
   summaryJson: Summary | null;
   fallbackFindings: Summary['findings'];
-  stats: {
-    findingsCount: number;
-    artifactsCount: number;
-    highImpactFindings: number;
-  };
+  stats: { findingsCount: number; artifactsCount: number; highImpactFindings: number };
   artifacts: Artifact[];
   screenshotUrls?: Record<string, string>;
   blockedStatus?: Record<string, boolean>;
@@ -65,269 +52,134 @@ type Props = {
 
 const POLL_INTERVAL_MS = 5000;
 
-const statusColors: Record<AuditStatus, string> = {
-  queued: 'bg-gray-100 text-gray-800 border-gray-200',
-  running: 'bg-blue-100 text-blue-800 border-blue-200',
-  partial: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  completed: 'bg-green-100 text-green-800 border-green-200',
-  failed: 'bg-red-100 text-red-800 border-red-200',
-};
-
-const statusLabels: Record<AuditStatus, string> = {
-  queued: 'Queued',
-  running: 'Running',
-  partial: 'Completed with warnings',
-  completed: 'Completed',
-  failed: 'Failed',
-};
-
-const statusMessages: Record<AuditStatus, string> = {
-  queued: 'Waiting for a worker slot.',
-  running: 'We are crawling the site and running audits.',
-  partial: 'The audit finished, but some checks failed. Review the report for details.',
-  completed: 'All checks finished and the summary is ready.',
-  failed: 'The audit failed. Check the worker logs for more information.',
-};
-
-// Normalize kind values to ensure they use the new SEO category display values
 function normalizeKind(kind: string): 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links' {
-  const kindLower = kind.toLowerCase().trim();
-  // Map new Prisma enum values (case-insensitive)
-  if (kindLower === 'technicalseo' || kindLower === 'technical seo') {
-    return 'Technical SEO';
-  }
-  if (kindLower === 'onpageseo' || kindLower === 'on-page seo' || kindLower === 'on page seo') {
-    return 'On-Page SEO';
-  }
-  if (kindLower === 'performance' || kindLower === 'perf' || kindLower === 'speed') {
-    return 'Performance';
-  }
-  if (kindLower === 'links' || kindLower === 'link') {
-    return 'Links';
-  }
-  // Map old values to new SEO categories
-  if (kindLower === 'marketing strategy' || kindLower === 'marketingstrategy') {
-    return 'Technical SEO';
-  }
-  if (kindLower === 'copywriting' || kindLower === 'copy' || kindLower === 'messaging' || kindLower === 'headline' || kindLower === 'cta') {
-    return 'On-Page SEO';
-  }
-  if (kindLower === 'ux/ui' || kindLower === 'uxui' || kindLower === 'a11y' || kindLower === 'accessibility' || kindLower === 'ux' || kindLower === 'ui' || kindLower === 'usability' || kindLower === 'design' || kindLower === 'visual') {
-    return 'Performance';
-  }
-  // Map Motion and Generalist to Performance as fallback
-  if (kindLower === 'motion' || kindLower === 'animation' || kindLower === 'transition' || kindLower === 'generalist' || kindLower === 'general') {
-    return 'Performance';
-  }
-  // Default fallback
+  const k = kind.toLowerCase().trim();
+  if (k === 'technicalseo' || k === 'technical seo') return 'Technical SEO';
+  if (k === 'onpageseo' || k === 'on-page seo' || k === 'on page seo') return 'On-Page SEO';
+  if (k === 'performance' || k === 'perf' || k === 'speed') return 'Performance';
+  if (k === 'links' || k === 'link') return 'Links';
+  if (k === 'marketing strategy' || k === 'marketingstrategy') return 'Technical SEO';
+  if (['copywriting','copy','messaging','headline','cta'].includes(k)) return 'On-Page SEO';
+  if (['ux/ui','uxui','a11y','accessibility','ux','ui','usability','design','visual'].includes(k)) return 'Performance';
+  if (['motion','animation','transition','generalist','general'].includes(k)) return 'Performance';
   return 'Performance';
 }
 
-export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScreenshotUrls, elementCoordinates, blockedStatus }: Props) {
-  // Debug: log blocked status
-  console.log('AuditRunViewer blockedStatus:', blockedStatus);
+function shortHost(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, ''); }
+  catch { return url; }
+}
+
+function lighthouseScore(value: number | undefined, thresholds: { good: number; warn: number }) {
+  if (value === undefined || value === null) return 'unknown';
+  if (value <= thresholds.good) return 'good';
+  if (value <= thresholds.warn) return 'warn';
+  return 'bad';
+}
+
+export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScreenshotUrls, blockedStatus }: Props) {
   const [run, setRun] = useState<AuditRun>(initialRun);
   const [screenshotUrls, setScreenshotUrls] = useState<Record<string, string>>(initialScreenshotUrls || {});
   const [blockedStatusState, setBlockedStatusState] = useState<Record<string, boolean>>(blockedStatus || {});
-  const [isPolling, setIsPolling] = useState(initialRun.status === 'running' || initialRun.status === 'queued');
   const [error, setError] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [showPdfEmailForm, setShowPdfEmailForm] = useState(false);
-  const [pdfEmailInput, setPdfEmailInput] = useState('');
   const chatRef = useRef<AuditChatRef>(null);
-
   const prevFindingsCount = useRef(0);
   const stablePollCount = useRef(0);
 
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-
     const poll = async () => {
       try {
-        const response = await fetch(`/api/audits/${runId}`, {
-          cache: 'no-store',
-        });
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
+        const response = await fetch(`/api/audits/${runId}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
         const data = (await response.json()) as AuditRun;
-        if (!active) {
-          return;
-        }
+        if (!active) return;
         setRun(data);
-        if (data.screenshotUrls) {
-          setScreenshotUrls((prev) => ({ ...prev, ...data.screenshotUrls }));
-        }
-        if (data.blockedStatus) {
-          setBlockedStatusState(data.blockedStatus);
-        }
+        if (data.screenshotUrls) setScreenshotUrls((prev) => ({ ...prev, ...data.screenshotUrls }));
+        if (data.blockedStatus) setBlockedStatusState(data.blockedStatus);
         setError(null);
 
         const isDone = data.status === 'completed' || data.status === 'partial' || data.status === 'failed';
         const currentFindings = data.fallbackFindings?.length || 0;
-
         if (!isDone) {
-          // Still running — keep polling
           prevFindingsCount.current = 0;
           stablePollCount.current = 0;
           timer = setTimeout(poll, POLL_INTERVAL_MS);
         } else if (currentFindings === 0) {
-          // Done but no findings yet — keep polling, they're still being written
           stablePollCount.current = 0;
           timer = setTimeout(poll, 2000);
         } else if (currentFindings === prevFindingsCount.current) {
-          // Done and findings count is stable (and > 0)
           stablePollCount.current += 1;
-          if (stablePollCount.current < 2) {
-            // Poll one more time to confirm findings are stable
-            timer = setTimeout(poll, 2000);
-          } else {
-            // Findings stable for 2 polls — we have everything
-            setIsPolling(false);
-          }
+          if (stablePollCount.current < 2) timer = setTimeout(poll, 2000);
         } else {
-          // Done but findings count changed — more are arriving, keep polling
           prevFindingsCount.current = currentFindings;
           stablePollCount.current = 0;
           timer = setTimeout(poll, 2000);
         }
-      } catch (err) {
-        console.error('Failed to poll audit status', err);
+      } catch {
         if (active) {
           setError('Connection lost while checking the audit progress. Retrying…');
           timer = setTimeout(poll, POLL_INTERVAL_MS);
         }
       }
     };
-
-    // Always fetch once on mount to get latest data
     poll();
-
-    return () => {
-      active = false;
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
+    return () => { active = false; if (timer) clearTimeout(timer); };
   }, [runId]);
 
-  const hasSummary = Boolean(run.summaryJson);
-  const hasFindings = Boolean(run.summaryJson && run.summaryJson.findings && run.summaryJson.findings.length > 0);
-  const fallbackHasFindings = run.fallbackFindings.length > 0;
-  
-  // Merge all findings: database findings (heuristics, Axe, LLM) + summaryJson findings (AI curated)
-  // Database findings are the source of truth and include ALL findings from all sources
-  // SummaryJson findings are AI-curated but we still want to show all database findings
   const isAuditDone = run.status === 'completed' || run.status === 'partial' || run.status === 'failed';
+  const hasSummary = Boolean(run.summaryJson);
 
   const findingsToRender = useMemo(() => {
-    // Only show findings once the audit is fully done — prevents partial results from showing
     if (!isAuditDone) return [];
-
-    const dbFindings = run.fallbackFindings.map((f, index) => ({
-      ...f,
-      kind: normalizeKind(f.kind || 'Performance'),
-      _index: index,
-    }));
-
+    const dbFindings = run.fallbackFindings.map((f) => ({ ...f, kind: normalizeKind(f.kind || 'Performance') }));
     return dbFindings.sort((a, b) => {
-      const impactOrder: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
-      const impactDiff = (impactOrder[b.impact] || 0) - (impactOrder[a.impact] || 0);
-      if (impactDiff !== 0) return impactDiff;
+      const order: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
+      const diff = (order[b.impact] || 0) - (order[a.impact] || 0);
+      if (diff !== 0) return diff;
       return a.issue.localeCompare(b.issue);
     });
   }, [run.fallbackFindings, isAuditDone]);
 
-  // Group findings by kind (Assign To)
   const findingsByKind = useMemo(() => {
-    const groups: Record<string, typeof findingsToRender> = {
-      'Technical SEO': [],
-      'On-Page SEO': [],
-      'Performance': [],
-      'Links': [],
-    };
-
-    findingsToRender.forEach(finding => {
-      const kind = finding.kind || 'Performance';
-      if (groups[kind]) {
-        groups[kind].push(finding);
-      } else {
-        // Fallback to Performance for any unknown kinds
-        groups['Performance'].push(finding);
-      }
-    });
-
+    const groups: Record<string, typeof findingsToRender> = { 'Technical SEO': [], 'On-Page SEO': [], 'Performance': [], 'Links': [] };
+    findingsToRender.forEach(f => { (groups[f.kind] || groups['Performance']).push(f); });
     return groups;
   }, [findingsToRender]);
 
-  // Get all available tabs (kinds that have findings) - Technical SEO always first
   const availableTabs = useMemo(() => {
-    const allTabs = (['Technical SEO', 'On-Page SEO', 'Performance', 'Links'] as const).filter(
-      kind => findingsByKind[kind].length > 0
-    );
-    // Sort so Technical SEO always appears first
-    return allTabs.sort((a, b) => {
-      if (a === 'Technical SEO') return -1;
-      if (b === 'Technical SEO') return 1;
-      return 0; // Keep original order for others
-    });
+    return (['Technical SEO','On-Page SEO','Performance','Links'] as const).filter(k => findingsByKind[k].length > 0);
   }, [findingsByKind]);
 
-  // Active tab — initialize synchronously from available tabs
   const [activeTab, setActiveTab] = useState<string>(() => availableTabs[0] || '');
-
-  // Update active tab if current selection becomes invalid
   if (availableTabs.length > 0 && (!activeTab || !availableTabs.includes(activeTab as any))) {
     setActiveTab(availableTabs[0]);
   }
+  const currentTabFindings = (findingsByKind[activeTab as keyof typeof findingsByKind] || []) as typeof findingsToRender;
 
-  // Get current tab findings
-  const currentTabFindings = useMemo(() => {
-    const kind = activeTab as keyof typeof findingsByKind;
-    return (findingsByKind[kind] || []) as typeof findingsToRender;
-  }, [activeTab, findingsByKind]);
-
-  // Calculate progress stages based on artifacts and status
   const progressStages = useMemo(() => {
     const stages = [
       { name: 'AI Search', completed: false },
       { name: 'Technical Infrastructure', completed: false },
       { name: 'Brand Authority', completed: false },
     ];
-
-    if (run.status === 'completed' || run.status === 'partial' || run.status === 'failed') {
-      return stages.map(s => ({ ...s, completed: true }));
-    }
-
-    // Check which artifacts exist to determine completed stages
-    const hasScreenshots = run.artifacts?.some((a: Artifact) => a.type === 'screenshot' || a.type?.toString().toLowerCase() === 'screenshot') || false;
-    const hasAxe = run.artifacts?.some((a: Artifact) => {
+    if (isAuditDone) return stages.map(s => ({ ...s, completed: true }));
+    const hasScreenshots = run.artifacts?.some((a) => a.type === 'screenshot') || false;
+    const hasAxe = run.artifacts?.some((a) => {
       const path = a.path?.toString().toLowerCase() || '';
       const meta = a.meta as any;
       return path.includes('axe') || (meta?.violationsCount !== undefined || meta?.contrastIssuesCount !== undefined);
     }) || false;
-
-    stages[0].completed = hasScreenshots; // AI Search (crawl + initial scan)
-    stages[1].completed = hasAxe; // Technical Infrastructure
-    stages[2].completed = hasSummary; // Brand Authority (final synthesis)
-
+    stages[0].completed = hasScreenshots;
+    stages[1].completed = hasAxe;
+    stages[2].completed = hasSummary;
     return stages;
-  }, [run.status, run.artifacts, run.fallbackFindings, hasSummary]);
+  }, [run.artifacts, hasSummary, isAuditDone]);
 
-  // Only show progress bar when audit is actively in progress (queued or running)
-  // Hide it when completed, partial, or failed (results are shown instead)
-  // Keep showing progress until findings are actually loaded — prevents empty findings flash
-  const showProgressBar = run.status === 'queued' || run.status === 'running' || (isAuditDone && findingsToRender.length === 0);
-
-  const sortedScreenshots = useMemo(() => {
-    if (!screenshotUrls) {
-      return [];
-    }
-    return Object.entries(screenshotUrls)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([viewport, url]) => ({ viewport, url }));
-  }, [screenshotUrls]);
+  const lighthouseArtifact = run.artifacts.find(a => a.type === 'json' && (a.meta as any)?.lcp !== undefined);
+  const lighthouse = (lighthouseArtifact?.meta as any) || null;
 
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
@@ -342,771 +194,256 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const cleanTarget = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
-      a.download = `firon-audit-${cleanTarget}.pdf`;
+      const clean = (run.target || 'audit').replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '-');
+      a.download = `firon-audit-${clean}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
-      setError(`PDF Download Error: ${errorMessage}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to download PDF. Please try again.';
+      setError(`PDF Download Error: ${msg}`);
     } finally {
       setIsDownloadingPdf(false);
     }
   };
 
-  const handlePdfEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pdfEmailInput.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pdfEmailInput)) {
-      setError('Please enter a valid email address');
-      return;
-    }
+  // ============== IN-PROGRESS STATE ==============
+  if (!isAuditDone || findingsToRender.length === 0) {
+    const currentStage = progressStages.find(s => !s.completed);
+    const stageLabel = currentStage
+      ? currentStage.name === 'AI Search' ? 'Connecting to AI search engines'
+        : currentStage.name === 'Technical Infrastructure' ? 'Analyzing technical infrastructure'
+        : 'Compiling brand authority'
+      : 'Compiling findings';
+    return (
+      <div className="ed-col">
+        <header className="ed-head" style={{ textAlign: 'center' }}>
+          <div className="ed-eyebrow" style={{ justifyContent: 'center' }}>
+            <span className="dot" style={{ background: 'var(--accent)' }} />
+            Audit in progress
+          </div>
+          <h1 className="ed-display">Running your AI readiness audit.</h1>
+          <p className="ed-lede" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
+            {stageLabel}. This usually takes 60 seconds — we&apos;ll redirect you the moment your report is ready.
+          </p>
+        </header>
+        <div className="ed-progress">
+          {progressStages.map((stage, i) => {
+            const isActive = !stage.completed && progressStages.findIndex(s => !s.completed) === i;
+            return (
+              <div key={stage.name} className={'ed-progress-stage' + (stage.completed ? ' done' : isActive ? ' active' : '')}>
+                <div className={'ed-progress-bar' + (stage.completed ? ' done' : isActive ? ' active' : '')} />
+                <span className="ed-progress-label">{stage.name}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
-    setIsDownloadingPdf(true);
-    setError(null);
-    
-    try {
-      // Send email with PDF
-      const emailResponse = await fetch(`/api/audits/${runId}/email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: pdfEmailInput.trim() }),
-      });
+  // ============== FAILED STATE ==============
+  if (run.status === 'failed') {
+    return (
+      <div className="ed-col">
+        <header className="ed-head" style={{ textAlign: 'center' }}>
+          <div className="ed-eyebrow" style={{ justifyContent: 'center' }}>
+            <span className="dot" style={{ background: 'var(--neg)' }} />
+            Audit failed
+          </div>
+          <h1 className="ed-display">Something went wrong.</h1>
+          <p className="ed-lede" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
+            The audit didn&apos;t complete. Please retry, or contact the team if this keeps happening.
+          </p>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Link href="/" className="ed-btn" style={{ width: 'auto' }}>Run another audit</Link>
+          </div>
+        </header>
+      </div>
+    );
+  }
 
-      if (!emailResponse.ok) {
-        const errorData = await emailResponse.json().catch(() => ({ error: 'Failed to send email' }));
-        throw new Error(errorData.error || 'Failed to send email');
-      }
-
-      // Also download the PDF
-      const pdfResponse = await fetch(`/api/reports/${runId}/pdf`);
-      if (!pdfResponse.ok) {
-        let errorMessage = 'Failed to generate PDF';
-        try {
-          const errorData = await pdfResponse.json();
-          errorMessage = errorData.details || errorData.error || errorMessage;
-        } catch {
-          errorMessage = pdfResponse.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-      
-      const blob = await pdfResponse.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-report-${runId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      setShowPdfEmailForm(false);
-      setPdfEmailInput('');
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to download PDF. Please try again.';
-      setError(`PDF Download Error: ${errorMessage}`);
-    } finally {
-      setIsDownloadingPdf(false);
-    }
-  };
-
+  // ============== COMPLETED REPORT ==============
+  const lcp = lighthouse?.lcp as number | undefined;
+  const cls = lighthouse?.cls as number | undefined;
+  const inp = lighthouse?.inp as number | undefined;
+  const tbt = lighthouse?.tbt as number | undefined;
+  const reportDate = run.completedAt ? new Date(run.completedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
-      <div className="flex h-screen overflow-hidden">
-        {/* Main content area - with right padding for chat only when audit is complete */}
-        <div className={`flex-1 overflow-y-auto scrollbar-hide ${showProgressBar ? 'pr-0' : 'pr-0 lg:pr-[432px]'}`}>
-          {showProgressBar ? (
-            /* Centered layout when audit is running */
-            <div className="flex flex-col items-center justify-center min-h-screen">
-              <div className="mb-12">
-                <img src="/Logo.svg" alt="Logo" className="h-8" />
-              </div>
-              {/* Progress Bar - Show only when audit is running */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-6">
-                  <h2 className="text-lg font-semibold" style={{ color: '#ffffff' }}>Progress</h2>
+    <div className="ed-with-rail">
+      <div className="ed-col-report">
+        <header className="ed-head">
+          <div className="ed-eyebrow">
+            <span className="dot" />
+            AI Readiness Report{reportDate ? ` · ${reportDate}` : ''}
           </div>
-                
-                {/* Current Stage Text */}
-                <p className="text-sm text-center mb-6" style={{ color: '#888888' }}>
-                  {(() => {
-                    if (isAuditDone && findingsToRender.length === 0) return 'Compiling findings... almost there.';
-                    const currentStage = progressStages.find(s => !s.completed);
-                    if (!currentStage) return 'Finalizing audit report...';
-                    if (currentStage.name === 'AI Search') return 'Connecting to AI Search Engines...';
-                    if (currentStage.name === 'Technical Infrastructure') return 'Analyzing Technical Infrastructure...';
-                    if (currentStage.name === 'Brand Authority') return 'Compiling Brand Authority...';
-                    return 'Processing...';
-                  })()}
-                </p>
-                
-                {/* Segmented Progress Bar */}
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  {progressStages.map((stage, index) => {
-                    const isActive = !stage.completed && progressStages.findIndex(s => !s.completed) === index;
-                    return (
-                      <div key={stage.name} className="flex flex-col items-center">
-                        <div
-                          className="w-32 h-2 rounded-full transition-all duration-500 relative overflow-hidden"
-                          style={{
-                            backgroundColor: stage.completed ? '#FB3B24' : isActive ? '#212121' : '#0F0F0F',
-                          }}
-                        >
-                          {isActive && (
-                            <div
-                              className="absolute inset-0 rounded-full"
-                              style={{
-                                background: 'linear-gradient(90deg, transparent, rgba(251, 59, 36, 0.4), transparent)',
-                                animation: 'shimmer 2s infinite',
-                                transform: 'translateX(-100%)',
-                              }}
-                            />
-                          )}
-                        </div>
-                        <span
-                          className="text-xs mt-2 font-medium transition-all duration-300"
-                          style={{
-                            color: stage.completed ? '#FB3B24' : isActive ? '#FB3B24' : '#666666',
-                            fontWeight: isActive ? 600 : 500,
-                          }}
-                        >
-                          {stage.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Message below progress bar */}
-                <p className="text-sm text-center mt-6" style={{ color: '#666666' }}>
-                  Analyzing your website... this may take a few minutes
-                </p>
-              </div>
-            </div>
-          ) : (
-            /* Normal layout when audit is complete */
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Header - Centered when running, normal layout when complete */}
-        {false ? (
-          <div className="flex justify-center">
-            <img src="/Logo.svg" alt="Logo" className="h-8" />
+          <h1 className="ed-display">
+            How <em>{shortHost(run.target)}</em> reads to AI agents.
+          </h1>
+          <p className="ed-lede">
+            We crawled your site the way modern AI search engines do, ran a full technical audit, and
+            graded {run.stats.findingsCount} {run.stats.findingsCount === 1 ? 'issue' : 'issues'}
+            {run.stats.highImpactFindings > 0 ? ` — ${run.stats.highImpactFindings} high-impact` : ''}.
+          </p>
+          <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
+            <button onClick={handleDownloadPdf} disabled={isDownloadingPdf} className="ed-btn" style={{ width: 'auto' }}>
+              {isDownloadingPdf ? 'Preparing PDF…' : 'Download report'}
+            </button>
+            <a href={run.target} target="_blank" rel="noopener noreferrer"
+              className="ed-btn" style={{ width: 'auto', background: 'transparent', borderColor: 'var(--line)', color: 'var(--text)' }}>
+              Open audited site ↗
+            </a>
           </div>
-        ) : (
-        <div className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <img src="/Logo.svg" alt="Logo" className="h-8" />
-          </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-end">
-              {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
-              <div className="flex flex-row gap-2">
-                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloadingPdf}
-                    className="inline-flex items-center justify-center px-4 py-3 text-sm font-normal border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ height: '42px', boxSizing: 'border-box', backgroundColor: '#FB3B24', color: '#ffffff' }}
-                  >
-                    {isDownloadingPdf ? 'Downloading...' : 'Download Report'}
-                  </button>
-                {showPdfEmailForm && (
-                  <form onSubmit={handlePdfEmailSubmit} className="flex gap-2 items-center">
-                    <input
-                      type="email"
-                      value={pdfEmailInput}
-                      onChange={(e) => setPdfEmailInput(e.target.value)}
-                      placeholder="your@email.com"
-                      required
-                      className="min-w-[300px] px-3 text-sm bg-transparent border-0 border-b border-b-gray-400 rounded-none focus:outline-none focus:border-b-gray-300"
-                      style={{ color: '#ffffff', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5' }}
-                      disabled={isDownloadingPdf}
-                    />
-                    <button
-                      type="submit"
-                      disabled={isDownloadingPdf || !pdfEmailInput.trim()}
-                      className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                      style={{ backgroundColor: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#0F0F0F' : '#FB3B24', color: (isDownloadingPdf || !pdfEmailInput.trim()) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
-                    >
-                      {isDownloadingPdf ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline" style={{ color: isDownloadingPdf ? '#666666' : '#ffffff' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Sending...
-                        </>
-                      ) : (
-                        'Send & Download'
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowPdfEmailForm(false);
-                        setPdfEmailInput('');
-                      }}
-                      className="text-sm hover:text-white transition-colors ml-auto"
-                      style={{ color: '#888888' }}
-                      disabled={isDownloadingPdf}
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-              {/* Divider */}
-              <div className="border-b mb-6 lg:mb-16" style={{ borderColor: '#0F0F0F' }}></div>
+        </header>
 
-        {/* Show content only when audit is complete */}
-        {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
-          <>
-            {/* Header Screenshot + Lighthouse Results - Side by Side */}
+        {error && <div className="ed-error">{error}</div>}
+
+        {/* 01 — The snapshot */}
+        {(screenshotUrls?.desktop || lighthouse) && (
+          <section className="ed-section">
+            <div className="ed-chapter">
+              <span className="ed-chapter-num">01</span>
+              <h2 className="ed-chapter-title">The snapshot</h2>
+            </div>
             {screenshotUrls?.desktop && (
-          <div className="mb-12 pt-4 lg:pt-16">
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div>
-                <h2 className="text-3xl lg:text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Performance Overview</h2>
-                <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
-                  Visual preview and key performance metrics
-                </p>
-              </div>
-              <div className="flex-shrink-0 text-left sm:text-right">
-                <p className="text-gray-300 text-xs font-light uppercase mb-1" style={{ letterSpacing: '0.15em' }}>Website Audited</p>
-                <a 
-                  href={run.target} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-normal text-white hover:underline transition-colors cursor-pointer inline-block" 
-                  style={{ color: '#ffffff' }} 
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#FB3B24'; }} 
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                >
-                  {run.target}
-                </a>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left: Header Screenshot (no pins) - Show only top 500px of full page screenshot */}
-              <div 
-                className="overflow-hidden" 
-                style={{ 
-                  backgroundColor: '#0A0A0A',
-                  height: '500px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  width: '100%',
-                  borderRadius: '1rem'
-                }}
-              >
-                {screenshotUrls.desktop ? (
-                  blockedStatusState?.desktop ? (
-                    <div className="flex flex-col items-center justify-center h-full" style={{ color: '#888888', border: '1px solid #0F0F0F' }}>
-                      <p className="text-sm font-medium">No Preview Available</p>
-                      <p className="text-xs mt-1 opacity-75">Access to this website was blocked</p>
-                    </div>
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-                      <img
-                        src={screenshotUrls.desktop}
-                        alt="Website header"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'top center',
-                          display: 'block',
-                          margin: 0,
-                          padding: 0,
-                        }}
-                        onError={(e) => {
-                          console.error('Failed to load screenshot:', screenshotUrls.desktop);
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )
+              <div className="ed-screenshot" style={{ marginBottom: 28 }}>
+                {blockedStatusState?.desktop ? (
+                  <div className="blocked">
+                    <span>No preview available</span>
+                    <span className="sub">The site blocked our crawler</span>
+                  </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    Screenshot loading...
-                  </div>
-                )}
-                  </div>
-
-              {/* Right: Lighthouse Results */}
-              {(() => {
-                // Debug: Log all artifacts to see what we have
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('[Core Web Vitals] All artifacts:', run.artifacts);
-                  console.log('[Core Web Vitals] Artifacts count:', run.artifacts?.length || 0);
-                  run.artifacts?.forEach((a: any, idx: number) => {
-                    console.log(`[Core Web Vitals] Artifact ${idx}:`, {
-                      type: a.type,
-                      path: a.path,
-                      hasMeta: !!a.meta,
-                      metaType: typeof a.meta,
-                      metaKeys: a.meta ? Object.keys(a.meta) : [],
-                      metaLcp: a.meta?.lcp,
-                      metaCls: a.meta?.cls,
-                      metaInp: a.meta?.inp,
-                    });
-                  });
-                }
-
-                // Find Lighthouse artifact - check meta for lighthouse metrics (lcp, cls, inp)
-                // The artifact type is 'json' and meta contains lcp, cls, inp, tbt
-                const lighthouseArtifact = run.artifacts?.find(
-                  (a: any) => {
-                    if (!a) return false;
-                    
-                    // Check type (handle both string and enum)
-                    const artifactType = a.type?.toString().toLowerCase();
-                    if (artifactType !== 'json') return false;
-                    
-                    // Check if meta contains lighthouse metrics
-                    if (a.meta && typeof a.meta === 'object' && a.meta !== null) {
-                      // Check for numeric lighthouse metrics (they should be numbers, not null/undefined)
-                      const lcp = a.meta.lcp;
-                      const cls = a.meta.cls;
-                      const inp = a.meta.inp;
-                      
-                      const hasLcp = typeof lcp === 'number' && !isNaN(lcp);
-                      const hasCls = typeof cls === 'number' && !isNaN(cls);
-                      const hasInp = typeof inp === 'number' && !isNaN(inp);
-                      
-                      if (hasLcp || hasCls || hasInp) {
-                        if (process.env.NODE_ENV === 'development') {
-                          console.log('[Core Web Vitals] Found Lighthouse artifact by metrics:', a);
-                        }
-                        return true;
-                      }
-                    }
-                    
-                    // Fallback: check if path contains lighthouse
-                    const artifactPath = a.path?.toString().toLowerCase() || '';
-                    if (artifactPath.includes('lighthouse')) {
-                      if (process.env.NODE_ENV === 'development') {
-                        console.log('[Core Web Vitals] Found Lighthouse artifact by path:', a);
-                      }
-                      return true;
-                    }
-                    return false;
-                  }
-                );
-                
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('[Core Web Vitals] Lighthouse artifact found:', lighthouseArtifact);
-                }
-                
-                const lighthouseMetrics = lighthouseArtifact?.meta as any;
-                
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('[Core Web Vitals] Lighthouse metrics:', lighthouseMetrics);
-                }
-
-                // Check if we have valid metrics (including 0, which is valid)
-                const hasValidMetrics = lighthouseMetrics && (
-                  (typeof lighthouseMetrics.lcp === 'number' && !isNaN(lighthouseMetrics.lcp)) ||
-                  (typeof lighthouseMetrics.cls === 'number' && !isNaN(lighthouseMetrics.cls)) ||
-                  (typeof lighthouseMetrics.inp === 'number' && !isNaN(lighthouseMetrics.inp))
-                );
-
-                if (!lighthouseArtifact || !hasValidMetrics) {
-                  // Show placeholder if no Lighthouse data yet
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[Core Web Vitals] No valid metrics found. Artifact:', lighthouseArtifact, 'Metrics:', lighthouseMetrics);
-                    console.log('[Core Web Vitals] Audit status:', run.status);
-                    console.log('[Core Web Vitals] All artifact types:', run.artifacts?.map((a: any) => a.type));
-                    console.log('[Core Web Vitals] SummaryJson:', run.summaryJson);
-                  }
-                  
-                  // Check if audit is partial (some jobs may have failed)
-                  const isPartial = run.status === 'partial';
-                  
-                  // Check if there's a Lighthouse error in summaryJson
-                  const lighthouseError = run.summaryJson && typeof run.summaryJson === 'object' && 'lighthouseError' in run.summaryJson
-                    ? (run.summaryJson as any).lighthouseError
-                    : null;
-                  
-                  return (
-                    <div className="rounded-lg p-6 shadow-lg" style={{ backgroundColor: '#F5F5F5' }}>
-                      <h3 className="text-xl font-light mb-4" style={{ color: '#0A0A0A' }}>Core Web Vitals</h3>
-                      <div className="text-sm" style={{ color: '#666666' }}>
-                        {isPartial
-                          ? 'Lighthouse analysis failed. The audit completed with partial results.'
-                          : run.status === 'failed'
-                          ? 'Lighthouse analysis failed. Check the audit error details.'
-                          : 'Lighthouse results are not available. The Lighthouse job may have failed silently.'}
-                      </div>
-                      {lighthouseError && (
-                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-xs font-medium text-red-800 mb-1">Lighthouse Error:</p>
-                          <p className="text-xs text-red-700">{lighthouseError.message}</p>
-                          {lighthouseError.stack && (
-                            <details className="mt-2">
-                              <summary className="text-xs text-red-600 cursor-pointer">Show stack trace</summary>
-                              <pre className="text-xs text-red-600 mt-1 whitespace-pre-wrap break-words overflow-x-auto">
-                                {lighthouseError.stack}
-                              </pre>
-                            </details>
+                  <img src={screenshotUrls.desktop} alt={`${shortHost(run.target)} screenshot`} />
                 )}
               </div>
             )}
-                      {isPartial && !lighthouseError && (
-                        <div className="mt-3 text-xs" style={{ color: '#666666' }}>
-                          <p>Tip: Check the worker terminal logs for more details about the Lighthouse failure.</p>
-          </div>
-                      )}
-        </div>
-                  );
-                }
-
-                const getScoreColor = (value: number, threshold: number, isLowerBetter: boolean = true) => {
-                  const isGood = isLowerBetter ? value <= threshold : value >= threshold;
-                  return isGood ? '#4ADE80' : '#ff9595';
-                };
-
-                return (
-                  <div style={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
-                    <div className="grid grid-cols-2 gap-4 flex-1">
-                      {/* LCP Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                        <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>LCP</div>
-                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How long it takes for the main content to appear</div>
-                        <div className="mt-auto">
-                          <div 
-                            className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.lcp, 2.5) }}
-                          >
-                            {lighthouseMetrics.lcp?.toFixed(2)}s
-          </div>
-                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
-                            Target: &lt;2.5s
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* CLS Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                        <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>CLS</div>
-                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How much the page shifts while loading</div>
-                        <div className="mt-auto">
-                          <div 
-                            className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.cls, 0.1) }}
-                          >
-                            {lighthouseMetrics.cls?.toFixed(3)}
-            </div>
-                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
-                            Target: &lt;0.1
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* INP Card */}
-                      <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                        <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>INP</div>
-                        <div className="text-sm mb-2" style={{ color: '#666666' }}>How responsive the page feels when you interact with it</div>
-                        <div className="mt-auto">
-                          <div 
-                            className="text-6xl font-light mb-1"
-                            style={{ color: getScoreColor(lighthouseMetrics.inp, 200) }}
-                          >
-                            {lighthouseMetrics.inp?.toFixed(0)}ms
-            </div>
-                          <div className="text-sm mt-1" style={{ color: '#212121' }}>
-                            Target: &lt;200ms
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* TBT Card */}
-                      {lighthouseMetrics.tbt ? (
-                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                          <div className="text-sm uppercase tracking-wider mb-1" style={{ color: '#ffffff' }}>TBT</div>
-                          <div className="text-sm mb-2" style={{ color: '#666666' }}>How long the page is blocked from responding</div>
-                          <div className="mt-auto">
-                            <div 
-                              className="text-6xl font-light mb-1"
-                              style={{ color: getScoreColor(lighthouseMetrics.tbt, 200) }}
-                            >
-                              {lighthouseMetrics.tbt?.toFixed(0)}ms
-                            </div>
-                            <div className="text-sm mt-1" style={{ color: '#212121' }}>
-                              Target: &lt;200ms
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-xl p-5 flex flex-col" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                          <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#666666' }}>Total Size</div>
-                          <div className="mt-auto">
-                            <div className="text-6xl font-light mb-1" style={{ color: '#4ADE80' }}>
-                              {(lighthouseMetrics.totalBytes / 1024 / 1024).toFixed(2)} MB
-                            </div>
-                            <div className="text-sm" style={{ color: '#666666' }}>
-                              Page Size
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+            {lighthouse && (
+              <div className="ed-stats">
+                <div className="ed-stat">
+                  <div className={'num ' + lighthouseScore(lcp, { good: 2.5, warn: 4 })}>
+                    {lcp !== undefined ? lcp.toFixed(1) : '—'}<span className="unit">s</span>
                   </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-
-        {error && (
-          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-            {error}
-          </div>
-        )}
-
-        {/* Show findings if we have any (from database) - even before summary is ready */}
-        {fallbackHasFindings || hasFindings ? (
-          <div className="space-y-8">
-            <section className="space-y-6">
-              <div className="mb-6 mt-12 lg:mt-24">
-                <div>
-                  <h2 className="text-3xl lg:text-5xl font-light mb-1" style={{ color: '#ffffff' }}>Findings</h2>
-                  {hasSummary && run.summaryJson && (
-                    <p className="text-base font-light max-w-5xl line-clamp-2" style={{ color: '#888888' }}>
-                      {run.stats.highImpactFindings > 0 && `${run.stats.highImpactFindings} high-impact ${run.stats.highImpactFindings === 1 ? 'issue' : 'issues'} found. `}
-                      {findingsToRender.length > 0 && `This audit identified ${findingsToRender.length} SEO ${findingsToRender.length === 1 ? 'issue' : 'issues'} across technical health, on-page optimization, performance, and link structure. `}
-                      <br />
-                      Review the findings below to prioritize fixes and improve your search&nbsp;visibility.
-                    </p>
-                  )}
+                  <div className="lbl">Largest contentful paint</div>
+                  <div className="target">Target ≤ 2.5s</div>
                 </div>
+                <div className="ed-stat">
+                  <div className={'num ' + lighthouseScore(cls, { good: 0.1, warn: 0.25 })}>
+                    {cls !== undefined ? cls.toFixed(2) : '—'}
+                  </div>
+                  <div className="lbl">Cumulative layout shift</div>
+                  <div className="target">Target ≤ 0.1</div>
+                </div>
+                <div className="ed-stat">
+                  <div className={'num ' + lighthouseScore(inp, { good: 200, warn: 500 })}>
+                    {inp !== undefined ? Math.round(inp) : '—'}<span className="unit">ms</span>
+                  </div>
+                  <div className="lbl">Interaction to next paint</div>
+                  <div className="target">Target ≤ 200ms</div>
+                </div>
+                {tbt !== undefined && (
+                  <div className="ed-stat">
+                    <div className={'num ' + lighthouseScore(tbt, { good: 200, warn: 600 })}>
+                      {Math.round(tbt)}<span className="unit">ms</span>
+                    </div>
+                    <div className="lbl">Total blocking time</div>
+                    <div className="target">Target ≤ 200ms</div>
+                  </div>
+                )}
               </div>
-
-              {/* Tabs for different assignment types - show when there are multiple categories */}
-              {availableTabs.length > 1 && (
-                <div className="border-b border-gray-600 mb-6">
-                  <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-hide" aria-label="Tabs">
-                    {availableTabs.map((tab) => {
-                      const tabFindings = findingsByKind[tab] || [];
-                      const isActive = activeTab === tab;
-                      
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`
-                            whitespace-nowrap py-4 px-1 border-b-2 font-light text-xs uppercase
-                            ${isActive
-                              ? ''
-                              : 'border-transparent hover:border-[#FB3B24]'
-                            }
-                          `}
-                          style={{ 
-                            letterSpacing: '0.15em', 
-                            color: isActive ? '#ffffff' : '#777777',
-                            borderBottomColor: isActive ? '#FB3B24' : undefined
-                          }}
-                        >
-                          {tab.toUpperCase()}
-                          {tabFindings.length > 0 && (
-                            <span className={`
-                              ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium
-                              ${isActive
-                                ? ''
-                                : 'text-gray-400'
-                              }
-                            `}
-                            style={isActive ? { backgroundColor: 'rgba(251, 59, 36, 0.2)', color: '#FB3B24' } : { backgroundColor: '#0F0F0F' }}
-                            >
-                              {tabFindings.length}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </nav>
-                </div>
-              )}
-
-              {/* Show category label when there's only one tab */}
-              {availableTabs.length === 1 && activeTab && (
-                <div className="mb-4">
-                  <p className="text-xs font-light text-white uppercase" style={{ letterSpacing: '0.15em' }}>
-                    Assign To: {activeTab.toUpperCase()}
-                  </p>
-                </div>
-              )}
-
-              {/* Current tab findings - show findings for active tab, or all if single category */}
-              {(() => {
-                // Determine which findings to show
-                const findingsToShow = availableTabs.length === 1 
-                  ? findingsToRender 
-                  : (activeTab ? currentTabFindings : []);
-                
-                const findingsToShowCount = findingsToShow.length;
-                
-                if (findingsToShowCount === 0) {
-                  return (
-                    <div className="text-center py-12 text-gray-400">
-                      No findings in this category
-                    </div>
-                  );
-                }
-                
-                return (
-                  <>
-                    <AuditTable
-                      findings={findingsToShow.map(f => ({
-                        issue: f.issue,
-                        why: f.why,
-                        fix: f.fix,
-                        impact: f.impact,
-                        effort: f.effort,
-                        kind: f.kind,
-                        evidenceRefs: f.evidenceRefs || [],
-                      }))}
-                      onExplainFinding={(finding) => {
-                        const message = `Can you explain this finding to me: "${finding.issue}". Why does it matter and how should I fix it?`;
-                        chatRef.current?.sendMessage(message);
-                      }}
-                    />
-                  </>
-                );
-              })()}
-            </section>
-
-            {/* Action Plan — Firon's Three-Phase Methodology */}
-            {run.summaryJson?.plan && (
-              <FindingsPlan plan={run.summaryJson.plan} />
             )}
+          </section>
+        )}
 
-            {/* Locked Premium Data Section */}
-            {isAuditDone && findingsToRender.length > 0 && (
-              <div className="mt-12 relative">
-                <div className="rounded-xl p-8 relative overflow-hidden" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
-                  {/* Blur overlay */}
-                  <div className="absolute inset-0 backdrop-blur-[4px]" style={{ backgroundColor: 'rgba(15, 15, 15, 0.85)' }} />
-
-                  {/* Blurred fake data behind */}
-                  <div className="opacity-10 select-none pointer-events-none">
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
-                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Domain Authority</div>
-                        <div className="text-3xl font-light" style={{ color: '#FB3B24' }}>██</div>
-                      </div>
-                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
-                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Backlink Trust Flow</div>
-                        <div className="text-3xl font-light" style={{ color: '#FBBF24' }}>██</div>
-                      </div>
-                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
-                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Competitor Gap</div>
-                        <div className="text-3xl font-light" style={{ color: '#4ADE80' }}>██ keywords</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
-                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Branded vs Non-Branded Traffic</div>
-                        <div className="h-4 rounded-full" style={{ backgroundColor: '#212121' }}><div className="h-4 rounded-full w-1/3" style={{ backgroundColor: '#FB3B24' }} /></div>
-                      </div>
-                      <div className="rounded-lg p-4" style={{ backgroundColor: '#0A0A0A' }}>
-                        <div className="text-xs mb-1" style={{ color: '#666666' }}>Backlink Velocity (30d)</div>
-                        <div className="h-4 rounded-full" style={{ backgroundColor: '#212121' }}><div className="h-4 rounded-full w-2/3" style={{ backgroundColor: '#FBBF24' }} /></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Lock overlay content */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
-                    <h3 className="text-xl font-medium mb-2" style={{ color: '#ffffff' }}>Off-Page Authority &amp; Competitor Market Share</h3>
-                    <p className="text-sm max-w-lg mb-6" style={{ color: '#888888' }}>
-                      This automated scan checks your technical foundation. However, it cannot extract your proprietary Domain Authority, Backlink Velocity, or Branded vs. Non-Branded traffic splits. To see exactly how much market share you are losing to competitors, request a Deep-Dive Manual Audit.
-                    </p>
-                    <button
-                      onClick={() => chatRef.current?.openLeadForm()}
-                      className="px-6 py-3 text-sm font-medium rounded-full transition-all hover:opacity-90"
-                      style={{ backgroundColor: '#FB3B24', color: '#ffffff' }}
-                    >
-                      Unlock Enterprise Data — Speak to an Analyst
+        {/* 02 — What we found */}
+        {findingsToRender.length > 0 && (
+          <section className="ed-section">
+            <div className="ed-chapter">
+              <span className="ed-chapter-num">02</span>
+              <h2 className="ed-chapter-title">What we found</h2>
+            </div>
+            <div className="ed-prose" style={{ marginBottom: 24 }}>
+              <p>
+                {run.stats.highImpactFindings > 0 && <><strong>{run.stats.highImpactFindings} high-impact</strong> {run.stats.highImpactFindings === 1 ? 'issue' : 'issues'} to address first. </>}
+                Issues are grouped by category and sorted by impact. Click <em>Explain this</em> on any
+                finding to get a plain-English walkthrough in the chat.
+              </p>
+            </div>
+            {availableTabs.length > 1 && (
+              <div className="ed-tabs">
+                {availableTabs.map((tab) => {
+                  const count = findingsByKind[tab].length;
+                  return (
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={'ed-tab' + (activeTab === tab ? ' active' : '')}>
+                      {tab}
+                      <span className="count">{count}</span>
                     </button>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             )}
-          </div>
-        ) : null}
-            
-            {/* Failed status message - show when audit failed */}
-            {run.status === 'failed' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-lg font-medium mb-2" style={{ color: '#0A0A0A' }}>Audit Failed</p>
-                <p className="text-gray-600 mb-4">
-              The audit failed. Please retry or check the worker logs.
-            </p>
-                {run.summaryJson && typeof run.summaryJson === 'object' && 'error' in run.summaryJson ? (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
-                    <p className="text-sm font-medium text-red-800 mb-2">Error Details:</p>
-                    <div className="text-xs text-red-700 whitespace-pre-wrap break-words">
-                      {(run.summaryJson as any).error?.message || JSON.stringify((run.summaryJson as any).error, null, 2)}
-                    </div>
-                    {(run.summaryJson as any).error?.stack && (
-                      <details className="mt-2">
-                        <summary className="text-xs text-red-600 cursor-pointer">Show stack trace</summary>
-                        <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words">
-                          {(run.summaryJson as any).error.stack}
-                        </pre>
-                      </details>
-                    )}
-          </div>
-        ) : (
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left">
-                    <p className="text-sm font-medium text-yellow-800 mb-2">No error details available</p>
-                    <p className="text-xs text-yellow-700">
-                      Check the worker terminal logs for more information about what went wrong.
-            </p>
-          </div>
+            <AuditTable
+              findings={currentTabFindings.map(f => ({
+                issue: f.issue, why: f.why, fix: f.fix, impact: f.impact, effort: f.effort, kind: f.kind,
+                evidenceRefs: f.evidenceRefs || [],
+              }))}
+              onExplainFinding={(finding) => {
+                const msg = `Can you explain this finding to me: "${finding.issue}". Why does it matter and how should I fix it?`;
+                chatRef.current?.sendMessage(msg);
+              }}
+            />
+          </section>
         )}
-          </div>
-            )}
-          </>
-        )}
-            </div>
-          )}
-        </div>
 
-        {/* Chat panel - Fixed on right side, full height with margins - Only show when audit is complete */}
-        {(run.status === 'completed' || run.status === 'partial' || run.status === 'failed') && (
-        <div className="hidden lg:block fixed right-4 top-4 bottom-4 w-[400px] rounded-3xl flex-shrink-0 z-40 shadow-lg overflow-hidden" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
+        {/* 03 — Your action plan */}
+        {run.summaryJson?.plan && <FindingsPlan plan={run.summaryJson.plan} />}
+
+        {/* 04 — What we couldn't see (locked) */}
+        {findingsToRender.length > 0 && (
+          <section className="ed-section">
+            <div className="ed-chapter">
+              <span className="ed-chapter-num">04</span>
+              <h2 className="ed-chapter-title">What we couldn&apos;t see</h2>
+            </div>
+            <div className="ed-locked">
+              <div className="ed-locked-blur" />
+              <div style={{ position: 'relative', maxWidth: 620, margin: '0 auto' }}>
+                <div className="ed-eyebrow" style={{ justifyContent: 'center', color: 'var(--accent)' }}>
+                  <span className="dot" style={{ background: 'var(--accent)' }} />
+                  Deep-dive only
+                </div>
+                <h3 className="ed-display" style={{ fontSize: 'clamp(22px, 2.8vw, 30px)', marginBottom: 12 }}>
+                  Off-page authority &amp; competitor market share.
+                </h3>
+                <p className="ed-prose" style={{ margin: '0 auto 24px' }}>
+                  This automated scan checks your technical foundation, but it can&apos;t see your Domain
+                  Authority, Backlink Velocity, or branded vs non-branded traffic mix. A manual deep-dive
+                  surfaces exactly how much share you&apos;re losing to competitors.
+                </p>
+                <button onClick={() => chatRef.current?.openLeadForm()} className="ed-btn" style={{ width: 'auto' }}>
+                  Speak to an analyst
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Right rail chat — unchanged behavior, restyled wrapper */}
+      {isAuditDone && (
+        <div className="ed-chat-rail">
           <AuditChat
             ref={chatRef}
             runId={runId}
-            findings={findingsToRender.map(f => ({
-              issue: f.issue,
-              why: f.why,
-              fix: f.fix,
-              impact: f.impact,
-              effort: f.effort,
-              kind: f.kind,
-            }))}
+            findings={findingsToRender.map(f => ({ issue: f.issue, why: f.why, fix: f.fix, impact: f.impact, effort: f.effort, kind: f.kind }))}
             summary={run.summaryJson}
             stats={run.stats}
             target={run.target}
             status={run.status}
           />
         </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
-
