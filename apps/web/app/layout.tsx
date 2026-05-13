@@ -19,9 +19,6 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "SEO Audit Platform",
   description: "Evidence-first audits for websites",
-  icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-  },
 };
 
 export default function RootLayout({
