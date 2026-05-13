@@ -4,48 +4,181 @@
 
 :root {
   --radius: 0.5rem;
-  --bg-primary: #0A0A0A;
+
+  /* Labs design tokens */
+  --bg:           #0a0a0b;
+  --bg-1:         #0f0f10;
+  --bg-2:         #141416;
+  --bg-3:         #1a1a1d;
+  --line:         #232327;
+  --line-2:       #2c2c31;
+  --text:         #ededee;
+  --text-2:       #a8a8ad;
+  --text-3:       #6c6c73;
+  --text-4:       #4a4a50;
+  --accent:       #FB3B24;
+  --accent-hover: #d8311c;
+  --pos:          #34d399;
+  --warn:         #fbbf24;
+  --neg:          #f87171;
+
+  --col-w-form:   620px;
+  --gutter:       32px;
+
+  /* legacy */
+  --bg-primary:   var(--bg);
 }
 
 body {
-  @apply text-gray-100;
-  background-color: var(--bg-primary);
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Hide scrollbars but keep scroll functionality */
+/* Hide scrollbars while keeping scroll (matches Labs) */
+html, body { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
 @layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
-/* Highlight animation for findings */
+/* ============================================================
+   Editorial layout primitives — matches Firon Labs
+   ============================================================ */
+.ed-col {
+  width: 100%;
+  max-width: var(--col-w-form);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+.ed-head {
+  padding: 80px 0 28px;
+}
+.ed-eyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.ed-eyebrow .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--pos);
+  display: inline-block;
+}
+.ed-display {
+  font-size: clamp(30px, 4.4vw, 44px);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin: 0;
+  color: var(--text);
+}
+.ed-display em {
+  font-style: normal;
+  color: var(--accent);
+}
+.ed-lede {
+  margin-top: 18px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-2);
+  max-width: 540px;
+}
+
+/* Form */
+.ed-field { display: flex; flex-direction: column; margin-bottom: 14px; }
+.ed-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.ed-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.ed-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-2);
+}
+.ed-input::placeholder { color: var(--text-4); }
+.ed-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ed-hint {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-3);
+  margin-top: 8px;
+}
+
+/* Button — Labs primary */
+.ed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, border-color .15s, opacity .15s;
+}
+.ed-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.ed-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Inline error block */
+.ed-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(248,113,113,0.06);
+  border: 1px solid rgba(248,113,113,0.25);
+  color: #fca5a5;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* Highlight animation kept */
 @keyframes highlight {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(251, 59, 36, 0);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(251, 59, 36, 0.4);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 59, 36, 0); }
+  50%      { box-shadow: 0 0 0 8px rgba(251, 59, 36, 0.4); }
 }
-
 .highlight-finding {
   animation: highlight 1s ease-in-out;
-  border: 2px solid #FB3B24;
+  border: 2px solid var(--accent);
   border-radius: 1rem;
 }
 
-/* Shimmer animation for progress bar */
 @keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
