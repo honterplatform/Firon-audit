@@ -82,10 +82,18 @@ export async function processSummarize(job: Job<SummarizeJobData>) {
       },
     });
 
+    // Attach deterministic pass markers (computed by heuristics) onto the summary
+    // before persisting. They live alongside the LLM-curated findings/plan so the
+    // viewer can render a "What you do well" chapter without a schema migration.
+    const summaryWithPasses = {
+      ...summary,
+      passes: heuristicsResult?.passes ?? [],
+    };
+
     // Store summary
     await prisma.auditRun.update({
       where: { id: runId },
-      data: { summaryJson: summary },
+      data: { summaryJson: summaryWithPasses as any },
     });
 
     // Map LLM findings to database (merge with existing heuristic findings)

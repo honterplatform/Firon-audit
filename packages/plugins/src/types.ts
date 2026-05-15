@@ -180,7 +180,15 @@ export interface HeuristicFinding {
   evidence?: string;
 }
 
+export interface HeuristicPass {
+  title: string;
+  detail: string;
+  category?: 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links';
+  evidence?: string;
+}
+
 export interface HeuristicsResult {
   findings: HeuristicFinding[];
+  passes?: HeuristicPass[];
 }
 

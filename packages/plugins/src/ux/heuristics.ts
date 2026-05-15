@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import type { HeuristicsResult, HeuristicFinding } from '../types';
+import type { HeuristicsResult, HeuristicFinding, HeuristicPass } from '../types';
 
 export async function runHeuristics(
   url: string,
@@ -28,6 +28,7 @@ export async function runHeuristics(
     args: ['--disable-blink-features=AutomationControlled', '--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox', '--disable-http2'],
   });
   const findings: HeuristicFinding[] = [];
+  const passes: HeuristicPass[] = [];
   const origin = new URL(url).origin;
 
   try {
@@ -47,34 +48,44 @@ export async function runHeuristics(
     const title = await page.title();
     if (!title || title.trim().length === 0) {
       findings.push({ issue: 'Homepage missing title tag', why: 'The homepage title tag is the #1 on-page ranking factor. Without it, search engines cannot properly index or display the page in SERPs.', fix: 'Add a unique, descriptive <title> tag (50-60 characters) with the primary keyword.' });
-    } else if (title.length > 60) {
-      findings.push({ issue: `Homepage title tag too long (${title.length} chars)`, why: 'Titles over 60 characters get truncated in SERPs, cutting off keywords and reducing CTR.', fix: `Shorten to under 60 characters. Current: "${title.substring(0, 60)}..."`, evidence: `${title.length} characters` });
+    } else if (title.length > 70) {
+      findings.push({ issue: `Homepage title tag too long (${title.length} chars)`, why: 'Titles over 70 characters get truncated in SERPs, cutting off keywords and reducing CTR.', fix: `Shorten to under 70 characters. Current: "${title.substring(0, 70)}..."`, evidence: `${title.length} characters` });
+    } else {
+      passes.push({ title: 'Meta title length is on point', detail: `"${title}" — ${title.length} characters, within the SERP-safe range (≤70).`, category: 'On-Page SEO' });
     }
 
     // Meta description (homepage)
     const metaDesc = await page.$eval('meta[name="description"]', (el) => el.getAttribute('content')).catch(() => null);
     if (!metaDesc || metaDesc.trim().length === 0) {
-      findings.push({ issue: 'Homepage missing meta description', why: 'Without a homepage meta description, Google auto-generates snippets that may not convey value, reducing CTR from SERPs by up to 30%.', fix: 'Add a compelling meta description (120-155 chars) with the primary keyword and a call-to-action.' });
-    } else if (metaDesc.length > 160) {
-      findings.push({ issue: `Homepage meta description too long (${metaDesc.length} chars)`, why: 'Descriptions over 160 characters get truncated, potentially cutting off the CTA.', fix: 'Shorten to 120-155 characters. Front-load keywords and value prop.', evidence: `${metaDesc.length} characters` });
+      findings.push({ issue: 'Homepage missing meta description', why: 'Without a homepage meta description, Google auto-generates snippets that may not convey value, reducing CTR from SERPs by up to 30%.', fix: 'Add a compelling meta description (120-140 chars) with the primary keyword and a call-to-action.' });
+    } else if (metaDesc.length > 140) {
+      findings.push({ issue: `Homepage meta description too long (${metaDesc.length} chars)`, why: 'Descriptions over 140 characters get truncated, potentially cutting off the CTA.', fix: 'Shorten to 120-140 characters. Front-load keywords and value prop.', evidence: `${metaDesc.length} characters` });
+    } else {
+      passes.push({ title: 'Meta description is tight', detail: `${metaDesc.length} characters — fits inside SERP snippets without truncation.`, category: 'On-Page SEO' });
     }
 
     // Canonical tag (homepage)
     const canonical = await page.$eval('link[rel="canonical"]', (el) => el.getAttribute('href')).catch(() => null);
     if (!canonical) {
       findings.push({ issue: 'Homepage missing canonical tag', why: 'Without a canonical tag, search engines may index duplicate versions of this page (trailing slashes, query params, etc.), diluting ranking signals and wasting crawl budget.', fix: 'Add a self-referencing <link rel="canonical"> tag pointing to the preferred URL.' });
+    } else {
+      passes.push({ title: 'Canonical tag is in place', detail: `Points to ${canonical} — search engines will consolidate ranking signals correctly.`, category: 'Technical SEO' });
     }
 
     // HTML lang
     const htmlLang = await page.$eval('html', (el) => el.getAttribute('lang')).catch(() => null);
     if (!htmlLang) {
       findings.push({ issue: 'Missing HTML lang attribute', why: 'The lang attribute helps search engines serve pages to the right audience and is required for proper internationalization.', fix: 'Add lang="en" (or appropriate language code) to the <html> tag.' });
+    } else {
+      passes.push({ title: 'HTML lang attribute is set', detail: `Declared as "${htmlLang}" — proper language signal for indexing and accessibility.`, category: 'Technical SEO' });
     }
 
     // Viewport
     const viewport = await page.$eval('meta[name="viewport"]', (el) => el.getAttribute('content')).catch(() => null);
     if (!viewport) {
       findings.push({ issue: 'Missing viewport meta tag', why: 'Without a viewport tag, pages fail mobile-friendliness tests. Google uses mobile-first indexing, so this directly impacts rankings.', fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1">.' });
+    } else {
+      passes.push({ title: 'Viewport meta is configured', detail: 'Mobile-friendliness signal is correctly declared for mobile-first indexing.', category: 'Technical SEO' });
     }
 
     // Robots noindex
@@ -209,12 +220,21 @@ export async function runHeuristics(
 
     const schemaData = await page.evaluate(() => {
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-      const schemas: Array<{ type: string; raw: string }> = [];
+      const schemas: Array<{ type: string; raw: string; parsed?: any }> = [];
       scripts.forEach((s) => {
         try {
           const data = JSON.parse(s.textContent || '');
-          const type = data['@type'] || (Array.isArray(data['@graph']) ? 'Graph' : 'Unknown');
-          schemas.push({ type, raw: (s.textContent || '').substring(0, 200) });
+          // A single JSON-LD <script> may contain a top-level object OR an @graph array of nodes.
+          const nodes: any[] = Array.isArray(data['@graph']) ? data['@graph'] : [data];
+          for (const node of nodes) {
+            if (!node || typeof node !== 'object') continue;
+            const type = node['@type'] || (Array.isArray(data['@graph']) ? 'Graph' : 'Unknown');
+            schemas.push({
+              type: Array.isArray(type) ? type.join(',') : type,
+              raw: (s.textContent || '').substring(0, 200),
+              parsed: node,
+            });
+          }
         } catch { schemas.push({ type: 'Invalid JSON', raw: (s.textContent || '').substring(0, 100) }); }
       });
       return schemas;
@@ -222,12 +242,35 @@ export async function runHeuristics(
 
     // Collect all schema types from homepage
     const homepageSchemaTypes = schemaData.map(s => s.type);
+    const orgNode = schemaData.find(s => /organization|localbusiness|company/i.test(s.type) && s.parsed);
 
     if (schemaData.length === 0) {
       findings.push({ issue: 'No structured data (JSON-LD) on homepage', why: 'The homepage has no structured data. Rich results (stars, FAQs, breadcrumbs) require schema markup. This also helps AI search engines understand your content.', fix: 'Add JSON-LD structured data to the homepage: Organization schema (brand info), FAQ schema, Breadcrumb schema, and Service/Product schema as relevant.' });
     } else {
-      if (!homepageSchemaTypes.some(t => /organization|localbusiness|company/i.test(t))) {
+      if (!orgNode) {
         findings.push({ issue: 'Homepage missing Organization schema', why: 'Organization schema tells search engines and AI assistants who you are. This strengthens your Knowledge Panel and brand entity in Google.', fix: 'Add Organization JSON-LD with name, url, logo, description, sameAs (social profiles), and contactPoint.' });
+      } else {
+        // We have an Organization schema — now check whether sameAs is populated.
+        const sameAsRaw = orgNode.parsed?.sameAs;
+        const sameAsList: string[] = Array.isArray(sameAsRaw)
+          ? sameAsRaw.filter((u: any) => typeof u === 'string' && u.length > 0)
+          : typeof sameAsRaw === 'string' && sameAsRaw.length > 0 ? [sameAsRaw] : [];
+
+        if (sameAsList.length === 0) {
+          findings.push({
+            issue: 'Organization schema is missing sameAs',
+            why: 'The sameAs property links your organization to its official social profiles (LinkedIn, X, GitHub, etc.). AI search engines specifically use sameAs to resolve your entity and trust your brand. Without it, the schema can\'t do its strongest job.',
+            fix: 'Add a sameAs array to your Organization JSON-LD with full URLs to your official LinkedIn, X/Twitter, YouTube, GitHub, and any other authoritative profiles.',
+            evidence: 'Organization node present, sameAs absent or empty',
+          });
+        } else {
+          passes.push({
+            title: 'Organization schema includes sameAs',
+            detail: `Linked to ${sameAsList.length} ${sameAsList.length === 1 ? 'profile' : 'profiles'} — AI search engines can resolve your brand entity with high confidence.`,
+            category: 'Technical SEO',
+            evidence: sameAsList.slice(0, 5).join(', '),
+          });
+        }
       }
       if (!homepageSchemaTypes.some(t => /faq/i.test(t))) {
         findings.push({ issue: 'Homepage missing FAQ schema', why: 'FAQ schema can display expandable Q&A directly in search results, increasing SERP real estate and click-through rates.', fix: 'Add FAQ schema for common questions. Each Q&A pair becomes a rich result in Google.' });
@@ -582,5 +625,5 @@ Respond with JSON only.`
     await browser.close();
   }
 
-  return { findings };
+  return { findings, passes };
 }

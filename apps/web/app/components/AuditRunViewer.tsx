@@ -8,6 +8,13 @@ import { FindingsPlan } from './FindingsPlan';
 
 type AuditStatus = 'queued' | 'running' | 'partial' | 'completed' | 'failed';
 
+type Pass = {
+  title: string;
+  detail: string;
+  category?: 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links';
+  evidence?: string;
+};
+
 type Summary = {
   findings: Array<{
     issue: string;
@@ -24,6 +31,7 @@ type Summary = {
     scaleAuthority?: string[];
     experiments: Array<{ hypothesis: string; variant: string; metric: string; risk?: string }>;
   };
+  passes?: Pass[];
 };
 
 type Artifact = { type: string; path: string; meta: Record<string, unknown> | null };
@@ -356,11 +364,40 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
           </section>
         )}
 
-        {/* 02 — What we found */}
-        {findingsToRender.length > 0 && (
+        {/* 02 — What you do well */}
+        {(run.summaryJson?.passes?.length ?? 0) > 0 && (
           <section className="ed-section">
             <div className="ed-chapter">
               <span className="ed-chapter-num">02</span>
+              <h2 className="ed-chapter-title">What you do well</h2>
+            </div>
+            <div className="ed-prose" style={{ marginBottom: 20 }}>
+              <p>The fundamentals we verified are already in place. Keep these as you iterate.</p>
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
+              {run.summaryJson!.passes!.map((p, i) => (
+                <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-1)' }}>
+                  <span aria-hidden style={{ flexShrink: 0, marginTop: 3, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(52,211,153,0.12)', color: 'var(--pos)', fontSize: 12, fontWeight: 700 }}>✓</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                      <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 500 }}>{p.title}</span>
+                      {p.category && (
+                        <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-4)' }}>{p.category}</span>
+                      )}
+                    </div>
+                    <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-2)' }}>{p.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* 03 — What we found */}
+        {findingsToRender.length > 0 && (
+          <section className="ed-section">
+            <div className="ed-chapter">
+              <span className="ed-chapter-num">03</span>
               <h2 className="ed-chapter-title">What we found</h2>
             </div>
             <div className="ed-prose" style={{ marginBottom: 24 }}>
@@ -399,11 +436,11 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
         {/* 03 — Your action plan */}
         {run.summaryJson?.plan && <FindingsPlan plan={run.summaryJson.plan} />}
 
-        {/* 04 — What we couldn't see (locked) */}
+        {/* 05 — What we couldn't see (locked) */}
         {findingsToRender.length > 0 && (
           <section className="ed-section">
             <div className="ed-chapter">
-              <span className="ed-chapter-num">04</span>
+              <span className="ed-chapter-num">05</span>
               <h2 className="ed-chapter-title">What we couldn&apos;t see</h2>
             </div>
             <div className="ed-locked">

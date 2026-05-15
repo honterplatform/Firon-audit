@@ -21,7 +21,7 @@ export function FindingsPlan({ plan }: FindingsPlanProps) {
   return (
     <section className="ed-section">
       <div className="ed-chapter">
-        <span className="ed-chapter-num">03</span>
+        <span className="ed-chapter-num">04</span>
         <h2 className="ed-chapter-title">Your action plan</h2>
       </div>
       <div className="ed-prose" style={{ marginBottom: 24 }}>
