@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import type { HeuristicsResult, HeuristicFinding, HeuristicPass } from '../types';
+import { discoverPageSamples } from '../crawl/sitemap';
 
 export async function runHeuristics(
   url: string,
@@ -365,6 +366,136 @@ export async function runHeuristics(
       }
     } catch {
       // Inner page crawl failed — non-critical, continue
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // SITEMAP-BASED PAGE-TYPE RUBRICS (blog post)
+    // ═══════════════════════════════════════════════════════
+
+    try {
+      const samples = await discoverPageSamples(origin);
+
+      if (samples.blog) {
+        await page.goto(samples.blog, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await page.waitForTimeout(800);
+        const blogPath = new URL(samples.blog).pathname;
+
+        const blog = await page.evaluate(() => {
+          const title = document.title || '';
+          const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+          const h1Count = document.querySelectorAll('h1').length;
+          const h2Count = document.querySelectorAll('h2').length;
+          const h3Count = document.querySelectorAll('h3').length;
+
+          // Prefer main content containers for word count; fall back to body.
+          const contentEl =
+            document.querySelector('article') ||
+            document.querySelector('main') ||
+            document.querySelector('.post-content, .entry-content, .article-body, [class*="article"], [class*="post-body"]') ||
+            document.body;
+          const text = (contentEl?.textContent || '').replace(/\s+/g, ' ').trim();
+          const wordCount = text ? text.split(/\s+/).length : 0;
+
+          // Schemas
+          const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+          const schemaTypes: string[] = [];
+          scripts.forEach((s) => {
+            try {
+              const data = JSON.parse(s.textContent || '');
+              const nodes: any[] = Array.isArray(data['@graph']) ? data['@graph'] : [data];
+              for (const node of nodes) {
+                const t = node?.['@type'];
+                if (typeof t === 'string') schemaTypes.push(t);
+                else if (Array.isArray(t)) schemaTypes.push(...t.filter((x) => typeof x === 'string'));
+              }
+            } catch { /* ignore invalid */ }
+          });
+
+          // FAQ section heuristic: any heading or section mentioning "FAQ" / "Frequently asked"
+          const allText = (document.body?.textContent || '').toLowerCase();
+          const headingMatches = Array.from(document.querySelectorAll('h1,h2,h3,h4')).some((h) => {
+            const t = (h.textContent || '').toLowerCase();
+            return t.includes('faq') || t.includes('frequently asked');
+          });
+          const hasFaqSection = headingMatches || /frequently asked questions/.test(allText);
+
+          return { title, metaDesc, h1Count, h2Count, h3Count, wordCount, schemaTypes, hasFaqSection };
+        });
+
+        const sample = `Sampled: ${blogPath}`;
+
+        // H1 count
+        if (blog.h1Count === 0) {
+          findings.push({ issue: `Blog post is missing an H1 (${blogPath})`, why: 'Blog posts need exactly one H1 — it tells search engines and AI engines what the article is about. No H1 means weaker topical signals and lower visibility.', fix: `Add a single, descriptive <h1> at the top of ${blogPath} that matches the page's primary keyword.`, evidence: sample });
+        } else if (blog.h1Count > 1) {
+          findings.push({ issue: `Blog post has multiple H1s (${blog.h1Count} found on ${blogPath})`, why: 'Multiple H1s split topical authority and confuse search engines about the article subject.', fix: `Keep exactly one H1 on ${blogPath}; demote the rest to H2.`, evidence: sample });
+        } else {
+          passes.push({ title: 'Blog posts use a single H1', detail: `Verified on ${blogPath} — clean topical signal for search engines.`, category: 'On-Page SEO', evidence: sample });
+        }
+
+        // Subheadings (H2/H3)
+        if (blog.h2Count === 0 && blog.h3Count === 0) {
+          findings.push({ issue: `Blog post has no H2 or H3 subheadings (${blogPath})`, why: 'Long-form posts without subheadings are hard to scan and lose featured-snippet opportunities. Subheadings also help AI engines summarize and excerpt your content.', fix: `Break ${blogPath} into 4–8 sections using descriptive H2 headings; use H3 for sub-sections where useful.`, evidence: sample });
+        } else {
+          passes.push({ title: 'Blog posts use a clear subheading hierarchy', detail: `${blogPath} has ${blog.h2Count} H2${blog.h2Count === 1 ? '' : 's'}${blog.h3Count ? ` and ${blog.h3Count} H3${blog.h3Count === 1 ? '' : 's'}` : ''} — readable and snippet-friendly.`, category: 'On-Page SEO', evidence: sample });
+        }
+
+        // Word count
+        if (blog.wordCount < 1000) {
+          findings.push({ issue: `Blog post is under 1,000 words (${blog.wordCount} on ${blogPath})`, why: 'Posts under ~1,000 words underperform in competitive SERPs and rarely get cited by AI search. Depth correlates strongly with rankings and AI inclusion.', fix: `Expand ${blogPath} with use cases, examples, and FAQs. Aim for 1,200–2,000 words of substantive content.`, evidence: `${blog.wordCount} words, ${sample}` });
+        } else {
+          passes.push({ title: 'Blog posts have substantive depth', detail: `${blogPath} runs ${blog.wordCount.toLocaleString()} words — enough body for AI engines and ranking competitiveness.`, category: 'On-Page SEO', evidence: sample });
+        }
+
+        // Meta title length on the blog post
+        if (!blog.title || blog.title.trim().length === 0) {
+          findings.push({ issue: `Blog post missing title tag (${blogPath})`, why: 'Without a title tag the post can\'t rank or be displayed in SERPs.', fix: `Add a unique title to ${blogPath} under 70 characters.`, evidence: sample });
+        } else if (blog.title.length > 70) {
+          findings.push({ issue: `Blog post title is too long (${blog.title.length} chars on ${blogPath})`, why: 'Titles over 70 characters get truncated in SERPs, cutting off keywords.', fix: `Shorten the title on ${blogPath} to ≤70 characters.`, evidence: `${blog.title.length} chars on ${blogPath}` });
+        } else {
+          passes.push({ title: 'Blog post titles are SERP-safe', detail: `${blogPath} title is ${blog.title.length} characters — within the ≤70 sweet spot.`, category: 'On-Page SEO', evidence: sample });
+        }
+
+        // Meta description on the blog post
+        if (!blog.metaDesc || blog.metaDesc.trim().length === 0) {
+          findings.push({ issue: `Blog post missing meta description (${blogPath})`, why: 'Without a meta description Google auto-generates snippets — typically the first text on the page, which often isn\'t the strongest hook.', fix: `Add a unique 120–140 character meta description to ${blogPath}.`, evidence: sample });
+        } else if (blog.metaDesc.length > 140) {
+          findings.push({ issue: `Blog post meta description is too long (${blog.metaDesc.length} chars on ${blogPath})`, why: 'Descriptions over 140 characters get truncated in SERPs, often cutting off the CTA.', fix: `Shorten ${blogPath}'s meta description to ≤140 characters.`, evidence: `${blog.metaDesc.length} chars on ${blogPath}` });
+        } else {
+          passes.push({ title: 'Blog post meta descriptions are tight', detail: `${blogPath} meta description is ${blog.metaDesc.length} characters — fits SERP snippets cleanly.`, category: 'On-Page SEO', evidence: sample });
+        }
+
+        // FAQ section
+        if (blog.hasFaqSection) {
+          passes.push({ title: 'Blog posts include FAQ-style sections', detail: `Detected on ${blogPath} — strong fit for AI Overviews and People-Also-Ask placements.`, category: 'On-Page SEO', evidence: sample });
+        } else {
+          findings.push({ issue: `Blog post has no FAQ section (${blogPath})`, why: 'FAQ-style sections are heavily favored by AI Overviews and Google\'s People-Also-Ask block. Without them, you miss those high-visibility surfaces.', fix: `Add a short FAQ section to ${blogPath} answering 3–5 common questions about the topic, paired with FAQPage schema.`, evidence: sample });
+        }
+
+        // FAQ schema on the blog post
+        if (blog.schemaTypes.some((t) => /faq/i.test(t))) {
+          passes.push({ title: 'Blog posts ship with FAQ schema', detail: `${blogPath} has FAQ JSON-LD — Q&A rich results are eligible.`, category: 'Technical SEO', evidence: sample });
+        } else {
+          findings.push({ issue: `Blog post missing FAQ schema (${blogPath})`, why: 'FAQ schema unlocks expandable Q&A in Google SERPs and is the primary signal AI engines use to extract authoritative answers from your post.', fix: `Add FAQPage JSON-LD on ${blogPath} matching the questions in the post body.`, evidence: sample });
+        }
+
+        // Article / NewsArticle schema
+        const hasArticleSchema = blog.schemaTypes.some((t) => /^(article|newsarticle|blogposting|techarticle)$/i.test(t));
+        if (hasArticleSchema) {
+          passes.push({ title: 'Blog posts use Article schema', detail: `${blogPath} declares Article/BlogPosting JSON-LD — AI engines can resolve byline, publish date, and topic.`, category: 'Technical SEO', evidence: sample });
+        } else {
+          findings.push({ issue: `Blog post missing Article schema (${blogPath})`, why: 'Article (or BlogPosting/NewsArticle) schema gives AI engines author, publish date, and topical context. Without it, your posts are harder to cite and rank for news/feature SERP features.', fix: `Add Article or BlogPosting JSON-LD on ${blogPath} with headline, author, datePublished, and image.`, evidence: sample });
+        }
+
+        // Navigate back to homepage for any remaining checks downstream
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(500);
+      } else if (samples.sitemapFound) {
+        // We have a sitemap but no blog URL matched — surface as info-level for now via a pass marker
+        passes.push({ title: 'Sitemap discovered', detail: `Indexed ${samples.discoveredCount} URLs. No blog posts detected — if a blog exists, ensure post URLs match a standard pattern (/blog/*, /posts/*, /articles/*).`, category: 'Technical SEO' });
+      }
+    } catch (err) {
+      // Sitemap-based rubric failed — non-critical, continue
     }
 
     // ═══════════════════════════════════════════════════════
