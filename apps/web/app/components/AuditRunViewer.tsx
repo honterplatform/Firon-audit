@@ -315,18 +315,18 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
               <span className="ed-chapter-num">01</span>
               <h2 className="ed-chapter-title">The snapshot</h2>
             </div>
-            {screenshotUrls?.desktop && (
+            {screenshotUrls?.desktop ? (
               <div className="ed-screenshot" style={{ marginBottom: 28 }}>
-                {blockedStatusState?.desktop ? (
-                  <div className="blocked">
-                    <span>No preview available</span>
-                    <span className="sub">The site blocked our crawler</span>
-                  </div>
-                ) : (
-                  <img src={screenshotUrls.desktop} alt={`${shortHost(run.target)} screenshot`} />
-                )}
+                <img src={screenshotUrls.desktop} alt={`${shortHost(run.target)} screenshot`} />
               </div>
-            )}
+            ) : blockedStatusState?.desktop ? (
+              <div className="ed-screenshot" style={{ marginBottom: 28 }}>
+                <div className="blocked">
+                  <span>No preview available</span>
+                  <span className="sub">The site blocked our crawler</span>
+                </div>
+              </div>
+            ) : null}
             {lighthouse && (
               <div className="ed-stats">
                 <div className="ed-stat">
