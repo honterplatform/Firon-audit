@@ -494,6 +494,138 @@ export async function runHeuristics(
         // We have a sitemap but no blog URL matched — surface as info-level for now via a pass marker
         passes.push({ title: 'Sitemap discovered', detail: `Indexed ${samples.discoveredCount} URLs. No blog posts detected — if a blog exists, ensure post URLs match a standard pattern (/blog/*, /posts/*, /articles/*).`, category: 'Technical SEO' });
       }
+
+      // ───────────────── PRODUCT PAGE RUBRIC ─────────────────
+      if (samples.product) {
+        await page.goto(samples.product, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await page.waitForTimeout(800);
+        const productPath = new URL(samples.product).pathname;
+
+        const prod = await page.evaluate(() => {
+          const title = document.title || '';
+          const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+          const h1Count = document.querySelectorAll('h1').length;
+          const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+          const schemaTypes: string[] = [];
+          scripts.forEach((s) => {
+            try {
+              const data = JSON.parse(s.textContent || '');
+              const nodes: any[] = Array.isArray(data['@graph']) ? data['@graph'] : [data];
+              for (const node of nodes) {
+                const t = node?.['@type'];
+                if (typeof t === 'string') schemaTypes.push(t);
+                else if (Array.isArray(t)) schemaTypes.push(...t.filter((x) => typeof x === 'string'));
+              }
+            } catch { /* ignore */ }
+          });
+          return { title, metaDesc, h1Count, schemaTypes };
+        });
+
+        const psample = `Sampled: ${productPath}`;
+
+        // H1 count
+        if (prod.h1Count === 0) {
+          findings.push({ issue: `Product page is missing an H1 (${productPath})`, why: 'Without an H1, the product\'s primary keyword has no anchor. Search engines and AI engines can\'t tell what the page is selling.', fix: `Add a single <h1> to ${productPath} that contains the product name.`, evidence: psample });
+        } else if (prod.h1Count > 1) {
+          findings.push({ issue: `Product page has multiple H1s (${prod.h1Count} on ${productPath})`, why: 'Multiple H1s dilute the product\'s topical focus and confuse rankings.', fix: `Keep exactly one H1 on ${productPath}; demote the rest to H2.`, evidence: psample });
+        } else {
+          passes.push({ title: 'Product pages use a single H1', detail: `Verified on ${productPath} — clear topical anchor for each product.`, category: 'On-Page SEO', evidence: psample });
+        }
+
+        // Meta title
+        if (!prod.title || prod.title.trim().length === 0) {
+          findings.push({ issue: `Product page missing title tag (${productPath})`, why: 'Without a title, the product can\'t rank or display in SERPs.', fix: `Add a unique title under 70 characters to ${productPath}.`, evidence: psample });
+        } else if (prod.title.length > 70) {
+          findings.push({ issue: `Product page title too long (${prod.title.length} chars on ${productPath})`, why: 'Titles over 70 chars get truncated, losing the product name or category at the end.', fix: `Shorten ${productPath} title to ≤70 characters.`, evidence: `${prod.title.length} chars on ${productPath}` });
+        } else {
+          passes.push({ title: 'Product page titles are SERP-safe', detail: `${productPath} title is ${prod.title.length} characters — within the ≤70 range.`, category: 'On-Page SEO', evidence: psample });
+        }
+
+        // Meta description
+        if (!prod.metaDesc || prod.metaDesc.trim().length === 0) {
+          findings.push({ issue: `Product page missing meta description (${productPath})`, why: 'Templated or missing meta descriptions hurt CTR from SERPs. Each product needs a unique selling hook.', fix: `Write a unique 120–140 character description for ${productPath}.`, evidence: psample });
+        } else if (prod.metaDesc.length > 140) {
+          findings.push({ issue: `Product page meta description too long (${prod.metaDesc.length} chars on ${productPath})`, why: 'Descriptions over 140 chars truncate in SERPs and cut the CTA.', fix: `Shorten ${productPath} meta description to ≤140 characters.`, evidence: `${prod.metaDesc.length} chars on ${productPath}` });
+        } else {
+          passes.push({ title: 'Product meta descriptions are tight', detail: `${productPath} meta description is ${prod.metaDesc.length} characters — fits SERP snippets cleanly.`, category: 'On-Page SEO', evidence: psample });
+        }
+
+        // Product schema (nice-to-have — emit as pass when present)
+        if (prod.schemaTypes.some((t) => /^product$/i.test(t))) {
+          passes.push({ title: 'Product pages ship Product schema', detail: `${productPath} declares Product JSON-LD — eligible for price/availability/review rich results.`, category: 'Technical SEO', evidence: psample });
+        }
+
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(500);
+      }
+
+      // ───────────────── COLLECTION PAGE RUBRIC ─────────────────
+      if (samples.collection) {
+        await page.goto(samples.collection, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await page.waitForTimeout(800);
+        const collectionPath = new URL(samples.collection).pathname;
+
+        const coll = await page.evaluate(() => {
+          const title = document.title || '';
+          const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+          const h1Count = document.querySelectorAll('h1').length;
+
+          // Intro copy: paragraphs inside <main> that aren't inside a card/link
+          // (a rough proxy for collection-page body copy vs the product grid itself).
+          const mainEl = document.querySelector('main') || document.body;
+          let bodyCopy = '';
+          if (mainEl) {
+            const paragraphs = Array.from(mainEl.querySelectorAll('p, h2, h3'));
+            for (const p of paragraphs) {
+              // Skip paragraphs nested inside product cards / anchor wraps
+              if (p.closest('a, [data-product], .product-card, .product-item, [class*="product-card"]')) continue;
+              const t = (p.textContent || '').replace(/\s+/g, ' ').trim();
+              if (t.length > 20) bodyCopy += t + ' ';
+              if (bodyCopy.length > 1500) break;
+            }
+          }
+          return { title, metaDesc, h1Count, bodyCopyLength: bodyCopy.trim().length };
+        });
+
+        const csample = `Sampled: ${collectionPath}`;
+
+        // H1
+        if (coll.h1Count === 0) {
+          findings.push({ issue: `Collection page missing an H1 (${collectionPath})`, why: 'Collection pages without H1s lose the chance to rank for category-level keywords (e.g. "men\'s running shoes") that drive bulk product discovery.', fix: `Add a descriptive <h1> to ${collectionPath} matching the category keyword.`, evidence: csample });
+        } else if (coll.h1Count > 1) {
+          findings.push({ issue: `Collection page has multiple H1s (${coll.h1Count} on ${collectionPath})`, why: 'Multiple H1s blur the category focus and weaken category-keyword rankings.', fix: `Keep one H1 on ${collectionPath}; demote the rest to H2.`, evidence: csample });
+        } else {
+          passes.push({ title: 'Collection pages use a single H1', detail: `Verified on ${collectionPath} — strong category-keyword anchor.`, category: 'On-Page SEO', evidence: csample });
+        }
+
+        // Body copy ≥120 chars
+        if (coll.bodyCopyLength < 120) {
+          findings.push({ issue: `Collection page has thin body copy (${coll.bodyCopyLength} chars on ${collectionPath})`, why: 'Collection pages with only a product grid look thin to Google. A short intro paragraph (≥120 chars) of contextual copy signals topical relevance and competes for category SERPs.', fix: `Add ${120 - coll.bodyCopyLength}+ more characters of category-introducing copy near the H1 on ${collectionPath}.`, evidence: `${coll.bodyCopyLength} chars, ${csample}` });
+        } else {
+          passes.push({ title: 'Collection pages include intro copy', detail: `${collectionPath} has ${coll.bodyCopyLength} characters of category context — competitive for category SERPs.`, category: 'On-Page SEO', evidence: csample });
+        }
+
+        // Meta title
+        if (!coll.title || coll.title.trim().length === 0) {
+          findings.push({ issue: `Collection page missing title tag (${collectionPath})`, why: 'Without a title the collection can\'t rank or display in SERPs.', fix: `Add a unique title under 70 characters to ${collectionPath}.`, evidence: csample });
+        } else if (coll.title.length > 70) {
+          findings.push({ issue: `Collection page title too long (${coll.title.length} chars on ${collectionPath})`, why: 'Titles over 70 chars truncate in SERPs and lose category keywords.', fix: `Shorten ${collectionPath} title to ≤70 characters.`, evidence: `${coll.title.length} chars on ${collectionPath}` });
+        } else {
+          passes.push({ title: 'Collection page titles are SERP-safe', detail: `${collectionPath} title is ${coll.title.length} characters.`, category: 'On-Page SEO', evidence: csample });
+        }
+
+        // Meta description
+        if (!coll.metaDesc || coll.metaDesc.trim().length === 0) {
+          findings.push({ issue: `Collection page missing meta description (${collectionPath})`, why: 'No meta description means Google auto-generates one from product card text — usually a poor selling pitch for the category as a whole.', fix: `Write a 120–140 character meta description for ${collectionPath} that pitches the category.`, evidence: csample });
+        } else if (coll.metaDesc.length > 140) {
+          findings.push({ issue: `Collection page meta description too long (${coll.metaDesc.length} chars on ${collectionPath})`, why: 'Descriptions over 140 chars get truncated in SERPs.', fix: `Shorten ${collectionPath} meta description to ≤140 characters.`, evidence: `${coll.metaDesc.length} chars on ${collectionPath}` });
+        } else {
+          passes.push({ title: 'Collection meta descriptions are tight', detail: `${collectionPath} meta description is ${coll.metaDesc.length} characters.`, category: 'On-Page SEO', evidence: csample });
+        }
+
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForTimeout(500);
+      }
     } catch (err) {
       // Sitemap-based rubric failed — non-critical, continue
     }
