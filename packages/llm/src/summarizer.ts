@@ -262,41 +262,15 @@ export async function summarizeAudit(input: SummarizeInput): Promise<AuditSummar
           .join('\n')
       : 'None detected.';
 
-  const accessibilityViolations =
-    input.a11y.violations.length > 0
-      ? input.a11y.violations
-          .slice(0, 8)
-          .map(
-            (violation, index) =>
-              `${index + 1}. ${violation.id} — ${truncate(violation.description, 160)}`
-          )
-          .join('\n')
-      : 'No axe violations captured.';
-
-  const contrastSummary =
-    input.a11y.contrastIssues.length > 0
-      ? input.a11y.contrastIssues
-          .slice(0, 5)
-          .map(
-            (issue, index) =>
-              `${index + 1}. ${issue.selector} ratio ${issue.ratio.toFixed(2)}:1 (${truncate(
-                issue.text,
-                80
-              )})`
-          )
-          .join('\n')
-      : 'No contrast issues captured.';
-
-  const tapTargetSummary =
-    input.a11y.tapTargetIssues.length > 0
-      ? `${input.a11y.tapTargetIssues.length} tap target issues detected.`
-      : 'No tap target issues captured.';
+  // Accessibility/axe results are intentionally NOT fed to the LLM — Firon does
+  // not advise on ADA compliance and we don't want a11y violations framed as
+  // SEO liabilities. See the prompt guardrail below.
 
   const systemPrompt = `You are Firon Marketing's SEO Audit Agent. You don't just list technical errors — you translate them into high-stakes business liabilities and pitch Firon's specific solutions.
 
 CATEGORIES — assign each finding to EXACTLY one of these:
 🔧 "Technical SEO" — Crawlability, indexability, redirects, sitemaps, HTTPS, structured data, robots.txt, canonical tags
-🔍 "On-Page SEO" — Title tags, meta descriptions, headings (H1/H2), alt text, content quality, keyword usage, duplicate content
+🔍 "On-Page SEO" — Title tags, meta descriptions, headings (H1/H2), content quality, keyword usage, duplicate content
 ⚡ "Performance" — Core Web Vitals (LCP, CLS, INP, TBT), page speed, image optimization, render-blocking resources
 🔗 "Links" — Broken links, redirect chains, internal linking, orphan pages, anchor text
 
@@ -346,6 +320,11 @@ SCHEMA ACCURACY RULES:
 - Do NOT say "missing product schema" without qualifying that inner pages may have it.
 - If the page appears to be an e-commerce site, note: "Product schema should be verified on individual product pages."
 
+SCOPE — DO NOT MENTION ACCESSIBILITY:
+- NEVER frame accessibility, ADA compliance, a11y, contrast ratios, alt text, axe violations, screen-reader issues, or tap-target sizing as findings.
+- Firon does not advise on accessibility. If the data hints at a11y issues, ignore them.
+- Do NOT say "accessibility violations signal poor technical foundation" or anything similar — that wording is banned.
+
 GENERAL RULES:
 - Maximum 8 findings. Issue ≤140 chars, Why ≤400, Fix ≤280.
 - Distribute across at least 3 categories. Max 3 per category.
@@ -361,7 +340,6 @@ ${heroSnapshot}
 Heading hierarchy: ${input.crawl.typography?.headingHierarchy?.map(h => `H${h.level}: ${h.count} found`).join(', ') || 'Not detected'}
 Navigation items: ${input.crawl.navItems.length > 0 ? input.crawl.navItems.join(', ') : 'None detected'}
 Section headings: ${input.crawl.sectionHeadings.length > 0 ? input.crawl.sectionHeadings.slice(0, 8).join(' → ') : 'None detected'}
-Images missing alt text: check accessibility violations below
 
 ⚡ CORE WEB VITALS:
 - Available: ${input.availability.perf ? 'yes' : 'no'}
@@ -372,11 +350,6 @@ Images missing alt text: check accessibility violations below
 - Total page size: ${(input.perf.totalBytes / 1024 / 1024).toFixed(2)}MB ${input.perf.totalBytes > 2 * 1024 * 1024 ? '⚠️ LARGE' : '✅ OK'}
 - Third-party domains: ${input.perf.thirdPartyDomains.length > 0 ? input.perf.thirdPartyDomains.join(', ') : 'None'}
 
-♿ ACCESSIBILITY / TECHNICAL ISSUES:
-- Violations (${input.a11y.violations.length}):
-${accessibilityViolations}
-- Contrast issues: ${contrastSummary}
-
 🔍 HEURISTIC FINDINGS (${input.heuristics.findings.length}):
 ${heuristicSummary}
 
@@ -385,7 +358,6 @@ ${input.crawl.images ? `
 - Total: ${input.crawl.images.totalImages} images, ${(input.crawl.images.totalImageSize / (1024 * 1024)).toFixed(2)}MB total
 - Above fold: ${input.crawl.images.aboveFold.length}, Below fold: ${input.crawl.images.belowFold.length}
 - Missing lazy loading: ${input.crawl.images.belowFold.filter(i => !i.hasLazyLoading).length} below-fold images
-- Missing alt text: check accessibility violations
 ${input.crawl.images.lcpImage ? `- LCP image: ${(input.crawl.images.lcpImage.fileSize / 1024).toFixed(0)}KB, ${input.crawl.images.lcpImage.format}` : ''}
 ` : 'Not available'}
 
