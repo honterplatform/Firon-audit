@@ -29,14 +29,26 @@ const TOP_BAR_CSS = `
   .firon-doc-top .left { justify-self: start; min-width: 0; overflow: hidden; display: flex; align-items: center; }
   .firon-doc-top .right { justify-self: end; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
-  .firon-doc-top .brand {
-    display: inline-flex; align-items: center; gap: 10px;
-    flex-shrink: 0; text-decoration: none; color: var(--firon-text);
-    padding: 4px 8px 4px 4px; border-radius: 7px;
-    margin-right: 4px; transition: background .15s;
+  .firon-doc-top .brand-logo {
+    display: block; width: 90px; height: auto; flex-shrink: 0;
+    margin-right: 10px;
   }
-  .firon-doc-top .brand:hover { background: var(--firon-bg-2); }
-  .firon-doc-top .brand-text { font-size: 13.5px; font-weight: 600; letter-spacing: -0.012em; }
+
+  .firon-doc-top .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 7px;
+    border: 1px solid var(--firon-line);
+    background: var(--firon-bg-1);
+    color: var(--firon-text-3);
+    font-size: 13px; font-weight: 500;
+    text-decoration: none; flex-shrink: 0;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .firon-doc-top .back-btn:hover {
+    color: var(--firon-text);
+    background: var(--firon-bg-2);
+    border-color: var(--firon-line-2);
+  }
 
   .firon-doc-top .sep { color: var(--firon-text-4); display: inline-flex; align-items: center; margin: 0 4px; }
   .firon-doc-top .crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: nowrap; }
@@ -97,13 +109,12 @@ const TOP_BAR_CSS = `
     .firon-doc-top .left { grid-row: 1; grid-column: 1; }
     .firon-doc-top .right { grid-row: 1; grid-column: 2; gap: 4px; }
     .firon-doc-top .toolbar { grid-row: 2; grid-column: 1 / -1; justify-self: center; gap: 5px; }
-    .firon-doc-top .brand { padding: 4px 6px 4px 4px; margin-right: 0; }
-    .firon-doc-top .brand-text { font-size: 13px; }
+    .firon-doc-top .brand-logo { width: 78px; margin-right: 8px; }
     .firon-doc-top .crumb { font-size: 12.5px; max-width: 140px; }
     .firon-doc-top .auth-btn { padding: 4px 9px; font-size: 12px; }
   }
   @media (max-width: 480px) {
-    .firon-doc-top .brand-text { display: none; }
+    .firon-doc-top .back-btn-text { display: none; }
   }
 `;
 
@@ -113,9 +124,10 @@ export function FironTopBar() {
       <style dangerouslySetInnerHTML={{ __html: TOP_BAR_CSS }} />
       <header className="firon-doc-top">
         <div className="left">
-          <a href="https://labs.fironmarketing.com" className="brand" title="Firon Labs · home">
-            <img src="https://labs.fironmarketing.com/fironlabs.svg" width={16} height={24} alt="" />
-            <span className="brand-text">Firon Labs</span>
+          <img className="brand-logo" src="https://labs.fironmarketing.com/fironlabs.svg" alt="Firon Labs" />
+          <a href="https://fironmarketing.com" className="back-btn" aria-label="Back to fironmarketing.com" title="Back to fironmarketing.com">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+            <span className="back-btn-text">Back to website</span>
           </a>
           <span className="sep">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
