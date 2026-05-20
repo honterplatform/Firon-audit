@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { prisma, FindingKind } from '@audit/db';
 import { createStorageProvider } from '@audit/pipeline';
@@ -5,6 +6,11 @@ import { AuditRunViewer } from '@/app/components/AuditRunViewer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Per-audit reports are user-specific — keep them out of search indexes.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // Map database enum values to display strings
 function mapKindToDisplay(kind: FindingKind): 'Technical SEO' | 'On-Page SEO' | 'Performance' | 'Links' {
