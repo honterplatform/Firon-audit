@@ -529,3 +529,128 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 @media (max-width: 1023px) {
   .ed-with-rail { padding-right: 0; }
 }
+
+/* Contact CTA — floating accent card */
+.contact-bar {
+  position: fixed;
+  bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 30;
+  background: #FB3B24;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.12);
+  padding: 16px;
+  max-width: calc(100% - 32px);
+}
+.contact-bar-inner { display: flex; align-items: center; gap: 18px; flex-wrap: nowrap; }
+.contact-bar-text { flex: 1; min-width: 240px; font-size: 14px; color: #fff; font-weight: 600; letter-spacing: -0.005em; }
+.contact-bar-sub { color: rgba(255,255,255,0.78); font-weight: 400; letter-spacing: 0; margin-left: 6px; }
+.contact-bar-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; background: #fff; border: 1px solid #fff; border-radius: 8px;
+  color: #FB3B24; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.contact-bar-btn:hover { background: #f3f3f3; border-color: #f3f3f3; color: #d8311c; }
+@media (max-width: 640px) { .contact-bar-sub { display: none; } }
+
+/* Modal */
+.contact-modal-bd {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px); z-index: 60;
+  display: grid; place-items: center; padding: 16px;
+}
+.contact-modal {
+  width: 520px; max-width: 100%;
+  background: #0f0f10; border: 1px solid #232327; border-radius: 14px;
+  display: flex; flex-direction: column; color: #ededee; overflow: hidden;
+}
+.contact-modal-hd { padding: 18px 22px; border-bottom: 1px solid #232327; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.contact-modal-hd h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
+.contact-modal-hd .sub { margin: 4px 0 0; font-size: 12.5px; color: #6c6c73; }
+.contact-modal-close {
+  background: transparent; border: 1px solid #232327;
+  width: 32px; height: 32px; border-radius: 8px;
+  color: #a8a8ad; font-size: 18px; cursor: pointer;
+  display: grid; place-items: center; font-family: inherit;
+}
+.contact-modal-close:hover { background: #141416; color: #ededee; }
+.contact-modal-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.contact-field { display: flex; flex-direction: column; gap: 6px; }
+.contact-field label { font-size: 12px; font-weight: 500; color: #a8a8ad; }
+.contact-field input {
+  background: #141416; border: 1px solid #232327; border-radius: 8px;
+  padding: 10px 12px; color: #ededee; font-size: 13.5px; font-family: inherit;
+  outline: none; transition: border-color .15s, background .15s;
+}
+.contact-field input:focus { border-color: #FB3B24; background: #1a1a1d; }
+.contact-field input:disabled { opacity: 0.5; }
+.contact-revenue { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.contact-revenue-opt {
+  padding: 10px 12px; border-radius: 8px; border: 1px solid #232327;
+  background: #141416; color: #a8a8ad; font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.contact-revenue-opt:hover:not(:disabled) { border-color: #2c2c31; color: #ededee; }
+.contact-revenue-opt.on { border-color: #FB3B24; background: rgba(251,59,36,0.06); color: #ededee; }
+.contact-revenue-opt:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 480px) { .contact-revenue { grid-template-columns: 1fr; } }
+.contact-error { padding: 10px 12px; border-radius: 8px; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; font-size: 12.5px; }
+.contact-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+.contact-modal-cancel, .contact-modal-submit {
+  padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, opacity .15s;
+}
+.contact-modal-cancel { background: transparent; border: 1px solid #232327; color: #ededee; }
+.contact-modal-cancel:hover:not(:disabled) { background: #141416; }
+.contact-modal-submit { background: #FB3B24; border: 1px solid #FB3B24; color: #fff; }
+.contact-modal-submit:hover:not(:disabled) { background: #d8311c; border-color: #d8311c; }
+.contact-modal-submit:disabled, .contact-modal-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Bottom padding so content scrolls clear of the floating bar */
+body { padding-bottom: 100px; }
+
+/* ─── Contact CTA — mobile refinements ─── */
+@media (max-width: 640px) {
+  .contact-bar {
+    bottom: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    max-width: calc(100% - 16px);
+  }
+  .contact-bar-inner { gap: 10px; }
+  .contact-bar-text {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .contact-bar-btn {
+    padding: 8px 12px;
+    font-size: 12.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  body { padding-bottom: 84px; }
+}
+
+/* Below ~380px stack the bar vertically so the CTA stays full-width */
+@media (max-width: 380px) {
+  .contact-bar-inner { flex-wrap: wrap; gap: 10px; }
+  .contact-bar-text { flex-basis: 100%; }
+  .contact-bar-btn { width: 100%; }
+  body { padding-bottom: 120px; }
+}
+
+/* ─── Contact modal — mobile refinements ─── */
+@media (max-width: 640px) {
+  .contact-modal-bd { padding: 12px; align-items: flex-end; }
+  .contact-modal { border-radius: 12px; }
+  .contact-modal-hd { padding: 14px 16px; }
+  .contact-modal-hd h3 { font-size: 16px; }
+  .contact-modal-hd .sub { font-size: 12px; }
+  .contact-modal-body { padding: 14px 16px; gap: 12px; }
+  .contact-field input { font-size: 16px; padding: 11px 12px; } /* 16px prevents iOS auto-zoom on focus */
+  .contact-revenue-opt { padding: 11px 10px; font-size: 13px; }
+  .contact-modal-cancel, .contact-modal-submit { padding: 10px 14px; font-size: 13px; }
+}

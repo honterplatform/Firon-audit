@@ -49,6 +49,24 @@ enum ContactStatus {
   closed
 }
 
+enum ContactRevenueRange {
+  under_5m
+  five_to_10m
+  over_10m
+}
+
+model ContactLead {
+  id            String              @id @default(cuid())
+  name          String
+  email         String
+  revenueRange  ContactRevenueRange
+  toolSource    String              @default("ai-readiness-audit")
+  slackNotified Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}
+
 model AuditRun {
   id              String          @id @default(cuid())
   target          String

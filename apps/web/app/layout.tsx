@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter_Tight, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { FironTopBar } from "./components/FironTopBar";
+import { ContactBar } from "./components/ContactBar";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default function RootLayout({
       <body className={interTight.className} suppressHydrationWarning>
         <FironTopBar />
         {children}
+        <ContactBar />
       </body>
     </html>
   );
