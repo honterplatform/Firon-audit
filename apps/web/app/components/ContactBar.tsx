@@ -15,7 +15,8 @@ export function ContactBar() {
       <div className="contact-bar" role="region" aria-label="Contact Firon team">
         <div className="contact-bar-inner">
           <div className="contact-bar-text">
-            Want Firon&apos;s team running this for you?{" "}
+            Want Firon&apos;s team running this
+            <span className="contact-bar-flourish"> for you</span>?{" "}
             <span className="contact-bar-sub">
               We run the same toolkit on agency clients end to end.
             </span>
