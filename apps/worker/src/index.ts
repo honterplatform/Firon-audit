@@ -1,4 +1,4 @@
-// deploy-marker: rebuild-trigger-6
+// deploy-marker: rebuild-trigger-7
 import './loadEnv';
 import { Worker } from 'bullmq';
 import IORedis from 'ioredis';
@@ -9,6 +9,21 @@ import { execSync } from 'child_process';
 // Lighthouse will use Playwright's Chromium automatically
 // No need for complex Chrome detection - removed for simplicity
 logger.info('Lighthouse configured to use Playwright\'s bundled Chromium');
+
+// Lighthouse internally registers async CDP event handlers (TargetManager,
+// session.js) that can throw AFTER the main lighthouse() promise has already
+// settled. Node 20 treats those as unhandled rejections and exits the process,
+// which kills the worker mid-audit, leaves the AuditRun stuck in `running`,
+// and only resolves when BullMQ stalls the job ~30s later. Catch them and
+// keep the process alive — the orchestrator's Promise.allSettled already
+// records the Lighthouse failure correctly.
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('Unhandled promise rejection (kept process alive)', err);
+});
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught exception (kept process alive)', err);
+});
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 logger.info(`Connecting to Redis: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`); // Log URL with masked password
