@@ -58,7 +58,11 @@ export async function runAxe(
       (window as any).chrome = { runtime: {} };
     });
     
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    // 'networkidle' never settles on Shopify/heavy-tracker sites (continuous
+    // analytics + 3p pings keep the network active indefinitely). Use
+    // domcontentloaded with a hydration grace period instead.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(2000);
 
     // Get violations using AxeBuilder (legacy mode prevents context warnings)
     const axeBuilder = new AxeBuilder({ page: page as any }).setLegacyMode();

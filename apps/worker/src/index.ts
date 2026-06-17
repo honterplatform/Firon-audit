@@ -1,4 +1,4 @@
-// deploy-marker: rebuild-trigger-7
+// deploy-marker: rebuild-trigger-8
 import './loadEnv';
 import { Worker } from 'bullmq';
 import IORedis from 'ioredis';

@@ -38,8 +38,10 @@ export async function runHeuristics(
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     });
 
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-    await page.waitForTimeout(1000);
+    // 'networkidle' never settles on Shopify/heavy-tracker sites. Use
+    // domcontentloaded + a hydration grace period instead.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(2000);
 
     // ═══════════════════════════════════════════════════════
     // TECHNICAL SEO

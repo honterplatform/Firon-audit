@@ -409,7 +409,7 @@ CRITICAL ACCURACY REQUIREMENTS:
       let completion;
       try {
         completion = await client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 4096,
           system: systemMsg + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code fences, no prose.',
           messages: claudeMessages,
