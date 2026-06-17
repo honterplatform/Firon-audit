@@ -253,8 +253,15 @@ export async function runCrawl(
       results.blocked.desktop = true;
       console.log('Blocked status set:', results.blocked);
     }
-    
-    await desktopPage.waitForTimeout(2000);
+
+    // Wait for the page to actually paint: 'load' fires after stylesheets +
+    // images, document.fonts.ready resolves once webfonts are applied. Without
+    // these, screenshots can capture the raw HTML before CSS lands (default
+    // serif font, blue underlined links). Both are bounded so a never-firing
+    // load event on tracker-heavy sites can't hang the audit.
+    await desktopPage.waitForLoadState('load', { timeout: 12000 }).catch(() => {});
+    await desktopPage.evaluate(() => (document as any).fonts?.ready).catch(() => {});
+    await desktopPage.waitForTimeout(1500);
 
     // Scroll to top to ensure we capture from the beginning
     await desktopPage.evaluate(() => window.scrollTo(0, 0));
@@ -785,8 +792,12 @@ export async function runCrawl(
       }
       results.blocked.mobile = true;
     }
-    
-    await mobilePage.waitForTimeout(2000);
+
+    // Same paint-readiness gate as desktop: wait for `load` event +
+    // webfont readiness so CSS is applied before screenshot.
+    await mobilePage.waitForLoadState('load', { timeout: 12000 }).catch(() => {});
+    await mobilePage.evaluate(() => (document as any).fonts?.ready).catch(() => {});
+    await mobilePage.waitForTimeout(1500);
 
     // Scroll to top to ensure we capture from the beginning
     await mobilePage.evaluate(() => window.scrollTo(0, 0));
