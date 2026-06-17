@@ -254,14 +254,21 @@ export async function runCrawl(
       console.log('Blocked status set:', results.blocked);
     }
 
-    // Wait for the page to actually paint: 'load' fires after stylesheets +
-    // images, document.fonts.ready resolves once webfonts are applied. Without
-    // these, screenshots can capture the raw HTML before CSS lands (default
-    // serif font, blue underlined links). Both are bounded so a never-firing
-    // load event on tracker-heavy sites can't hang the audit.
+    // Wait for the page to actually paint and hydrate. Each step is bounded
+    // so a never-settling site (heavy trackers, infinite analytics pings)
+    // can't hang the audit:
+    //   1. 'load' event — stylesheets and images
+    //   2. document.fonts.ready — webfonts applied
+    //   3. networkidle (capped at 5s) — gives JS frameworks time to hydrate
+    //      so cart drawers, modals, etc. position themselves correctly
+    //   4. Escape key — dismiss any cookie banner, region selector, or
+    //      cart drawer that some sites pop on first visit
+    //   5. small buffer so the dismiss animations complete
     await desktopPage.waitForLoadState('load', { timeout: 12000 }).catch(() => {});
     await desktopPage.evaluate(() => (document as any).fonts?.ready).catch(() => {});
-    await desktopPage.waitForTimeout(1500);
+    await desktopPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await desktopPage.keyboard.press('Escape').catch(() => {});
+    await desktopPage.waitForTimeout(800);
 
     // Scroll to top to ensure we capture from the beginning
     await desktopPage.evaluate(() => window.scrollTo(0, 0));
@@ -793,11 +800,12 @@ export async function runCrawl(
       results.blocked.mobile = true;
     }
 
-    // Same paint-readiness gate as desktop: wait for `load` event +
-    // webfont readiness so CSS is applied before screenshot.
+    // Same paint + hydration gate as desktop.
     await mobilePage.waitForLoadState('load', { timeout: 12000 }).catch(() => {});
     await mobilePage.evaluate(() => (document as any).fonts?.ready).catch(() => {});
-    await mobilePage.waitForTimeout(1500);
+    await mobilePage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await mobilePage.keyboard.press('Escape').catch(() => {});
+    await mobilePage.waitForTimeout(800);
 
     // Scroll to top to ensure we capture from the beginning
     await mobilePage.evaluate(() => window.scrollTo(0, 0));
