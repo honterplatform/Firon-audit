@@ -124,10 +124,12 @@ export function FironTopBar() {
       <style dangerouslySetInnerHTML={{ __html: TOP_BAR_CSS }} />
       <header className="firon-doc-top">
         <div className="left">
-          <img className="brand-logo" src="https://labs.fironmarketing.com/fironlabs.svg" alt="Firon Labs" />
-          <a href="https://fironmarketing.com" className="back-btn" aria-label="Back to fironmarketing.com" title="Back to fironmarketing.com">
+          <a href="https://fironmarketing.com" aria-label="fironmarketing.com" title="fironmarketing.com" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <img className="brand-logo" src="https://labs.fironmarketing.com/fironlabs.svg" alt="Firon Labs" />
+          </a>
+          <a href="https://labs.fironmarketing.com" className="back-btn" aria-label="Back to Firon Labs" title="Back to Firon Labs">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-            <span className="back-btn-text">Back to website</span>
+            <span className="back-btn-text">Back to Labs</span>
           </a>
           <span className="sep">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
