@@ -287,11 +287,11 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
   // Don't render until mounted to avoid hydration issues
   if (!isMounted) {
     return (
-      <div className="flex flex-col h-full relative" style={{ backgroundColor: '#0F0F0F' }}>
+      <div className="flex flex-col h-full relative" style={{ backgroundColor: 'var(--bg-1)' }}>
         <div className="px-6 py-4 border-b border-[#212121] flex-shrink-0">
           <div className="flex items-center gap-2">
             <img src="/ai-magic.svg" alt="AI magic" className="h-5 w-5" />
-            <h3 className="text-lg font-normal" style={{ color: '#E0E0E0' }}>AI Audit Assistant</h3>
+            <h3 className="text-lg font-normal" style={{ color: 'var(--text)' }}>AI Audit Assistant</h3>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
@@ -302,12 +302,12 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
   }
 
   return (
-    <div className="flex flex-col h-full relative" style={{ backgroundColor: '#0F0F0F' }}>
+    <div className="flex flex-col h-full relative" style={{ backgroundColor: 'var(--bg-1)' }}>
       {/* Title */}
       <div className="px-6 py-4 border-b border-[#212121] flex-shrink-0">
         <div className="flex items-center gap-2">
           <img src="/ai-magic.svg" alt="AI magic" className="h-5 w-5" />
-          <h3 className="text-lg font-normal" style={{ color: '#E0E0E0' }}>AI Audit Assistant</h3>
+          <h3 className="text-lg font-normal" style={{ color: 'var(--text)' }}>AI Audit Assistant</h3>
         </div>
       </div>
       {/* Messages */}
@@ -329,7 +329,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium mb-2" style={{ color: '#E0E0E0' }}>Start a conversation</p>
+            <p className="text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>Start a conversation</p>
             <p className="text-xs text-gray-500 mb-4">
               Ask questions about your findings, get implementation guidance, or prioritize your fixes.
             </p>
@@ -343,7 +343,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                 >
                   <div
                     className="max-w-[85%] rounded-xl px-4 py-2"
-                    style={{ color: '#E0E0E0' }}
+                    style={{ color: 'var(--text)' }}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
@@ -365,11 +365,11 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
             {/* Lead Capture Form - Show at bottom after all messages */}
             {showLeadForm && !leadSubmitted && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
+                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: 'var(--bg-1)', border: '1px solid #212121' }}>
                   <div className="mb-3">
                     <img src="/Logo2_Vector.svg" alt="Logo" className="mb-3 h-6" />
-                    <h4 className="text-lg font-normal mb-1" style={{ color: '#E0E0E0', lineHeight: '23px' }}>Download your audit report</h4>
-                    <p className="mb-2" style={{ color: '#E0E0E0', fontSize: '14px' }}>
+                    <h4 className="text-lg font-normal mb-1" style={{ color: 'var(--text)', lineHeight: '23px' }}>Download your audit report</h4>
+                    <p className="mb-2" style={{ color: 'var(--text)', fontSize: '14px' }}>
                       Share your email and we'll send you the full audit report.
                     </p>
                   </div>
@@ -379,9 +379,9 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                       value={leadFormData.name}
                       onChange={(e) => setLeadFormData(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
-                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
+                      style={{ color: 'var(--text)', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: 'var(--bg-3)' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
+                      onBlur={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
                       placeholder="Name (optional)"
                       disabled={isSubmittingLead}
                     />
@@ -391,9 +391,9 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                       value={leadFormData.email}
                       onChange={(e) => setLeadFormData(prev => ({ ...prev, email: e.target.value }))}
                       className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
-                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
+                      style={{ color: 'var(--text)', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: 'var(--bg-3)' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
+                      onBlur={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
                       placeholder="your@email.com"
                       disabled={isSubmittingLead}
                     />
@@ -402,7 +402,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                         type="submit"
                         disabled={!leadFormData.email.trim() || isSubmittingLead}
                         className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                        style={{ backgroundColor: (!leadFormData.email.trim() || isSubmittingLead) ? '#2A2A2A' : '#FB3B24', color: (!leadFormData.email.trim() || isSubmittingLead) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
+                        style={{ backgroundColor: (!leadFormData.email.trim() || isSubmittingLead) ? 'var(--bg-3)' : '#FB3B24', color: (!leadFormData.email.trim() || isSubmittingLead) ? 'var(--text-3)' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
                       >
                         {isSubmittingLead ? 'Submitting...' : 'Get report'}
                       </button>
@@ -412,7 +412,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                           setShowLeadForm(false);
                         }}
                         className="text-sm hover:text-white transition-colors"
-                        style={{ color: '#888888' }}
+                        style={{ color: 'var(--text-3)' }}
                         disabled={isSubmittingLead}
                       >
                         Cancel
@@ -433,11 +433,11 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
             {/* Sales Contact Form - Show at bottom after all messages */}
             {showSalesForm && !salesFormSubmitted && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: '#0F0F0F', border: '1px solid #212121' }}>
+                <div className="max-w-[85%] rounded-xl p-4" style={{ backgroundColor: 'var(--bg-1)', border: '1px solid #212121' }}>
                   <div className="mb-3">
                     <img src="/Logo2_Vector.svg" alt="Logo" className="mb-3 h-6" />
-                    <h4 className="text-lg font-normal mb-1" style={{ color: '#E0E0E0', lineHeight: '23px' }}>Connect with our sales team</h4>
-                    <p className="mb-2" style={{ color: '#E0E0E0', fontSize: '14px' }}>
+                    <h4 className="text-lg font-normal mb-1" style={{ color: 'var(--text)', lineHeight: '23px' }}>Connect with our sales team</h4>
+                    <p className="mb-2" style={{ color: 'var(--text)', fontSize: '14px' }}>
                       Share your details and we'll reach out to discuss how we can help.
                     </p>
                   </div>
@@ -448,9 +448,9 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                       value={salesFormData.name}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
-                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
+                      style={{ color: 'var(--text)', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: 'var(--bg-3)' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
+                      onBlur={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
                       placeholder="Name"
                       disabled={isSubmittingSales}
                     />
@@ -460,9 +460,9 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                       value={salesFormData.email}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, email: e.target.value }))}
                       className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
-                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
+                      style={{ color: 'var(--text)', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: 'var(--bg-3)' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
+                      onBlur={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
                       placeholder="Email"
                       disabled={isSubmittingSales}
                     />
@@ -471,9 +471,9 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                       value={salesFormData.phone}
                       onChange={(e) => setSalesFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className="w-full px-3 text-sm bg-transparent border-0 border-b rounded-none focus:outline-none placeholder:text-[#666666]"
-                      style={{ color: '#E0E0E0', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: '#212121' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#212121'}
-                      onBlur={(e) => e.target.style.borderBottomColor = '#212121'}
+                      style={{ color: 'var(--text)', paddingTop: '0.75rem', paddingBottom: '0.75rem', height: '42px', boxSizing: 'border-box', lineHeight: '1.5', borderBottomColor: 'var(--bg-3)' }}
+                      onFocus={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
+                      onBlur={(e) => e.target.style.borderBottomColor = 'var(--bg-3)'}
                       placeholder="Phone (optional)"
                       disabled={isSubmittingSales}
                     />
@@ -482,7 +482,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                         type="submit"
                         disabled={!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales}
                         className="px-4 py-3 text-sm font-normal rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90"
-                        style={{ backgroundColor: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#2A2A2A' : '#FB3B24', color: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? '#666666' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
+                        style={{ backgroundColor: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? 'var(--bg-3)' : '#FB3B24', color: (!salesFormData.name.trim() || !salesFormData.email.trim() || isSubmittingSales) ? 'var(--text-3)' : '#ffffff', height: '42px', boxSizing: 'border-box' }}
                       >
                         {isSubmittingSales ? 'Submitting...' : 'Get in touch'}
                       </button>
@@ -492,7 +492,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
                           setShowSalesForm(false);
                         }}
                         className="text-sm hover:text-white transition-colors"
-                        style={{ color: '#888888' }}
+                        style={{ color: 'var(--text-3)' }}
                         disabled={isSubmittingSales}
                       >
                         Cancel
@@ -521,7 +521,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
       </div>
 
       {/* Input */}
-      <div className="p-4 flex-shrink-0" style={{ backgroundColor: '#0F0F0F' }}>
+      <div className="p-4 flex-shrink-0" style={{ backgroundColor: 'var(--bg-1)' }}>
         {/* CTA Button */}
         <div className="mb-4 flex flex-col items-end">
           <button
@@ -539,7 +539,7 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
           >
             Talk to an SEO Strategist 🚀
           </button>
-          <p className="text-xs mt-2" style={{ color: '#666666' }}>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-3)' }}>
             Get a custom fix plan from our senior team
           </p>
         </div>
@@ -555,17 +555,17 @@ Want me to walk you through the key liabilities, or would you prefer to get stra
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about your audit..."
             className="w-full px-3 py-2 text-sm border border-[#212121] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FB3B24] focus:border-transparent resize-none bg-transparent placeholder:text-[#666666]"
-            style={{ color: '#E0E0E0' }}
+            style={{ color: 'var(--text)' }}
             rows={3}
             disabled={isLoading}
           />
           <div className="flex justify-between items-center gap-2">
-            <p className="text-xs hidden xl:block" style={{ color: '#666666' }}>Press Enter to send</p>
+            <p className="text-xs hidden xl:block" style={{ color: 'var(--text-3)' }}>Press Enter to send</p>
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
               className="px-4 py-2 text-sm font-medium rounded-full disabled:cursor-not-allowed transition-all hover:opacity-90 flex-shrink-0"
-              style={{ backgroundColor: (!input.trim() || isLoading) ? '#2A2A2A' : '#FB3B24', color: (!input.trim() || isLoading) ? '#666666' : '#ffffff' }}
+              style={{ backgroundColor: (!input.trim() || isLoading) ? 'var(--bg-3)' : '#FB3B24', color: (!input.trim() || isLoading) ? 'var(--text-3)' : '#ffffff' }}
             >
               {isLoading ? 'Sending...' : 'Send'}
             </button>

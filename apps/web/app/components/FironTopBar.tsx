@@ -1,29 +1,21 @@
+'use client';
+
+import { useTheme } from './ThemeProvider';
+
 const TOP_BAR_CSS = `
-  :root {
-    --firon-bg:        #0a0a0b;
-    --firon-bg-1:      #0f0f10;
-    --firon-bg-2:      #141416;
-    --firon-bg-3:      #1a1a1d;
-    --firon-line:      #232327;
-    --firon-line-2:    #2c2c31;
-    --firon-text:      #ededee;
-    --firon-text-2:    #a8a8ad;
-    --firon-text-3:    #6c6c73;
-    --firon-text-4:    #4a4a50;
-    --firon-accent:    #FB3B24;
-  }
   .firon-doc-top {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 16px;
     padding: 9px 18px;
-    background: var(--firon-bg);
+    background: var(--bg);
     position: sticky; top: 0; z-index: 8;
-    font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
     font-size: 13px;
     min-height: 48px;
-    color: var(--firon-text);
+    color: var(--text);
+    transition: background-color .15s, color .15s;
   }
   .firon-doc-top *, .firon-doc-top *::before, .firon-doc-top *::after { box-sizing: border-box; }
   .firon-doc-top .left { justify-self: start; min-width: 0; overflow: hidden; display: flex; align-items: center; }
@@ -36,69 +28,80 @@ const TOP_BAR_CSS = `
 
   .firon-doc-top .back-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 10px; border-radius: 7px;
-    border: 1px solid var(--firon-line);
-    background: var(--firon-bg-1);
-    color: var(--firon-text-3);
+    padding: 6px 10px; border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: var(--bg-1);
+    color: var(--text-3);
     font-size: 13px; font-weight: 500;
     text-decoration: none; flex-shrink: 0;
     transition: color .15s, background .15s, border-color .15s;
   }
   .firon-doc-top .back-btn:hover {
-    color: var(--firon-text);
-    background: var(--firon-bg-2);
-    border-color: var(--firon-line-2);
+    color: var(--text);
+    background: var(--bg-2);
+    border-color: var(--line-2);
   }
 
-  .firon-doc-top .sep { color: var(--firon-text-4); display: inline-flex; align-items: center; margin: 0 4px; }
+  .firon-doc-top .sep { color: var(--text-4); display: inline-flex; align-items: center; margin: 0 4px; }
   .firon-doc-top .crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: nowrap; }
   .firon-doc-top .crumb {
-    color: var(--firon-text-3); font-size: 13px; text-decoration: none;
+    color: var(--text-3); font-size: 13px; text-decoration: none;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;
   }
-  .firon-doc-top a.crumb:hover { color: var(--firon-text-2); }
-  .firon-doc-top .crumb.here { color: var(--firon-text); font-weight: 500; }
+  .firon-doc-top a.crumb:hover { color: var(--text-2); }
+  .firon-doc-top .crumb.here { color: var(--text); font-weight: 500; }
 
   .firon-doc-top .toolbar {
     justify-self: center; display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   }
   .firon-doc-top .toolbar-item {
     position: relative; display: grid; place-items: center;
-    width: 32px; height: 32px; border-radius: 8px;
-    background: var(--firon-bg-1); border: 1px solid var(--firon-line);
-    color: var(--firon-text-3); text-decoration: none;
+    width: 32px; height: 32px; border-radius: var(--r-md);
+    background: var(--bg-1); border: 1px solid var(--line);
+    color: var(--text-3); text-decoration: none;
     transition: color .15s, background .15s, border-color .15s;
   }
   .firon-doc-top .toolbar-item:hover {
-    color: var(--firon-text); background: var(--firon-bg-2); border-color: var(--firon-line-2);
+    color: var(--text); background: var(--bg-2); border-color: var(--line-2);
   }
   .firon-doc-top .toolbar-item[data-active="true"] {
-    color: var(--firon-accent); background: var(--firon-bg-3);
+    color: var(--accent); background: var(--bg-3);
     border-color: rgba(251,59,36,0.35);
   }
   .firon-doc-top .toolbar-item .tooltip {
     position: absolute; top: calc(100% + 10px); left: 50%;
     transform: translateX(-50%) translateY(-4px); white-space: nowrap;
-    padding: 5px 9px; background: var(--firon-bg-3); color: var(--firon-text);
-    border: 1px solid var(--firon-line-2); border-radius: 6px;
+    padding: 5px 9px; background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--line-2); border-radius: var(--r-sm);
     font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none;
     transition: opacity .12s, transform .12s;
     box-shadow: 0 4px 14px rgba(0,0,0,0.4); z-index: 20;
   }
   .firon-doc-top .toolbar-item:hover .tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  .firon-doc-top .theme-toggle {
+    display: grid; place-items: center;
+    width: 32px; height: 32px; border-radius: var(--r-md);
+    background: var(--bg-1); border: 1px solid var(--line);
+    color: var(--text-3); cursor: pointer; font-family: inherit;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .firon-doc-top .theme-toggle:hover {
+    color: var(--text); background: var(--bg-2); border-color: var(--line-2);
+  }
+
   .firon-doc-top .auth-btn {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 5px 11px; font-size: 12.5px; font-weight: 500;
-    border-radius: 8px; border: 1px solid var(--firon-line);
-    background: var(--firon-bg-1); color: var(--firon-text);
+    border-radius: var(--r-md); border: 1px solid var(--line);
+    background: var(--bg-1); color: var(--text);
     text-decoration: none; cursor: pointer; font-family: inherit;
   }
-  .firon-doc-top .auth-btn:hover { background: var(--firon-bg-2); }
+  .firon-doc-top .auth-btn:hover { background: var(--bg-2); }
   .firon-doc-top .auth-btn.primary {
-    background: var(--firon-accent); border-color: var(--firon-accent); color: #fff;
+    background: var(--accent); border-color: var(--accent); color: #fff;
   }
-  .firon-doc-top .auth-btn.primary:hover { background: #d8311c; border-color: #d8311c; }
+  .firon-doc-top .auth-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
   @media (max-width: 768px) {
     .firon-doc-top {
@@ -119,13 +122,15 @@ const TOP_BAR_CSS = `
 `;
 
 export function FironTopBar() {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === 'dark';
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: TOP_BAR_CSS }} />
       <header className="firon-doc-top">
         <div className="left">
           <a href="https://fironmarketing.com" aria-label="fironmarketing.com" title="fironmarketing.com" style={{ display: 'inline-flex', alignItems: 'center' }}>
-            <img className="brand-logo" src="https://labs.fironmarketing.com/fironlabs.svg" alt="Firon Labs" />
+            <img className="brand-logo" data-invert-on-light src="https://labs.fironmarketing.com/fironlabs.svg" alt="Firon Labs" />
           </a>
           <a href="https://labs.fironmarketing.com" className="back-btn" aria-label="Back to Firon Labs" title="Back to Firon Labs">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -171,6 +176,13 @@ export function FironTopBar() {
         </nav>
 
         <div className="right">
+          <button type="button" onClick={toggle} className="theme-toggle" aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'} title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}>
+            {isDark ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+            )}
+          </button>
           <a href="https://labs.fironmarketing.com" className="auth-btn">Open Labs</a>
         </div>
       </header>

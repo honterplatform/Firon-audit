@@ -93,9 +93,9 @@ function ContactModal({ onClose }: { onClose: () => void }) {
         </div>
         {done ? (
           <div className="contact-modal-body">
-            <p style={{ fontSize: 14, color: "#a8a8ad", lineHeight: 1.55, margin: 0 }}>
+            <p style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.55, margin: 0 }}>
               Thanks {name.split(" ")[0]} — your message landed in our inbox. Someone from the
-              Firon team will email <strong style={{ color: "#ededee" }}>{email}</strong> shortly.
+              Firon team will email <strong style={{ color: "var(--text)" }}>{email}</strong> shortly.
             </p>
           </div>
         ) : (

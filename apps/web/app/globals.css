@@ -2,37 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Firon design system tokens. Dark is default, light flips via
+   :root[data-theme="light"]. All components read from these vars.
+   ============================================================ */
 :root {
-  --radius: 0.5rem;
+  /* Shared radius scale (never tinted, never themed) */
+  --r-sm: 3px;
+  --r-md: 5px;
+  --r-lg: 7px;
+  --r-xl: 9px;
+  --radius: var(--r-md);
 
-  /* Labs design tokens */
-  --bg:           #0a0a0b;
-  --bg-1:         #0f0f10;
-  --bg-2:         #141416;
-  --bg-3:         #1a1a1d;
-  --line:         #232327;
-  --line-2:       #2c2c31;
-  --text:         #ededee;
-  --text-2:       #a8a8ad;
-  --text-3:       #6c6c73;
-  --text-4:       #4a4a50;
+  /* Shared accent (does not change between themes) */
   --accent:       #FB3B24;
+  --accent-2:     #FB3B24;
   --accent-hover: #d8311c;
-  --pos:          #34d399;
-  --warn:         #fbbf24;
-  --neg:          #f87171;
 
-  --col-w-form:   620px;
-  --gutter:       32px;
+  /* Dark theme (default) */
+  --bg:        #0a0a0b;
+  --bg-1:      #0f0f10;
+  --bg-2:      #141416;
+  --bg-3:      #1a1a1d;
+  --bg-hover:  #1e1e21;
+  --line:      #232327;
+  --line-2:    #2c2c31;
+  --text:      #ededee;
+  --text-2:    #a8a8ad;
+  --text-3:    #6c6c73;
+  --text-4:    #4a4a50;
+  --accent-bg: rgba(251,59,36,0.12);
+  --overlay:   rgba(10,10,11,0.72);
+  --pos:       #34d399;
+  --neg:       #f87171;
+  --neu:       #94a3b8;
+  --warn:      #fbbf24;
 
-  /* legacy */
-  --bg-primary:   var(--bg);
+  --col-w-form: 620px;
+  --gutter:     32px;
+
+  /* Legacy alias so any lingering usage keeps flipping with theme */
+  --bg-primary: var(--bg);
 }
+
+:root[data-theme="light"] {
+  --bg:        #FDFDFD;
+  --bg-1:      #F2F2F2;
+  --bg-2:      #E9E9EB;
+  --bg-3:      #DFDFE2;
+  --bg-hover:  #D3D3D6;
+  --line:      rgba(10,10,10,0.10);
+  --line-2:    rgba(10,10,10,0.18);
+  --text:      #0A0A0A;
+  --text-2:    #3A3A3E;
+  --text-3:    #6C6C73;
+  --text-4:    #A0A0A5;
+  --accent-bg: rgba(251,59,36,0.08);
+  --overlay:   rgba(253,253,253,0.72);
+  --pos:       #10b981;
+  --neg:       #dc2626;
+  --neu:       #64748b;
+  --warn:      #d97706;
+}
+
+/* White-on-transparent logos need inverting for the light theme so they
+   stay visible on the pale background. Scoped via [data-invert-on-light]
+   attribute so we only touch marks that need it. */
+:root[data-theme="light"] [data-invert-on-light] { filter: invert(1); }
 
 body {
   background-color: var(--bg);
   color: var(--text);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color .15s, color .15s;
 }
 
 /* Hide scrollbars while keeping scroll (matches Labs) */
@@ -107,7 +150,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   padding: 11px 14px;
   background: var(--bg-1);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   color: var(--text);
   font: inherit;
   font-size: 14.5px;
@@ -139,7 +182,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.005em;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
@@ -159,10 +202,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 /* Inline error block */
 .ed-error {
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: rgba(248,113,113,0.06);
   border: 1px solid rgba(248,113,113,0.25);
-  color: #fca5a5;
+  color: var(--neg);
   font-size: 13px;
   margin-bottom: 14px;
 }
@@ -175,13 +218,15 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 .highlight-finding {
   animation: highlight 1s ease-in-out;
   border: 2px solid var(--accent);
-  border-radius: 1rem;
+  border-radius: var(--r-xl);
 }
 
+/* Solid-color skeleton pulse (no gradient). Used by any .shimmer/.skeleton */
 @keyframes shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
 }
+.skeleton { background: var(--bg-3); animation: shimmer 1.4s ease-in-out infinite; }
 
 /* ============================================================
    Editorial primitives — results page (chapters, stats, findings)
@@ -200,7 +245,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 .ed-section:last-child { border-bottom: 0; padding-bottom: 64px; }
 .ed-chapter { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; }
 .ed-chapter-num {
-  font-family: var(--font-inter-tight), monospace;
+  font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--accent);
@@ -234,7 +279,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   border-bottom: 1px solid var(--line);
 }
 .ed-stat .num {
-  font-family: var(--font-inter-tight);
+  font-family: var(--font-geist-mono);
   font-size: 36px;
   font-weight: 500;
   letter-spacing: -0.03em;
@@ -258,7 +303,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 
 /* Screenshot frame */
 .ed-screenshot {
-  border-radius: 12px;
+  border-radius: var(--r-md);
   border: 1px solid var(--line);
   background: var(--bg-1);
   overflow: hidden;
@@ -329,7 +374,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 .ed-finding {
   background: var(--bg-1);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -391,7 +436,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   font-size: 11.5px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   transition: color .15s, background .15s;
 }
 .ed-finding-explain:hover { color: var(--accent); background: var(--bg-3); }
@@ -404,7 +449,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 }
 .ed-phase {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   padding: 22px 20px;
   background: var(--bg-1);
 }
@@ -444,7 +489,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   content: "→";
   color: var(--accent);
   flex-shrink: 0;
-  font-family: var(--font-inter-tight);
+  font-family: var(--font-geist-sans);
 }
 .ed-phase[data-phase="2"] .ed-phase-list li::before { color: var(--warn); }
 .ed-phase[data-phase="3"] .ed-phase-list li::before { color: var(--pos); }
@@ -466,7 +511,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 .ed-locked {
   position: relative;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: var(--bg-1);
   padding: 40px 32px;
   text-align: center;
@@ -474,9 +519,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 }
 .ed-locked-blur {
   position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(251,59,36,0.06), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(251,59,36,0.04), transparent 40%);
+  background: var(--accent-bg);
   pointer-events: none;
 }
 
@@ -494,13 +537,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   overflow: hidden;
 }
 .ed-progress-bar.done { background: var(--accent); }
-.ed-progress-bar.active::after {
-  content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(251,59,36,0.5), transparent);
-  animation: shimmer 1.8s linear infinite;
-  transform: translateX(-100%);
-}
+.ed-progress-bar.active { background: var(--accent); animation: shimmer 1.8s ease-in-out infinite; }
 .ed-progress-label {
   font-size: 11px;
   text-transform: uppercase;
@@ -517,7 +554,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   width: 400px;
   background: var(--bg-1);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-xl);
   overflow: hidden;
   z-index: 40;
   box-shadow: 0 12px 40px rgba(0,0,0,0.4);
@@ -535,8 +572,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   position: fixed;
   bottom: 20px; left: 50%; transform: translateX(-50%);
   z-index: 30;
-  background: #FB3B24;
-  border-radius: 14px;
+  background: var(--accent);
+  border-radius: var(--r-lg);
   box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.12);
   padding: 16px;
   max-width: calc(100% - 32px);
@@ -546,11 +583,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 .contact-bar-sub { color: rgba(255,255,255,0.78); font-weight: 400; letter-spacing: 0; margin-left: 6px; }
 .contact-bar-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 14px; background: #fff; border: 1px solid #fff; border-radius: 8px;
-  color: #FB3B24; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  padding: 8px 14px; background: #fff; border: 1px solid #fff; border-radius: var(--r-md);
+  color: var(--accent); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
-.contact-bar-btn:hover { background: #f3f3f3; border-color: #f3f3f3; color: #d8311c; }
+.contact-bar-btn:hover { background: color-mix(in srgb, #fff 92%, #000 8%); border-color: color-mix(in srgb, #fff 92%, #000 8%); color: var(--accent-hover); }
 @media (max-width: 640px) { .contact-bar-sub { display: none; } }
 
 /* Modal */
@@ -561,51 +598,51 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 }
 .contact-modal {
   width: 520px; max-width: 100%;
-  background: #0f0f10; border: 1px solid #232327; border-radius: 14px;
-  display: flex; flex-direction: column; color: #ededee; overflow: hidden;
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-lg);
+  display: flex; flex-direction: column; color: var(--text); overflow: hidden;
 }
-.contact-modal-hd { padding: 18px 22px; border-bottom: 1px solid #232327; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.contact-modal-hd { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .contact-modal-hd h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
-.contact-modal-hd .sub { margin: 4px 0 0; font-size: 12.5px; color: #6c6c73; }
+.contact-modal-hd .sub { margin: 4px 0 0; font-size: 12.5px; color: var(--text-3); }
 .contact-modal-close {
-  background: transparent; border: 1px solid #232327;
-  width: 32px; height: 32px; border-radius: 8px;
-  color: #a8a8ad; font-size: 18px; cursor: pointer;
+  background: transparent; border: 1px solid var(--line);
+  width: 32px; height: 32px; border-radius: var(--r-md);
+  color: var(--text-2); font-size: 18px; cursor: pointer;
   display: grid; place-items: center; font-family: inherit;
 }
-.contact-modal-close:hover { background: #141416; color: #ededee; }
+.contact-modal-close:hover { background: var(--bg-2); color: var(--text); }
 .contact-modal-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
 .contact-field { display: flex; flex-direction: column; gap: 6px; }
-.contact-field label { font-size: 12px; font-weight: 500; color: #a8a8ad; }
+.contact-field label { font-size: 12px; font-weight: 500; color: var(--text-2); }
 .contact-field input {
-  background: #141416; border: 1px solid #232327; border-radius: 8px;
-  padding: 10px 12px; color: #ededee; font-size: 13.5px; font-family: inherit;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 10px 12px; color: var(--text); font-size: 13.5px; font-family: inherit;
   outline: none; transition: border-color .15s, background .15s;
 }
-.contact-field input:focus { border-color: #FB3B24; background: #1a1a1d; }
+.contact-field input:focus { border-color: var(--accent); background: var(--bg-3); }
 .contact-field input:disabled { opacity: 0.5; }
 .contact-revenue { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .contact-revenue-opt {
-  padding: 10px 12px; border-radius: 8px; border: 1px solid #232327;
-  background: #141416; color: #a8a8ad; font-size: 13px; font-weight: 500;
+  padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line);
+  background: var(--bg-2); color: var(--text-2); font-size: 13px; font-weight: 500;
   font-family: inherit; cursor: pointer;
   transition: border-color .15s, color .15s, background .15s;
 }
-.contact-revenue-opt:hover:not(:disabled) { border-color: #2c2c31; color: #ededee; }
-.contact-revenue-opt.on { border-color: #FB3B24; background: rgba(251,59,36,0.06); color: #ededee; }
+.contact-revenue-opt:hover:not(:disabled) { border-color: var(--line-2); color: var(--text); }
+.contact-revenue-opt.on { border-color: var(--accent); background: var(--accent-bg); color: var(--text); }
 .contact-revenue-opt:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (max-width: 480px) { .contact-revenue { grid-template-columns: 1fr; } }
-.contact-error { padding: 10px 12px; border-radius: 8px; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; font-size: 12.5px; }
+.contact-error { padding: 10px 12px; border-radius: var(--r-md); background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: var(--neg); font-size: 12.5px; }
 .contact-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
 .contact-modal-cancel, .contact-modal-submit {
-  padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  padding: 9px 14px; border-radius: var(--r-md); font-size: 13px; font-weight: 500;
   font-family: inherit; cursor: pointer;
   transition: background .15s, color .15s, border-color .15s, opacity .15s;
 }
-.contact-modal-cancel { background: transparent; border: 1px solid #232327; color: #ededee; }
-.contact-modal-cancel:hover:not(:disabled) { background: #141416; }
-.contact-modal-submit { background: #FB3B24; border: 1px solid #FB3B24; color: #fff; }
-.contact-modal-submit:hover:not(:disabled) { background: #d8311c; border-color: #d8311c; }
+.contact-modal-cancel { background: transparent; border: 1px solid var(--line); color: var(--text); }
+.contact-modal-cancel:hover:not(:disabled) { background: var(--bg-2); }
+.contact-modal-submit { background: var(--accent); border: 1px solid #FB3B24; color: #fff; }
+.contact-modal-submit:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .contact-modal-submit:disabled, .contact-modal-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Bottom padding so content scrolls clear of the floating bar */
@@ -647,7 +684,7 @@ body { padding-bottom: 100px; }
 /* ─── Contact modal — mobile refinements ─── */
 @media (max-width: 640px) {
   .contact-modal-bd { padding: 12px; align-items: flex-end; }
-  .contact-modal { border-radius: 12px; }
+  .contact-modal { border-radius: var(--r-md); }
   .contact-modal-hd { padding: 14px 16px; }
   .contact-modal-hd h3 { font-size: 16px; }
   .contact-modal-hd .sub { font-size: 12px; }

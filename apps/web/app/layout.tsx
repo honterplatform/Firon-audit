@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Inter_Tight, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FironTopBar } from "./components/FironTopBar";
 import { ContactBar } from "./components/ContactBar";
+import { ThemeProvider } from "./components/ThemeProvider";
 
-const interTight = Inter_Tight({
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-geist-sans",
   display: "swap",
 });
 
-const instrumentSerif = Instrument_Serif({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-instrument-serif",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -41,21 +41,34 @@ export const metadata: Metadata = {
   },
 };
 
+// Runs BEFORE hydration so light-mode users never see a dark flash.
+// Reads localStorage.firon:theme, then prefers-color-scheme, then defaults to dark.
+const THEME_INIT_SCRIPT = `
+(function(){try{
+  var s = localStorage.getItem('firon:theme');
+  var t = (s === 'light' || s === 'dark') ? s :
+          (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', t);
+}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${interTight.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
-      <body className={interTight.className} suppressHydrationWarning>
-        <FironTopBar />
-        {children}
-        <ContactBar />
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body suppressHydrationWarning>
+        <ThemeProvider>
+          <FironTopBar />
+          {children}
+          <ContactBar />
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
-// deploy 1774622407
-// deploy 1776363036
