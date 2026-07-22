@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auditLeadAlert } from '@/app/lib/slack';
+import { appendToSheet } from '@/app/lib/sheets';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -288,6 +289,20 @@ export async function POST(request: NextRequest) {
         console.error('Failed to capture lead (non-fatal):', leadError);
       }
     }
+
+    // Mirror the submission into the shared Firon Labs lead-tracking Sheet.
+    // Fire-and-forget so the user-facing response is not delayed by the
+    // Sheets append (typically 1-3s). Never awaited, never throws.
+    // Column order matches row 1 of the "AI Readiness Audit" tab: Timestamp,
+    // Email, URL, Type, Referer, Run ID.
+    void appendToSheet('AI Readiness Audit', [
+      new Date().toISOString(),
+      parsed.email ?? '',
+      run.target,
+      parsed.email ? 'signed-in' : 'anon',
+      request.headers.get('referer') ?? '',
+      run.id,
+    ]);
 
     // Try to use Redis queue if available
     const queueClient = await getQueueClient();
