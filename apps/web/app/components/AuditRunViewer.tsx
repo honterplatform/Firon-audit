@@ -376,7 +376,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
               {run.summaryJson!.passes!.map((p, i) => (
-                <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-1)' }}>
+                <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', borderRadius: 'var(--r-md)', background: 'var(--bg-1)' }}>
                   <span aria-hidden style={{ flexShrink: 0, marginTop: 3, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(52,211,153,0.12)', color: 'var(--pos)', fontSize: 12, fontWeight: 700 }}>✓</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>

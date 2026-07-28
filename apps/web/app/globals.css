@@ -304,7 +304,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 /* Screenshot frame */
 .ed-screenshot {
   border-radius: var(--r-md);
-  border: 1px solid var(--line);
   background: var(--bg-1);
   overflow: hidden;
   position: relative;
@@ -373,15 +372,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 }
 .ed-finding {
   background: var(--bg-1);
-  border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: border-color .15s, background .15s;
 }
-.ed-finding:hover { border-color: var(--line-2); background: var(--bg-2); }
 .ed-finding-meta {
   display: flex; gap: 6px; flex-wrap: wrap;
 }
@@ -448,7 +444,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   gap: 16px;
 }
 .ed-phase {
-  border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 22px 20px;
   background: var(--bg-1);
@@ -510,7 +505,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 /* Locked / premium upsell block */
 .ed-locked {
   position: relative;
-  border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--bg-1);
   padding: 40px 32px;
@@ -553,7 +547,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
   right: 16px; top: 16px; bottom: 16px;
   width: 400px;
   background: var(--bg-1);
-  border: 1px solid var(--line);
   border-radius: var(--r-xl);
   overflow: hidden;
   z-index: 40;
@@ -598,7 +591,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display:
 }
 .contact-modal {
   width: 520px; max-width: 100%;
-  background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--bg-1); border-radius: var(--r-lg);
   display: flex; flex-direction: column; color: var(--text); overflow: hidden;
 }
 .contact-modal-hd { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
