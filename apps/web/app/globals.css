@@ -46,11 +46,11 @@
 }
 
 :root[data-theme="light"] {
-  --bg:        #FDFDFD;
-  --bg-1:      #F2F2F2;
-  --bg-2:      #E9E9EB;
-  --bg-3:      #DFDFE2;
-  --bg-hover:  #D3D3D6;
+  --bg:        #F7F6F3;
+  --bg-1:      #FFFFFF;
+  --bg-2:      #F7F6F3;
+  --bg-3:      #EEEDE9;
+  --bg-hover:  #F0EFEB;
   --line:      rgba(10,10,10,0.10);
   --line-2:    rgba(10,10,10,0.18);
   --text:      #0A0A0A;
