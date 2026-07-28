@@ -41,15 +41,16 @@ export const metadata: Metadata = {
   },
 };
 
-// Runs BEFORE hydration so light-mode users never see a dark flash.
-// Reads localStorage.firon:theme, then prefers-color-scheme, then defaults to dark.
+// Runs BEFORE hydration so dark-mode users never see a light flash.
+// Reads localStorage.firon:theme, then prefers-color-scheme (dark override
+// only, since light is the default), then falls back to light.
 const THEME_INIT_SCRIPT = `
 (function(){try{
   var s = localStorage.getItem('firon:theme');
   var t = (s === 'light' || s === 'dark') ? s :
-          (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', t);
-}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
+}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 `;
 
 export default function RootLayout({

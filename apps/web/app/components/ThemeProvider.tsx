@@ -15,8 +15,9 @@ const STORAGE_KEY = 'firon:theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // Start with whatever the pre-hydration script stamped on <html>.
-  // Fall back to 'dark' during SSR so the initial React tree matches the class.
-  const [theme, setTheme] = useState<Theme>('dark');
+  // Fall back to 'light' during SSR so the initial React tree matches the
+  // default theme.
+  const [theme, setTheme] = useState<Theme>('light');
 
   // Sync state with what the pre-hydration script actually stamped.
   useEffect(() => {
