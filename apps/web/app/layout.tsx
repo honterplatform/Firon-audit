@@ -41,6 +41,17 @@ export const metadata: Metadata = {
   },
 };
 
+// Google Tag Manager. Loads as high in <head> as possible per GTM install
+// guide; the injected tag itself is async so it does not block render.
+const GTM_ID = 'GTM-W47FHZN6';
+const GTM_HEAD_SCRIPT = `
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${GTM_ID}');
+`;
+
 // Runs BEFORE hydration so dark-mode users never see a light flash.
 // Reads localStorage.firon:theme, then prefers-color-scheme (dark override
 // only, since light is the default), then falls back to light.
@@ -61,9 +72,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: GTM_HEAD_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body suppressHydrationWarning>
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
         <ThemeProvider>
           <FironTopBar />
           {children}
