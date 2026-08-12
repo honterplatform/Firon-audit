@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
 // Google Tag Manager. Loads as high in <head> as possible per GTM install
 // guide; the injected tag itself is async so it does not block render.
-const GTM_ID = 'GTM-W47FHZN6';
+const GTM_ID = 'GTM-NPDH4BJM';
 const GTM_HEAD_SCRIPT = `
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
