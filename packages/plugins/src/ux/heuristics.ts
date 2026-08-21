@@ -774,7 +774,7 @@ export async function runHeuristics(
         const brandName = hostname.split('.')[0];
 
         const geoAnalysis = await ai.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-5',
           max_tokens: 800,
           temperature: 0,
           messages: [{

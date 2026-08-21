@@ -273,7 +273,7 @@ CRITICAL: Write like you're talking to a friend, not like you're reading from a 
     }));
 
     const completion = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5',
       max_tokens: 500,
       system: systemMsg,
       messages: claudeMessages,
