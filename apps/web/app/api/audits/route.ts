@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { lookup as dnsLookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import { auditLeadAlert } from '@/app/lib/slack';
 import { appendToSheet } from '@/app/lib/sheets';
 
@@ -95,10 +96,37 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Verify the submitted URL's hostname actually resolves in DNS. Blocks the
-// observed attack pattern (fabricated pronounceable-ish .com domains like
-// kmnrmwxvxw.com, xhqthf.com) BEFORE any DB row, Slack ping, Sheet append,
-// or worker job. 3s hard timeout so a hung resolver cannot hang the request.
+// Ranges we refuse to crawl even if they resolve. Covers loopback, unspecified,
+// RFC1918 private, link-local, CGNAT, and IPv6 equivalents. Guards against both
+// raw SSRF (http://127.0.0.1) and DNS rebinding (evil.example.com -> 127.0.0.1).
+function isPrivateAddress(ip: string): boolean {
+  if (!ip) return true;
+  // IPv4-mapped IPv6 (::ffff:1.2.3.4) — unwrap and check the v4 side
+  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (mapped) return isPrivateAddress(mapped[1]);
+  // IPv6 specials
+  if (ip === '::' || ip === '::1') return true;
+  if (/^fe80:/i.test(ip)) return true;                       // link-local
+  if (/^f[cd][0-9a-f]{2}:/i.test(ip)) return true;           // unique-local (fc00::/7)
+  // IPv4
+  const m = ip.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (!m) return false;
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  if (a === 10) return true;                                 // 10.0.0.0/8
+  if (a === 127) return true;                                // loopback
+  if (a === 0) return true;                                  // 0.0.0.0/8
+  if (a === 169 && b === 254) return true;                   // link-local
+  if (a === 172 && b >= 16 && b <= 31) return true;          // 172.16.0.0/12
+  if (a === 192 && b === 168) return true;                   // 192.168.0.0/16
+  if (a === 100 && b >= 64 && b <= 127) return true;         // CGNAT 100.64.0.0/10
+  return false;
+}
+
+// Verify the submitted URL's hostname resolves AND points at a public address.
+// Rejects IP literals (dns.lookup would treat them as pre-resolved), localhost,
+// internal TLDs (Railway private DNS, mDNS, corp zones), and DNS-rebinding
+// tricks. Runs before any DB write, Slack alert, Sheet append, or worker job.
+// 3s hard timeout so a hung resolver cannot hang the request.
 async function targetHostResolves(url: string): Promise<boolean> {
   let hostname: string;
   try {
@@ -106,13 +134,26 @@ async function targetHostResolves(url: string): Promise<boolean> {
   } catch {
     return false;
   }
+
+  // Strip IPv6 brackets from URL.hostname (e.g., "[::1]" -> "::1")
+  const bare = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+
+  // Reject IP literals up front — dns.lookup treats them as pre-resolved.
+  if (isIP(bare)) return !isPrivateAddress(bare);
+
+  // Reject localhost and known non-public TLDs.
+  if (bare === 'localhost') return false;
+  if (/\.(local|localhost|internal|intranet|home|lan|corp|private)$/i.test(bare)) return false;
+
   try {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('dns_timeout')), 3000)
     );
     // dns.lookup uses the OS resolver (getaddrinfo), same as a browser;
-    // returns whichever record type exists (A or AAAA).
-    await Promise.race([dnsLookup(hostname), timeout]);
+    // returns { address, family } with whichever record type exists.
+    const result = await Promise.race([dnsLookup(bare), timeout]);
+    if (!result || !result.address) return false;
+    if (isPrivateAddress(result.address)) return false;      // DNS rebind guard
     return true;
   } catch {
     return false;
