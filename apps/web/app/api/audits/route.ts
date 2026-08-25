@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { lookup as dnsLookup } from 'node:dns/promises';
 import { auditLeadAlert } from '@/app/lib/slack';
 import { appendToSheet } from '@/app/lib/sheets';
 
@@ -94,6 +95,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Verify the submitted URL's hostname actually resolves in DNS. Blocks the
+// observed attack pattern (fabricated pronounceable-ish .com domains like
+// kmnrmwxvxw.com, xhqthf.com) BEFORE any DB row, Slack ping, Sheet append,
+// or worker job. 3s hard timeout so a hung resolver cannot hang the request.
+async function targetHostResolves(url: string): Promise<boolean> {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return false;
+  }
+  try {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('dns_timeout')), 3000)
+    );
+    // dns.lookup uses the OS resolver (getaddrinfo), same as a browser;
+    // returns whichever record type exists (A or AAAA).
+    await Promise.race([dnsLookup(hostname), timeout]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const DEMO_HOSTS = ['fironmarketing.com'];
 
 function isDemoUrl(url: string): boolean {
@@ -181,6 +206,18 @@ export async function POST(request: NextRequest) {
       const prismaDemo = await getPrisma();
       const runId = await createDemoAudit(parsed.target, prismaDemo);
       return NextResponse.json({ runId, status: 'queued' }, { status: 202 });
+    }
+
+    // Reject targets whose hostname does not resolve. Runs before any DB
+    // write, Slack alert, Sheet append, or job enqueue.
+    if (!(await targetHostResolves(parsed.target))) {
+      return NextResponse.json(
+        {
+          error: 'invalid_target',
+          message: 'That domain does not resolve. Double-check the URL and try again.',
+        },
+        { status: 400 }
+      );
     }
 
     const normalizedInputs = {
