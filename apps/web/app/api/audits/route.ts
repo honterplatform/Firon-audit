@@ -4,6 +4,7 @@ import { lookup as dnsLookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { auditLeadAlert } from '@/app/lib/slack';
 import { appendToSheet } from '@/app/lib/sheets';
+import { requireToolAccess } from '@/app/lib/authGuard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -210,6 +211,11 @@ async function createDemoAudit(target: string, prisma: any): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
+  // Gate: only holders of the firon_tool_access cookie can trigger a scan.
+  // Runs before body parsing and before any downstream work.
+  const gate = requireToolAccess(request);
+  if (gate) return gate;
+
   try {
     // Check critical environment variables first
     if (!process.env.DATABASE_URL) {

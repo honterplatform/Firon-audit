@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@audit/db';
 import Anthropic from '@anthropic-ai/sdk';
+import { requireToolAccess } from '@/app/lib/authGuard';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ runId: string }> }
 ) {
+  // Gate: chat costs Anthropic tokens per message. Only holders of the
+  // firon_tool_access cookie may send.
+  const gate = requireToolAccess(request);
+  if (gate) return gate;
+
   try {
     const { runId } = await context.params;
     const body = await request.json();

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FironOnly } from './components/FironOnly';
 
 export default function HomePage() {
   const router = useRouter();
@@ -71,6 +72,7 @@ export default function HomePage() {
   const ready = formData.target.trim().length > 0 && formData.email.trim().length > 0;
 
   return (
+    <FironOnly>
     <div className="ed-col">
       <header className="ed-head">
         <div className="ed-eyebrow">
@@ -130,5 +132,6 @@ export default function HomePage() {
         </button>
       </form>
     </div>
+    </FironOnly>
   );
 }
