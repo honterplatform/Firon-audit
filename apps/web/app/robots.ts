@@ -8,9 +8,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Per-audit result URLs are user-specific reports — keep them out of
-        // search indexes. /api routes aren't meant for indexing either.
-        disallow: ["/audits/", "/api/"],
+        // /run is the internal tool page and is passcode-gated.
+        // Per-audit result URLs are user-specific reports.
+        // /api routes are not meant for indexing.
+        disallow: ["/run", "/audits/", "/api/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

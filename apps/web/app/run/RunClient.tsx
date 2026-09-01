@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FironOnly } from './components/FironOnly';
+import { FironOnly } from '../components/FironOnly';
 
-export default function HomePage() {
+export function RunClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -7,6 +7,18 @@ const __dirname = path.dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../..'),
+  async redirects() {
+    // Root path is retired from the public tool URL. Permanent redirect to
+    // the marketing blog post; the tool itself lives at /run behind the
+    // passcode gate.
+    return [
+      {
+        source: '/',
+        destination: 'https://fironmarketing.com/insights/ai-readiness-audit',
+        permanent: true,
+      },
+    ];
+  },
   webpack: (config, { isServer, webpack }) => {
     if (isServer) {
       // Externalize Puppeteer, Playwright and their dependencies to avoid bundling issues

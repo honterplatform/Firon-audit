@@ -1,15 +1,9 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://audit.fironmarketing.com";
-
+// Root URL is intentionally omitted: `/` now 308-redirects to
+// https://fironmarketing.com/insights/ai-readiness-audit (see next.config.mjs).
+// The tool itself lives at /run behind a passcode gate and is noindex, so it
+// does not belong in the sitemap either.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-  return [
-    {
-      url: `${SITE_URL}/`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-  ];
+  return [];
 }

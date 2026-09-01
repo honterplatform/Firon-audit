@@ -265,7 +265,7 @@ export function AuditRunViewer({ runId, initialRun, screenshotUrls: initialScree
             The audit didn&apos;t complete. Please retry, or contact the team if this keeps happening.
           </p>
           <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
-            <Link href="/" className="ed-btn" style={{ width: 'auto' }}>Run another audit</Link>
+            <Link href="/run" className="ed-btn" style={{ width: 'auto' }}>Run another audit</Link>
           </div>
         </header>
       </div>
