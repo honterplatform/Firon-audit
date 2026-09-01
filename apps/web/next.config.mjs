@@ -15,7 +15,7 @@ const nextConfig = {
       {
         source: '/',
         destination: 'https://fironmarketing.com/insights/ai-readiness-audit',
-        permanent: true,
+        statusCode: 301,
       },
     ];
   },
